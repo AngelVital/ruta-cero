@@ -1,0 +1,602 @@
+<!DOCTYPE html><html class="light" lang="es" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Inspección de Campo • RUTA 04</title>
+<!-- Google Fonts: Barlow Condensed & Atkinson Hyperlegible Next -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,500;0,700;1,400&amp;family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,600;1,700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-container": "#002f4a",
+            "on-tertiary-fixed": "#001d31",
+            "primary-fixed": "#78fbb6",
+            "tertiary-fixed": "#cce5ff",
+            "on-surface": "#0d1c2e",
+            "on-error": "#ffffff",
+            "secondary-fixed-dim": "#bec6e0",
+            "on-primary-container": "#00331d",
+            "secondary-fixed": "#dae2fd",
+            "on-primary-fixed-variant": "#005232",
+            "tertiary-fixed-dim": "#93ccff",
+            "surface-container": "#e6eeff",
+            "surface-tint": "#006d43",
+            "on-surface-variant": "#3d4a41",
+            "surface-dim": "#ccdbf3",
+            "on-primary-fixed": "#002111",
+            "on-tertiary-fixed-variant": "#004b73",
+            "primary": "#006d43",
+            "primary-container": "#00a86b",
+            "on-secondary-container": "#5c647a",
+            "tertiary-container": "#359ade",
+            "outline-variant": "#bccabe",
+            "secondary": "#565e74",
+            "background": "#f8f9ff",
+            "inverse-surface": "#233144",
+            "surface-container-low": "#eff4ff",
+            "on-error-container": "#93000a",
+            "on-secondary-fixed": "#131b2e",
+            "on-background": "#0d1c2e",
+            "surface-container-highest": "#d5e3fc",
+            "inverse-primary": "#59de9b",
+            "outline": "#6d7a70",
+            "tertiary": "#006398",
+            "primary-fixed-dim": "#59de9b",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-container-lowest": "#ffffff",
+            "secondary-container": "#dae2fd",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed-variant": "#3f465c",
+            "surface-bright": "#f8f9ff",
+            "error": "#ba1a1a",
+            "on-primary": "#ffffff",
+            "surface-variant": "#d5e3fc",
+            "inverse-on-surface": "#eaf1ff",
+            "surface": "#f8f9ff",
+            "surface-container-high": "#dce9ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "8px",
+            "space-sm": "12px",
+            "space-xl": "32px",
+            "space-md": "16px",
+            "space-2xs": "4px",
+            "gutter-tablet": "24px",
+            "gutter-mobile": "16px",
+            "space-2xl": "48px",
+            "space-lg": "24px",
+            "touch-min": "48px",
+            "touch-lg": "56px"
+          },
+          "fontFamily": {
+            "display": ["Barlow Condensed"],
+            "headline-md": ["Barlow Condensed"],
+            "body-sm": ["Atkinson Hyperlegible Next"],
+            "label-sm": ["Barlow Condensed"],
+            "body-lg": ["Atkinson Hyperlegible Next"],
+            "headline-lg": ["Barlow Condensed"],
+            "headline-lg-mobile": ["Barlow Condensed"],
+            "label-lg": ["Barlow Condensed"],
+            "headline-sm": ["Barlow Condensed"],
+            "body-md": ["Atkinson Hyperlegible Next"],
+            "label-md": ["Barlow Condensed"]
+          },
+          "fontSize": {
+            "display": ["44px", { "lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "26px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "label-sm": ["12px", { "lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "30px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.06em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "22px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-md": ["14px", { "lineHeight": "18px", "letterSpacing": "0.08em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      user-select: none;
+    }
+    .material-symbols-fill {
+      font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container pb-[180px]">
+<!-- TopAppBar: Anchored strictly to Shared Components JSON & Specifications -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface shadow-[0px_4px_0px_#0d1c2e] sticky top-0 z-40 w-full px-space-md py-space-sm min-h-touch-lg flex justify-between items-center">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 bg-primary text-on-primary flex items-center justify-center border-2 border-on-surface shadow-[2px_2px_0px_#0d1c2e]">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-inverse-on-surface uppercase tracking-wider">
+          RUTA 04&nbsp;</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-label-sm font-label-sm text-primary tracking-widest uppercase font-bold">OPERATIVO • EN LÍNEA</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button aria-label="Escanear QR" class="flex items-center justify-center min-w-[48px] min-h-touch-min bg-surface-container border-2 border-on-surface text-on-surface shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-transform duration-75 p-2" type="button">
+<span class="material-symbols-outlined text-2xl" data-icon="qr_code_scanner">qr_code_scanner</span>
+</button>
+</div>
+</header>
+<!-- Route Indicator Ribbon & Quick Selector -->
+<div class="bg-surface-container-highest px-space-md py-2 border-b-2 border-on-surface flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 bg-on-surface text-surface-container-lowest font-headline-sm text-label-sm font-bold tracking-widest">PUNTO 4 / 8</span>
+<span class="font-headline-sm text-label-md text-on-surface font-semibold uppercase">ID: CONT-04 (malecon)</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center border-2 border-on-surface bg-surface-container-lowest text-on-surface shadow-[1px_1px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center border-2 border-on-surface bg-surface-container-lowest text-on-surface shadow-[1px_1px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Main Content Container -->
+<main class="w-full max-w-xl mx-auto px-space-md pt-space-md flex flex-col gap-space-lg">
+<!-- Container Header Card -->
+<section class="bg-surface-container-lowest border-2 border-on-surface shadow-[4px_4px_0px_#0d1c2e] p-space-md">
+<div class="flex justify-between items-start mb-space-xs">
+<div>
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Inspección en Curso</span>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile uppercase text-on-surface leading-tight">
+            Contenedor 04 • malecon</h1>
+</div>
+<span class="bg-primary-fixed border border-on-surface text-on-primary-fixed font-label-sm text-label-sm px-2.5 py-1 tracking-wider uppercase font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-base" data-icon="check_circle">check_circle</span>
+          Activo
+        </span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-base text-primary" data-icon="pin_drop">pin_drop</span>
+        Paseo Alvaro Obregon</p>
+</section>
+<!-- SECTION 1: Fill Level Indicator (Glove Friendly, Direct Sunlight Optimized) -->
+<section class="bg-surface-container-lowest border-2 border-on-surface shadow-[4px_4px_0px_#0d1c2e] p-space-md">
+<div class="flex justify-between items-center mb-space-sm">
+<label class="font-headline-md text-headline-md text-on-surface uppercase flex items-center gap-2">
+<span class="material-symbols-outlined text-xl text-primary" data-icon="delete">delete</span>
+          1. Nivel de Llenado
+        </label>
+<span class="text-label-sm font-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 border border-on-surface font-bold">REQUERIDO</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-space-md">
+        Toque el nivel actual estimado para registrar volumen en telemetría:
+      </p>
+<!-- Fill Level Massive Glove Selector Grid -->
+<div class="grid grid-cols-1 gap-space-sm">
+<!-- Bajo Option -->
+<button class="fill-option-btn w-full min-h-touch-lg flex items-center justify-between px-space-md py-space-sm border-2 border-on-surface bg-surface-container-lowest text-on-surface shadow-[3px_3px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="selectFillLevel('BAJO_25%', this)" type="button">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 bg-primary-fixed border-2 border-on-surface flex items-center justify-center text-on-primary-fixed font-bold">
+<span class="material-symbols-outlined" data-icon="battery_2_bar">battery_2_bar</span>
+</div>
+<div class="text-left">
+<div class="font-headline-sm text-headline-sm uppercase font-bold text-on-surface">Bajo (&lt;40%)</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant font-medium">Volumen operativo normal</div>
+</div>
+</div>
+<div class="check-box w-7 h-7 border-2 border-on-surface bg-surface-container-lowest flex items-center justify-center">
+<span class="material-symbols-outlined check-icon hidden text-on-primary text-xl font-bold" data-icon="check">check</span>
+</div>
+</button>
+<!-- Medio Option (Active by default for demonstration) -->
+<button class="fill-option-btn is-active w-full min-h-touch-lg flex items-center justify-between px-space-md py-space-sm border-2 border-on-surface bg-[#fffbeb] text-on-surface shadow-[4px_4px_0px_#0d1c2e] ring-2 ring-[#d97706] active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="selectFillLevel('MEDIO_65%', this)" type="button">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 bg-[#fde68a] border-2 border-on-surface flex items-center justify-center text-[#78350f] font-bold">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+</div>
+<div class="text-left">
+<div class="font-headline-sm text-headline-sm uppercase font-bold text-on-surface">Medio (40% - 75%)</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant font-medium">Recolección regular recomendada</div>
+</div>
+</div>
+<div class="check-box w-7 h-7 border-2 border-on-surface bg-[#d97706] flex items-center justify-center">
+<span class="material-symbols-outlined check-icon text-white text-xl font-bold" data-icon="check">check</span>
+</div>
+</button>
+<!-- Lleno Option -->
+<button class="fill-option-btn w-full min-h-touch-lg flex items-center justify-between px-space-md py-space-sm border-2 border-on-surface bg-surface-container-lowest text-on-surface shadow-[3px_3px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="selectFillLevel('LLENO_90%', this)" type="button">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 bg-error-container border-2 border-on-surface flex items-center justify-center text-error font-bold">
+<span class="material-symbols-outlined" data-icon="priority_high">priority_high</span>
+</div>
+<div class="text-left">
+<div class="font-headline-sm text-headline-sm uppercase font-bold text-error">Lleno (&gt;75%) • Crítico</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant font-medium">Vaciado prioritario inmediato</div>
+</div>
+</div>
+<div class="check-box w-7 h-7 border-2 border-on-surface bg-surface-container-lowest flex items-center justify-center">
+<span class="material-symbols-outlined check-icon hidden text-white text-xl font-bold" data-icon="check">check</span>
+</div>
+</button>
+</div>
+</section>
+<!-- SECTION 2: Material Present (Multi-selection Chips) -->
+<section class="bg-surface-container-lowest border-2 border-on-surface shadow-[4px_4px_0px_#0d1c2e] p-space-md">
+<div class="flex justify-between items-center mb-space-sm">
+<label class="font-headline-md text-headline-md text-on-surface uppercase flex items-center gap-2">
+<span class="material-symbols-outlined text-xl text-primary" data-icon="category">category</span>
+          2. Tipo de Material Presente
+        </label>
+<span class="text-label-sm font-label-sm bg-primary-container text-on-primary-container px-2 py-0.5 border border-on-surface font-bold" id="material-count">2 SELECCIONADOS</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-space-md">
+        Identifique los materiales segregados verificados en el contenedor:
+      </p>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
+<!-- Plástico Chip (Selected) -->
+<button class="material-chip is-selected min-h-touch-min px-space-sm py-space-sm flex sm:flex-col items-center justify-between sm:justify-center gap-2 border-2 border-on-surface bg-[#0284c7] text-white shadow-[3px_3px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleMaterial('Plástico', this)" type="button">
+<div class="flex items-center sm:flex-col gap-2">
+<span class="material-symbols-outlined text-2xl" data-icon="recycling">recycling</span>
+<span class="font-headline-sm text-headline-sm uppercase font-bold tracking-wide">Plástico</span>
+</div>
+<span class="material-symbols-outlined text-xl chip-check" data-icon="check_box">check_box</span>
+</button>
+<!-- Cartón Chip (Selected) -->
+<button class="material-chip is-selected min-h-touch-min px-space-sm py-space-sm flex sm:flex-col items-center justify-between sm:justify-center gap-2 border-2 border-on-surface bg-[#d97706] text-white shadow-[3px_3px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleMaterial('Cartón', this)" type="button">
+<div class="flex items-center sm:flex-col gap-2">
+<span class="material-symbols-outlined text-2xl" data-icon="inventory_2">inventory_2</span>
+<span class="font-headline-sm text-headline-sm uppercase font-bold tracking-wide">Cartón</span>
+</div>
+<span class="material-symbols-outlined text-xl chip-check" data-icon="check_box">check_box</span>
+</button>
+<!-- Papel Chip (Unselected) -->
+<button class="material-chip min-h-touch-min px-space-sm py-space-sm flex sm:flex-col items-center justify-between sm:justify-center gap-2 border-2 border-outline bg-surface-container-lowest text-on-surface-variant shadow-[3px_3px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleMaterial('Papel', this)" type="button">
+<div class="flex items-center sm:flex-col gap-2">
+<span class="material-symbols-outlined text-2xl" data-icon="description">description</span>
+<span class="font-headline-sm text-headline-sm uppercase font-bold tracking-wide">Papel</span>
+</div>
+<span class="material-symbols-outlined text-xl chip-check text-outline" data-icon="check_box_outline_blank">check_box_outline_blank</span>
+</button>
+</div>
+</section>
+<!-- SECTION 3: Photographic Evidence -->
+<section class="bg-surface-container-lowest border-2 border-on-surface shadow-[4px_4px_0px_#0d1c2e] p-space-md flex flex-col gap-space-md">
+  <div class="flex justify-between items-center">
+    <label class="font-headline-md text-headline-md text-on-surface uppercase flex items-center gap-2">
+      <span class="material-symbols-outlined text-xl text-primary" data-icon="photo_camera">photo_camera</span>
+      3. Evidencia Fotográfica
+    </label>
+    <span class="text-label-sm font-label-sm bg-primary-container text-on-primary-container px-2 py-0.5 border border-on-surface font-bold">4 REGISTROS</span>
+  </div>
+  <p class="text-body-sm font-body-sm text-on-surface-variant">
+    Documente fotográficamente el estado del contenedor antes y después de la maniobra de recolección:
+  </p>
+
+  <!-- GRUPO 1: AL LLEGAR (ANTES DE RECOLECTAR) -->
+  <div class="flex flex-col gap-space-xs border-2 border-on-surface bg-surface-container-low p-space-sm">
+    <div class="flex justify-between items-center border-b-2 border-on-surface pb-1 mb-1">
+      <span class="font-headline-sm text-headline-sm uppercase font-bold text-on-surface flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-base text-[#d97706]" data-icon="schedule">schedule</span>
+        1. Al Llegar (Antes de Recolectar)
+      </span>
+      <span class="text-label-sm font-label-sm bg-[#fde68a] text-[#78350f] border border-on-surface px-1.5 py-0.5 font-bold uppercase">Fase Inicial</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mt-1">
+      <!-- FOTO 1: Estado inicial y entorno (Capturada) -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-space-xs shadow-[2px_2px_0px_#0d1c2e] flex flex-col justify-between min-h-touch-lg">
+        <div class="flex items-start justify-between gap-2 mb-1.5">
+          <div>
+            <div class="font-headline-sm text-label-md uppercase font-bold text-on-surface flex items-center gap-1">
+              <span class="material-symbols-outlined text-base text-primary" data-icon="check_circle">check_circle</span>
+              Foto 1: Entorno Inicial
+            </div>
+            <span class="text-label-sm font-label-sm text-on-surface-variant block">Vista perimetral y accesos</span>
+          </div>
+          <span class="px-1.5 py-0.5 bg-primary-fixed border border-on-surface text-on-primary-fixed font-label-sm text-label-sm font-bold uppercase shrink-0">Capturada</span>
+        </div>
+        <div class="bg-surface-container border-2 border-on-surface h-24 relative flex flex-col items-center justify-center overflow-hidden mb-2 shadow-[1px_1px_0px_#0d1c2e]">
+          <span class="material-symbols-outlined text-3xl text-outline mb-0.5" data-icon="image">image</span>
+          <span class="font-label-sm text-label-sm uppercase text-outline font-semibold">IMG_04_INIT_ENTORNO.JPG</span>
+          <div class="absolute bottom-1 left-1 bg-on-surface text-white px-1 py-0.5 text-[10px] font-mono leading-none tracking-tight">
+            GPS: 24.1612° N, 110.3128° W • 10:41:02
+          </div>
+        </div>
+        <button type="button" class="w-full min-h-touch-min bg-surface-container-high border-2 border-on-surface text-on-surface font-label-md text-label-md uppercase font-bold flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all">
+          <span class="material-symbols-outlined text-lg" data-icon="sync">sync</span>
+          Reemplazar Foto
+        </button>
+      </div>
+
+      <!-- FOTO 2: Nivel y apertura frontal/superior (Pendiente) -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-space-xs shadow-[2px_2px_0px_#0d1c2e] flex flex-col justify-between min-h-touch-lg">
+        <div class="flex items-start justify-between gap-2 mb-1.5">
+          <div>
+            <div class="font-headline-sm text-label-md uppercase font-bold text-on-surface flex items-center gap-1">
+              <span class="material-symbols-outlined text-base text-[#d97706]" data-icon="pending">pending</span>
+              Foto 2: Interior del contenedor</div>
+            
+          </div>
+          <span class="px-1.5 py-0.5 bg-[#fde68a] border border-on-surface text-[#78350f] font-label-sm text-label-sm font-bold uppercase shrink-0">Pendiente</span>
+        </div>
+        <div class="bg-surface-container-lowest border-2 border-dashed border-outline h-24 flex flex-col items-center justify-center mb-2">
+          <span class="material-symbols-outlined text-3xl text-outline mb-0.5" data-icon="add_a_photo">add_a_photo</span>
+          <span class="font-label-sm text-label-sm uppercase text-outline font-semibold">Pendiente de captura</span>
+        </div>
+        <button type="button" class="w-full min-h-touch-min bg-[#0284c7] text-white border-2 border-on-surface font-label-md text-label-md uppercase font-bold flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all">
+          <span class="material-symbols-outlined text-lg" data-icon="photo_camera">photo_camera</span>
+          Capturar Foto 2
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRUPO 2: DESPUÉS DE RECOLECTAR -->
+  <div class="flex flex-col gap-space-xs border-2 border-on-surface bg-surface-container-low p-space-sm">
+    <div class="flex justify-between items-center border-b-2 border-on-surface pb-1 mb-1">
+      <span class="font-headline-sm text-headline-sm uppercase font-bold text-on-surface flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-base text-primary" data-icon="task_alt">task_alt</span>
+        2. Después de Recolectar
+      </span>
+      <span class="text-label-sm font-label-sm bg-primary-fixed border border-on-surface text-on-primary-fixed px-1.5 py-0.5 font-bold uppercase">Fase Cierre</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mt-1">
+      <!-- FOTO 3: Contenedor vaciado / limpio -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-space-xs shadow-[2px_2px_0px_#0d1c2e] flex flex-col justify-between min-h-touch-lg">
+        <div class="flex items-start justify-between gap-2 mb-1.5">
+          <div>
+            <div class="font-headline-sm text-label-md uppercase font-bold text-on-surface flex items-center gap-1">
+              <span class="material-symbols-outlined text-base text-outline" data-icon="hourglass_empty">hourglass_empty</span>
+              Foto 3: Vaciado y Limpieza
+            </div>
+            <span class="text-label-sm font-label-sm text-on-surface-variant block">Interior vaciado sin remanente</span>
+          </div>
+          <span class="px-1.5 py-0.5 bg-surface-container-high border border-on-surface text-on-surface font-label-sm text-label-sm font-bold uppercase shrink-0">Pendiente</span>
+        </div>
+        <div class="bg-surface-container-lowest border-2 border-dashed border-outline h-24 flex flex-col items-center justify-center mb-2">
+          <span class="material-symbols-outlined text-3xl text-outline mb-0.5" data-icon="photo_camera">photo_camera</span>
+          <span class="font-label-sm text-label-sm uppercase text-outline font-semibold">Pendiente de captura</span>
+        </div>
+        <button type="button" class="w-full min-h-touch-min bg-primary-container text-on-primary-container border-2 border-on-surface font-label-md text-label-md uppercase font-bold flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all">
+          <span class="material-symbols-outlined text-lg" data-icon="photo_camera">photo_camera</span>
+          Capturar Foto 3
+        </button>
+      </div>
+
+      <!-- FOTO 4: Área despejada / cierre -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-space-xs shadow-[2px_2px_0px_#0d1c2e] flex flex-col justify-between min-h-touch-lg">
+        <div class="flex items-start justify-between gap-2 mb-1.5">
+          <div>
+            <div class="font-headline-sm text-label-md uppercase font-bold text-on-surface flex items-center gap-1">
+              <span class="material-symbols-outlined text-base text-outline" data-icon="hourglass_empty">hourglass_empty</span>
+              Foto 4: Cierre y Entorno Final
+            </div>
+            <span class="text-label-sm font-label-sm text-on-surface-variant block">Tapa asegurada y acera limpia</span>
+          </div>
+          <span class="px-1.5 py-0.5 bg-surface-container-high border border-on-surface text-on-surface font-label-sm text-label-sm font-bold uppercase shrink-0">Pendiente</span>
+        </div>
+        <div class="bg-surface-container-lowest border-2 border-dashed border-outline h-24 flex flex-col items-center justify-center mb-2">
+          <span class="material-symbols-outlined text-3xl text-outline mb-0.5" data-icon="photo_camera">photo_camera</span>
+          <span class="font-label-sm text-label-sm uppercase text-outline font-semibold">Pendiente de captura</span>
+        </div>
+        <button type="button" class="w-full min-h-touch-min bg-primary-container text-on-primary-container border-2 border-on-surface font-label-md text-label-md uppercase font-bold flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#0d1c2e] active:translate-x-0.5 active:translate-y-0.5 transition-all">
+          <span class="material-symbols-outlined text-lg" data-icon="photo_camera">photo_camera</span>
+          Capturar Foto 4
+        </button>
+      </div>
+    </div>
+  </div>
+</section><section class="bg-surface-container-lowest border-2 border-on-surface shadow-[4px_4px_0px_#0d1c2e] p-space-md"><div class="flex justify-between items-center mb-space-sm"><label class="font-headline-md text-headline-md text-on-surface uppercase flex items-center gap-2"><span class="material-symbols-outlined text-xl text-primary" data-icon="warning">warning</span> 4. INCIDENCIAS</label><span class="text-label-sm font-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 border border-on-surface font-bold">OPCIONAL</span></div><p class="text-body-sm font-body-sm text-on-surface-variant mb-space-md">Reporte cualquier anomalía o condición irregular detectada en el punto:</p><div class="flex flex-wrap gap-space-xs mb-space-sm"><button class="tag-btn border-2 border-outline px-3 py-2 bg-surface-container-lowest text-on-surface font-label-md text-label-md uppercase active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleTag(this, 'Contenedor vandalizado')" type="button">+ Contenedor vandalizado</button><button class="tag-btn border-2 border-outline px-3 py-2 bg-surface-container-lowest text-on-surface font-label-md text-label-md uppercase active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleTag(this, 'Basura fuera del contenedor')" type="button">+ Basura fuera del contenedor</button><button class="tag-btn border-2 border-outline px-3 py-2 bg-surface-container-lowest text-on-surface font-label-md text-label-md uppercase active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleTag(this, 'Mezcla de residuos')" type="button">+ Mezcla de residuos</button><button class="tag-btn border-2 border-outline px-3 py-2 bg-surface-container-lowest text-on-surface font-label-md text-label-md uppercase active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleTag(this, 'Contenedor dañado')" type="button">+ Contenedor dañado</button><button class="tag-btn border-2 border-outline px-3 py-2 bg-surface-container-lowest text-on-surface font-label-md text-label-md uppercase active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleTag(this, 'No se pudo recolectar')" type="button">+ No se pudo recolectar</button><button class="tag-btn border-2 border-outline px-3 py-2 bg-surface-container-lowest text-on-surface font-label-md text-label-md uppercase active:translate-x-0.5 active:translate-y-0.5 transition-all" onclick="toggleTag(this, 'Otro')" type="button">+ Otro</button></div><div class="relative"><input class="w-full min-h-[52px] px-space-md border-2 border-on-surface bg-surface-container-lowest text-on-surface font-body-md focus:ring-0 focus:border-primary shadow-[2px_2px_0px_#0d1c2e]" id="custom-notes" oninput="updatePayloadNotes(this.value)" placeholder="Detalles para 'Otro' u observaciones adicionales..." type="text"></div></section>
+<!-- SECTION 4: Observaciones Rápidas -->
+
+<!-- SECTION 5: Live JSON Payload Preview HUD -->
+
+</main>
+<!-- Sticky Bottom Action Tray: 60px Primary Route Action -->
+<div class="fixed bottom-[64px] inset-x-0 z-40 bg-surface-container-lowest border-t-2 border-on-surface p-space-sm shadow-[0px_-4px_0px_#0d1c2e]">
+<div class="max-w-xl mx-auto flex gap-space-sm">
+<button class="flex-1 min-h-[60px] bg-primary-container text-on-primary-container border-2 border-on-surface shadow-[4px_4px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#0d1c2e] transition-all flex items-center justify-center gap-2 font-headline-md text-headline-md uppercase font-bold tracking-wider" id="submit-btn" onclick="submitReport()" type="button">
+<span class="material-symbols-outlined text-2xl font-bold" data-icon="send">send</span>
+        Enviar Reporte de Inspección
+      </button>
+</div>
+</div>
+<!-- BottomNavBar: Exact implementation from Shared Components JSON -->
+<!-- Contextual State Lock: Page is Container Inspection / Checklist -> Active is "Registro" / "checklist" -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-xs py-space-xs pb-safe min-h-touch-lg bg-surface-container-lowest dark:bg-inverse-surface border-t-2 border-on-surface dark:border-outline shadow-[0px_-4px_0px_#0d1c2e] dark:shadow-none">
+<!-- Tab 0: Ruta -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant min-h-touch-min px-space-sm py-space-2xs active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="route">route</span>
+<span class="text-label-sm font-label-sm uppercase">Ruta</span>
+</a>
+<!-- Tab 1: Escanear -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant min-h-touch-min px-space-sm py-space-2xs active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="qr_code_2">qr_code_2</span>
+<span class="text-label-sm font-label-sm uppercase">Escanear</span>
+</a>
+<!-- Tab 2: Registro (ACTIVE TAB: Container Inspection form / Checklist) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container dark:bg-primary-fixed-dim dark:text-on-primary-fixed min-h-touch-min border-2 border-on-surface dark:border-outline px-space-sm py-space-2xs shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#">
+<span class="material-symbols-outlined text-2xl material-symbols-fill" data-icon="checklist">checklist</span>
+<span class="text-label-sm font-label-sm uppercase font-bold">Registro</span>
+</a>
+<!-- Tab 3: Incidencia -->
+
+</nav>
+<!-- Live Interactivity Script -->
+<script>
+    // State model conforming strictly to requested JSON structure
+    const reportData = {
+      container_id: "CONT-04",
+      location: "Plaza Central",
+      fill_level: "MEDIO_65%",
+      materials: ["Plástico", "Cartón"],
+      evidence_photo_url: "blob:cam_04.jpg",
+      timestamp: "2025-05-18T10:42:15Z",
+      inspector_id: "OP-982"
+    };
+
+    function refreshJsonView() {
+      const el = document.getElementById("json-preview");
+      if (el) {
+        el.textContent = JSON.stringify(reportData, null, 2);
+      }
+    }
+
+    function selectFillLevel(level, btn) {
+      reportData.fill_level = level;
+      reportData.timestamp = new Date().toISOString();
+
+      document.querySelectorAll(".fill-option-btn").forEach(b => {
+        b.classList.remove("is-active", "ring-2", "ring-[#d97706]", "ring-[#00a86b]", "ring-[#ba1a1a]");
+        b.classList.add("bg-surface-container-lowest");
+        const box = b.querySelector(".check-box");
+        const icon = b.querySelector(".check-icon");
+        if (box && icon) {
+          box.className = "check-box w-7 h-7 border-2 border-on-surface bg-surface-container-lowest flex items-center justify-center";
+          icon.classList.add("hidden");
+        }
+      });
+
+      btn.classList.add("is-active");
+      const box = btn.querySelector(".check-box");
+      const icon = btn.querySelector(".check-icon");
+
+      if (level.startsWith("BAJO")) {
+        btn.classList.add("ring-2", "ring-primary");
+        if (box && icon) {
+          box.className = "check-box w-7 h-7 border-2 border-on-surface bg-primary flex items-center justify-center";
+          icon.classList.remove("hidden");
+        }
+      } else if (level.startsWith("MEDIO")) {
+        btn.classList.add("ring-2", "ring-[#d97706]");
+        if (box && icon) {
+          box.className = "check-box w-7 h-7 border-2 border-on-surface bg-[#d97706] flex items-center justify-center";
+          icon.classList.remove("hidden");
+        }
+      } else {
+        btn.classList.add("ring-2", "ring-[#ba1a1a]");
+        if (box && icon) {
+          box.className = "check-box w-7 h-7 border-2 border-on-surface bg-[#ba1a1a] flex items-center justify-center";
+          icon.classList.remove("hidden");
+        }
+      }
+
+      refreshJsonView();
+    }
+
+    function toggleMaterial(materialName, btn) {
+      const index = reportData.materials.indexOf(materialName);
+      const checkIcon = btn.querySelector(".chip-check");
+
+      if (index > -1) {
+        reportData.materials.splice(index, 1);
+        btn.classList.remove("is-selected", "bg-[#0284c7]", "bg-[#d97706]", "bg-[#4f46e5]", "text-white");
+        btn.classList.add("bg-surface-container-lowest", "text-on-surface-variant", "border-outline");
+        if (checkIcon) {
+          checkIcon.textContent = "check_box_outline_blank";
+          checkIcon.classList.add("text-outline");
+          checkIcon.classList.remove("text-white");
+        }
+      } else {
+        reportData.materials.push(materialName);
+        btn.classList.add("is-selected", "text-white", "border-on-surface");
+        btn.classList.remove("bg-surface-container-lowest", "text-on-surface-variant", "border-outline");
+        
+        if (materialName === "Plástico") btn.classList.add("bg-[#0284c7]");
+        if (materialName === "Cartón") btn.classList.add("bg-[#d97706]");
+        if (materialName === "Papel") btn.classList.add("bg-[#4f46e5]");
+
+        if (checkIcon) {
+          checkIcon.textContent = "check_box";
+          checkIcon.classList.remove("text-outline");
+          checkIcon.classList.add("text-white");
+        }
+      }
+
+      const counter = document.getElementById("material-count");
+      if (counter) {
+        counter.textContent = `${reportData.materials.length} SELECCIONADO${reportData.materials.length === 1 ? '' : 'S'}`;
+      }
+
+      refreshJsonView();
+    }
+
+    function toggleTag(btn, tagName) {
+      document.querySelectorAll(".tag-btn").forEach(b => {
+        b.classList.remove("is-active", "bg-on-surface", "text-surface-container-lowest", "font-bold", "shadow-[2px_2px_0px_#0d1c2e]");
+        b.classList.add("border-outline", "bg-surface-container-lowest", "text-on-surface");
+        if (b.innerText.startsWith("✓")) {
+          b.innerText = "+ " + b.innerText.replace("✓ ", "");
+        }
+      });
+
+      btn.classList.add("is-active", "bg-on-surface", "text-surface-container-lowest", "font-bold", "shadow-[2px_2px_0px_#0d1c2e]");
+      btn.classList.remove("border-outline", "bg-surface-container-lowest", "text-on-surface");
+      btn.innerText = "✓ " + tagName;
+    }
+
+    function updatePayloadNotes(val) {
+      reportData.notes = val;
+      refreshJsonView();
+    }
+
+    function submitReport() {
+      const btn = document.getElementById("submit-btn");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-2xl" data-icon="sync">sync</span> TRANSMITIENDO REPORTE...`;
+
+      setTimeout(() => {
+        btn.classList.remove("bg-primary-container", "text-on-primary-container");
+        btn.classList.add("bg-on-surface", "text-primary-fixed");
+        btn.innerHTML = `<span class="material-symbols-outlined text-2xl text-primary-fixed" data-icon="check_circle">check_circle</span> ¡REPORTE ENVIADO CON ÉXITO!`;
+        
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.classList.add("bg-primary-container", "text-on-primary-container");
+          btn.classList.remove("bg-on-surface", "text-primary-fixed");
+          btn.innerHTML = originalText;
+        }, 3000);
+      }, 1000);
+    }
+
+    // Initial sync
+    refreshJsonView();
+  </script>
+
+
+
+
+
+
+
+
+</body></html>

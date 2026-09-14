@@ -1,0 +1,645 @@
+<!DOCTYPE html><html class="h-full" lang="es" style=""><svg class="inline-defs-container" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>HUD Táctico - Mapa de Ruta Programada R-04</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400..700;1,400..700&amp;family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,600;1,700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface-variant": "#3d4a41",
+            "surface-dim": "#ccdbf3",
+            "on-background": "#0d1c2e",
+            "surface-container-high": "#dce9ff",
+            "surface-container": "#e6eeff",
+            "inverse-surface": "#233144",
+            "surface-bright": "#f8f9ff",
+            "on-tertiary-fixed-variant": "#004b73",
+            "primary": "#006d43",
+            "primary-container": "#00a86b",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary-fixed-dim": "#93ccff",
+            "on-primary": "#ffffff",
+            "secondary": "#565e74",
+            "on-primary-fixed": "#002111",
+            "tertiary-fixed": "#cce5ff",
+            "on-primary-fixed-variant": "#005232",
+            "on-primary-container": "#00331d",
+            "outline": "#6d7a70",
+            "on-tertiary-container": "#002f4a",
+            "surface": "#f8f9ff",
+            "surface-tint": "#006d43",
+            "outline-variant": "#bccabe",
+            "background": "#f8f9ff",
+            "secondary-fixed-dim": "#bec6e0",
+            "error": "#ba1a1a",
+            "secondary-container": "#dae2fd",
+            "error-container": "#ffdad6",
+            "surface-container-highest": "#d5e3fc",
+            "on-secondary-container": "#5c647a",
+            "on-secondary": "#ffffff",
+            "primary-fixed-dim": "#59de9b",
+            "on-error-container": "#93000a",
+            "secondary-fixed": "#dae2fd",
+            "primary-fixed": "#78fbb6",
+            "on-secondary-fixed": "#131b2e",
+            "surface-variant": "#d5e3fc",
+            "inverse-primary": "#59de9b",
+            "on-surface": "#0d1c2e",
+            "tertiary": "#006398",
+            "tertiary-container": "#359ade",
+            "on-tertiary": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "on-secondary-fixed-variant": "#3f465c",
+            "on-tertiary-fixed": "#001d31"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "0px"
+          },
+          "spacing": {
+            "space-lg": "24px",
+            "space-md": "16px",
+            "gutter-mobile": "16px",
+            "space-2xl": "48px",
+            "touch-lg": "56px",
+            "space-sm": "12px",
+            "touch-min": "48px",
+            "space-xl": "32px",
+            "space-2xs": "4px",
+            "space-xs": "8px",
+            "gutter-tablet": "24px"
+          },
+          "fontFamily": {
+            "headline-lg": ["Barlow Condensed"],
+            "headline-lg-mobile": ["Barlow Condensed"],
+            "label-md": ["Barlow Condensed"],
+            "label-lg": ["Barlow Condensed"],
+            "headline-sm": ["Barlow Condensed"],
+            "headline-md": ["Barlow Condensed"],
+            "body-md": ["Atkinson Hyperlegible Next"],
+            "body-lg": ["Atkinson Hyperlegible Next"],
+            "body-sm": ["Atkinson Hyperlegible Next"],
+            "display": ["Barlow Condensed"],
+            "label-sm": ["Barlow Condensed"]
+          },
+          "fontSize": {
+            "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "30px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "label-md": ["14px", { "lineHeight": "18px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.06em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "22px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-md": ["22px", { "lineHeight": "26px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "display": ["44px", { "lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "label-sm": ["12px", { "lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .grid-spec-pattern {
+      background-size: 28px 28px;
+      background-image: 
+        linear-gradient(to right, rgba(13, 28, 46, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(13, 28, 46, 0.08) 1px, transparent 1px);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md h-full flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+<!-- ========================================== -->
+<!-- 1. FIELD-SPEC CABECERA SUPERIOR            -->
+<!-- ========================================== -->
+<header class="bg-on-background text-surface-container-lowest border-b-2 border-on-surface flex justify-between items-center w-full px-space-md py-space-sm h-touch-lg z-30 shrink-0 shadow-[0px_4px_0px_#0d1c2e]">
+<!-- Botón Regresar Field Target 48px -->
+<button class="flex items-center gap-1.5 bg-surface-container-lowest text-on-surface border-2 border-on-surface px-space-sm py-2 min-h-[44px] shadow-[2px_2px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer font-label-md text-label-md" onclick="window.history.back()">
+<span class="material-symbols-outlined text-base font-bold">arrow_back</span>
+<span class="">REGRESAR</span>
+</button>
+<!-- Indicador Unidad / Ruta -->
+<div class="flex items-center gap-2">
+<div class="flex flex-col items-end"><span class="font-label-sm text-[11px] uppercase tracking-wider text-surface-variant font-bold">UNIDAD EN SERVICIO</span>
+<span class="font-headline-sm text-base text-primary-fixed-dim tracking-wide font-bold leading-tight">CAMIÓN-08 • ACTIVA</span></div>
+<div class="w-3 h-3 bg-primary-container border border-on-surface animate-pulse"></div>
+</div>
+</header>
+<!-- ========================================== -->
+<!-- 2. STATUS HUD SUB-HEADER                   -->
+<!-- ========================================== -->
+<section class="bg-surface-container-lowest border-b-2 border-on-surface px-space-md py-2.5 z-20 shrink-0 shadow-[0px_2px_0px_#0d1c2e]">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2 truncate">
+<span class="bg-on-surface text-surface-bright px-2 py-0.5 font-headline-sm text-label-md font-bold tracking-wider">R-04</span>
+<span class="font-headline-md text-headline-sm text-on-surface font-bold tracking-tight truncate">AYUNTAMIENTO - EL CENTENARIO</span>
+</div>
+<div class="bg-primary-container text-on-primary-container font-headline-sm text-label-sm px-2 py-1 font-bold border border-on-surface shrink-0">
+        8 PUNTOS
+      </div>
+</div>
+<div class="mt-2 pt-2 border-t border-outline-variant flex items-center justify-between font-label-md text-label-sm text-on-surface-variant uppercase tracking-wider">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-primary">distance</span>
+<span class="font-bold text-on-surface">20.5 KM TOTALES</span>
+</div>
+<span class="text-outline">•</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-primary">schedule</span>
+<span class="font-bold text-on-surface">EST. 4 HORAS</span>
+</div>
+<span class="text-outline">•</span>
+<div class="flex items-center gap-1 text-tertiary font-bold">
+<span class="material-symbols-outlined text-sm">water_drop</span>
+<span class="">DESPEJADO</span>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 3. CANVAS DE MAPA VECTORIAL GPS TÁCTICO    -->
+<!-- ========================================== -->
+<main class="relative flex-1 bg-[#edf2f7] grid-spec-pattern overflow-hidden select-none touch-none">
+<!-- Capa Vectorial de Calles & Rutas (Simulación Táctica HUD) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Flecha Direccional de Ruta -->
+<marker id="route-arrow" markerHeight="6" markerWidth="6" orient="auto-start-reverse" refX="5" refY="5" viewBox="0 0 10 10">
+<path d="M 0 1 L 10 5 L 0 9 z" fill="#006d43"></path>
+</marker>
+<filter height="140%" id="hard-shadow" width="140%" x="0" y="0">
+<feDropShadow dx="3" dy="3" flood-color="#0d1c2e" stdDeviation="0"></feDropShadow>
+</filter>
+</defs>
+<!-- Malla Vial Base (Gris Urbano Táctico) -->
+<path d="M-50,120 L450,120 M-50,260 L450,260 M-50,420 L450,420 M-50,560 L450,560" fill="none" stroke="#cbd5e1" stroke-width="18"></path>
+<path d="M80,-50 L80,750 M220,-50 L220,750 M340,-50 L340,750" fill="none" stroke="#cbd5e1" stroke-width="22"></path>
+<path d="M-20,40 L380,580 M300,-40 L20,520" fill="none" stroke="#d5e3fc" stroke-width="12"></path>
+<!-- Manzanas / Infraestructura Urbana -->
+<rect fill="#ffffff" height="104" stroke="#94a3b8" stroke-width="2" width="104" x="98" y="138"></rect>
+<rect fill="#ffffff" height="104" stroke="#94a3b8" stroke-width="2" width="84" x="238" y="138"></rect>
+<rect fill="#ffffff" height="124" stroke="#94a3b8" stroke-width="2" width="104" x="98" y="278"></rect>
+<rect fill="#ffffff" height="124" stroke="#94a3b8" stroke-width="2" width="84" x="238" y="278"></rect>
+<!-- TRAZADO DE RUTA PROGRAMADA (Verde Esmeralda Primario #00a86b con borde oscuro) -->
+<!-- Borde oscuro de alto contraste para visibilidad solar -->
+<path d="M 80,80 L 80,120 L 220,120 L 220,260 L 340,260 L 340,380 L 220,380 L 220,500 L 80,500 L 80,620" fill="none" stroke="#0d1c2e" stroke-linecap="square" stroke-linejoin="miter" stroke-width="10"></path>
+<!-- Línea Verde de Ruta Activa con flechas -->
+<path d="M 80,80 L 80,120 L 220,120 L 220,260 L 340,260 L 340,380 L 220,380 L 220,500 L 80,500 L 80,620" fill="none" marker-mid="url(#route-arrow)" stroke="#00a86b" stroke-linecap="square" stroke-linejoin="miter" stroke-width="6"></path>
+</svg>
+<!-- WAYPOINT 0: DESPACHO / BASE CENTRAL (CAMIÓN ACTUAL) -->
+<div class="absolute left-[80px] top-[75px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="flex flex-col items-center">
+<div class="bg-on-surface text-surface-bright border-2 border-on-surface px-2 py-0.5 font-label-sm text-label-sm font-bold shadow-[2px_2px_0px_#000000] whitespace-nowrap mb-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary-container">near_me</span>
+<span class="">DESPACHO (TÚ)</span>
+</div>
+<div class="w-12 h-12 bg-on-surface text-primary-container border-2 border-primary-container flex items-center justify-center shadow-[3px_3px_0px_#0d1c2e] animate-bounce">
+<span class="material-symbols-outlined text-2xl font-bold" style="font-variation-settings: &quot;FILL&quot; 1;">local_shipping</span>
+</div>
+</div>
+</div>
+<!-- WAYPOINT 01: PRÓXIMO CONTENEDOR ACTIVO -->
+<div class="absolute left-[220px] top-[120px] -translate-x-1/2 -translate-y-1/2 z-20">
+<div class="flex flex-col items-center cursor-pointer group">
+<div class="bg-primary-container text-on-primary-container border-2 border-on-surface px-2 py-0.5 font-label-md text-label-sm font-bold shadow-[2px_2px_0px_#0d1c2e] whitespace-nowrap mb-1">
+          01 • CONT-01 AYUNTAMIENTO</div>
+<div class="w-11 h-11 bg-primary-container text-on-primary-container border-2 border-on-surface flex items-center justify-center font-headline-md font-extrabold shadow-[3px_3px_0px_#0d1c2e] ring-4 ring-primary-container/40">
+          01
+        </div>
+</div>
+</div>
+<!-- WAYPOINT 02 -->
+<div class="absolute left-[220px] top-[260px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="flex flex-col items-center">
+<div class="bg-surface-container-lowest text-on-surface border-2 border-on-surface px-1.5 py-0.5 font-label-sm text-label-sm font-bold shadow-[2px_2px_0px_#0d1c2e] whitespace-nowrap mb-1">
+          02 • CONT-02 CREE</div>
+<div class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e]">
+          02
+        </div>
+</div>
+</div>
+<!-- WAYPOINT 03 -->
+<div class="absolute left-[340px] top-[260px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="flex flex-col items-center">
+<div class="bg-surface-container-lowest text-on-surface border-2 border-on-surface px-1.5 py-0.5 font-label-sm text-label-sm font-bold shadow-[2px_2px_0px_#0d1c2e] whitespace-nowrap mb-1">
+          03 • CONT-03 MORELOS</div>
+<div class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e]">
+          03
+        </div>
+</div>
+</div>
+<!-- WAYPOINT 04 -->
+<div class="absolute left-[340px] top-[380px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e]">
+        04
+      </div>
+</div>
+<!-- WAYPOINT 05 -->
+<div class="absolute left-[220px] top-[380px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e]">
+        05
+      </div>
+</div>
+<!-- WAYPOINT 06 -->
+<div class="absolute left-[220px] top-[500px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e]">
+        06
+      </div>
+</div>
+<!-- WAYPOINT 07 -->
+<div class="absolute left-[80px] top-[500px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e]">
+        07
+      </div>
+</div>
+<!-- WAYPOINT 08: DESTINO FINAL -->
+<div class="absolute left-[80px] top-[620px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 bg-on-surface text-surface-bright border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e]">
+          08
+        </div>
+<div class="bg-surface-container-lowest text-on-surface border-2 border-on-surface px-1.5 py-0.5 font-label-sm text-label-sm font-bold shadow-[2px_2px_0px_#0d1c2e] mt-1">
+          FIN R-04
+        </div>
+</div>
+</div>
+<!-- ========================================== -->
+<!-- CONTROLES FLOTANTES DEL MAPA (GLOVE SIZED) -->
+<!-- ========================================== -->
+<div class="absolute right-3 top-3 flex flex-col gap-2.5 z-20">
+<!-- Zoom In (+52px Target) -->
+<button aria-label="Acercar mapa" class="w-12 h-12 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[3px_3px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#0d1c2e] transition-transform">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+<!-- Zoom Out -->
+<button aria-label="Alejar mapa" class="w-12 h-12 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[3px_3px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#0d1c2e] transition-transform">
+<span class="material-symbols-outlined text-2xl font-bold">remove</span>
+</button>
+<!-- Centrar en Camión Actual -->
+<button aria-label="Centrar en vehículo" class="w-12 h-12 bg-surface-container-lowest text-primary border-2 border-on-surface flex items-center justify-center shadow-[3px_3px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#0d1c2e] transition-transform">
+<span class="material-symbols-outlined text-2xl font-bold">my_location</span>
+</button>
+<!-- Capa Satélite/Tráfico -->
+<button aria-label="Cambiar capa de mapa" class="w-12 h-12 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[3px_3px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#0d1c2e] transition-transform">
+<span class="material-symbols-outlined text-2xl font-bold">layers</span>
+</button>
+</div>
+<!-- Indicador de Orientación / Compás Norte -->
+<div class="absolute left-3 top-3 z-20 pointer-events-none">
+<div class="w-11 h-11 bg-surface-container-lowest border-2 border-on-surface flex flex-col items-center justify-center shadow-[2px_2px_0px_#0d1c2e]">
+<span class="material-symbols-outlined text-error text-base font-bold leading-none">north</span>
+<span class="font-label-sm text-[10px] font-bold text-on-surface leading-none mt-0.5">N</span>
+</div>
+</div>
+</main>
+<!-- ========================================== -->
+<!-- 4. BOTTOM SHEET: SIGUIENTE PARADA & ACCIÓN -->
+<!-- ========================================== -->
+<section class="bg-surface-container-lowest border-t-2 border-on-surface z-30 shadow-[0px_-4px_0px_#0d1c2e] px-space-md pt-space-sm pb-space-sm shrink-0">
+<!-- Mini Grip Handle Visual -->
+<div class="w-12 h-1.5 bg-on-surface-variant mx-auto mb-2.5 opacity-40"></div>
+<!-- Encabezado de Parada Siguiente -->
+<div class="flex items-start justify-between gap-2 mb-2">
+<div>
+<div class="flex items-center gap-1.5 mb-1">
+<span class="bg-error text-surface-bright font-headline-sm text-[11px] px-1.5 py-0.5 font-bold tracking-widest uppercase">
+            PARADA INMEDIATA
+          </span>
+<span class="font-headline-sm text-label-md text-on-surface-variant font-bold tracking-wider">PUNTO 1 DE 8
+          </span>
+</div>
+<h2 class="font-headline-md text-headline-sm text-on-surface font-extrabold uppercase tracking-tight">
+          [01] CONTENEDOR 01 - aYUNTAMIENTO</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant font-medium">Paseo Alvaro Obregon</p>
+</div>
+<!-- Tag Tipo de Contenedor Segregación -->
+
+</div>
+<!-- Indicadores de Distancia / Estimación -->
+<div class="grid grid-cols-3 gap-2 py-2 mb-3 border-y-2 border-outline-variant bg-surface-container-low px-2">
+<div>
+<span class="block font-label-sm text-[11px] text-on-surface-variant uppercase">DISTANCIA</span>
+<span class="font-headline-md text-headline-sm font-bold text-on-surface">1.8 KM</span>
+</div>
+<div>
+<span class="block font-label-sm text-[11px] text-on-surface-variant uppercase">TIEMPO ESTIMADO</span>
+<span class="font-headline-md text-headline-sm font-bold text-on-surface">6 MINUTOS</span>
+</div>
+<div>
+<span class="block font-label-sm text-[11px] text-on-surface-variant uppercase">ESTADO</span>
+<span class="font-headline-md text-headline-sm font-bold text-primary">EN RUTA</span>
+</div>
+</div>
+<!-- Botones de Acción Operativa Rápida (56px Target) -->
+<div class="flex gap-2">
+<!-- Botón Secundario: Lista de Puntos -->
+<button id="btn-open-stop-list" onclick="document.getElementById('modal-stops-list').classList.remove('hidden'); document.getElementById('modal-stops-list').classList.add('flex');" class="h-touch-lg px-3 bg-surface-container-lowest text-on-surface border-2 border-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 shadow-[3px_3px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#0d1c2e] transition-transform shrink-0 cursor-pointer">
+<span class="material-symbols-outlined text-xl">format_list_numbered</span>
+<span class="font-bold">LISTA (8)</span>
+</button>
+<!-- Botón Primario: Iniciar Navegación GPS -->
+<button class="flex-1 h-touch-lg bg-primary-container text-on-primary-container border-2 border-on-surface font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-2 shadow-[4px_4px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#0d1c2e] transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: &quot;FILL&quot; 1;">navigation</span>
+<span class="">INICIAR NAVEGACIÓN GPS</span>
+</button>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 5. BOTTOM NAVIGATION BAR (PERSISTENTE JSON)-->
+<!-- ========================================== -->
+<nav class="bg-surface-container-lowest border-t-2 border-on-surface w-full z-40 flex justify-around items-center px-space-xs py-space-xs pb-safe min-h-touch-lg shadow-[0px_-4px_0px_#0d1c2e] shrink-0"><!-- Item 1: RUTA (ACTIVO) -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container min-h-touch-min min-w-[70px] border-2 border-on-surface px-space-sm py-1 shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75 cursor-pointer">
+<span class="material-symbols-outlined text-2xl font-bold" style="font-variation-settings: 'FILL' 1;">route</span>
+<span class="font-headline-sm text-xs uppercase font-bold tracking-wider leading-none mt-1">RUTA</span>
+</button>
+<!-- Item 2: ESCANEAR -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant min-h-touch-min min-w-[70px] px-space-sm py-1 hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75 cursor-pointer">
+<span class="material-symbols-outlined text-2xl">qr_code_2</span>
+<span class="font-headline-sm text-xs uppercase font-bold tracking-wider leading-none mt-1">ESCANEAR</span>
+</button>
+<!-- Item 3: REGISTRO -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant min-h-touch-min min-w-[70px] px-space-sm py-1 hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75 cursor-pointer">
+<span class="material-symbols-outlined text-2xl">checklist</span>
+<span class="font-headline-sm text-xs uppercase font-bold tracking-wider leading-none mt-1">REGISTRO</span>
+</button>
+<!-- Item 4: INCIDENCIA -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant min-h-touch-min min-w-[70px] px-space-sm py-1 hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75 cursor-pointer">
+<span class="material-symbols-outlined text-2xl text-error">warning</span>
+<span class="font-headline-sm text-xs uppercase font-bold tracking-wider leading-none mt-1">INCIDENCIA</span>
+</button></nav>
+
+
+<!-- MODAL / BOTTOM SHEET OVERLAY: LISTA DE PUNTOS R-04 -->
+<div id="modal-stops-list" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex-col justify-end transition-all">
+  <!-- Overlay click-out backdrop -->
+  <div class="flex-1 w-full" onclick="document.getElementById('modal-stops-list').classList.add('hidden'); document.getElementById('modal-stops-list').classList.remove('flex');"></div>
+  
+  <!-- Bottom Sheet Container Tactical HUD -->
+  <div class="bg-surface-container-lowest border-t-2 border-on-surface shadow-[0px_-6px_0px_#0d1c2e] flex flex-col max-h-[85vh] w-full animate-in slide-in-from-bottom duration-150">
+    
+    <!-- Sheet Header Handle & Title -->
+    <div class="px-space-md pt-3 pb-2.5 border-b-2 border-on-surface bg-surface-container-low shrink-0">
+      <div class="w-12 h-1.5 bg-on-surface-variant mx-auto mb-2 opacity-50 rounded-full"></div>
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 truncate">
+          <span class="bg-on-surface text-surface-bright px-2 py-0.5 font-headline-sm text-xs font-bold tracking-wider">R-04</span>
+          <div>
+            <h3 class="font-headline-md text-headline-sm text-on-surface font-extrabold uppercase leading-none">PUNTOS PROGRAMADOS (8)</h3>
+            <p class="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">AYUNTAMIENTO - EL CENTENARIO • 20.5 KM</p>
+          </div>
+        </div>
+        <button aria-label="Cerrar lista" onclick="document.getElementById('modal-stops-list').classList.add('hidden'); document.getElementById('modal-stops-list').classList.remove('flex');" class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-transform cursor-pointer shrink-0">
+          <span class="material-symbols-outlined text-xl font-bold">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Scrollable List of 8 Stops -->
+    <div class="overflow-y-auto px-space-md py-3 flex flex-col gap-2.5 flex-1 bg-[#edf2f7] grid-spec-pattern">
+      
+      <!-- STOP 01 (INMEDIATO) -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-2.5 shadow-[3px_3px_0px_#0d1c2e] ring-2 ring-primary-container relative">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-10 h-10 bg-primary-container text-on-primary-container border-2 border-on-surface flex items-center justify-center font-headline-md font-extrabold shadow-[2px_2px_0px_#0d1c2e] shrink-0">
+              01
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="bg-error text-surface-bright font-headline-sm text-[10px] px-1.5 py-0.5 font-bold tracking-widest uppercase">PARADA INMEDIATA</span>
+                <span class="font-headline-sm text-xs font-bold text-primary">EN RUTA</span>
+              </div>
+              <h4 class="font-headline-md text-base text-on-surface font-extrabold uppercase leading-tight">[01] CONT-01 AYUNTAMIENTO</h4>
+              <p class="font-body-sm text-xs text-on-surface-variant font-medium">Palacio Municipal • Paseo Álvaro Obregón</p>
+              <div class="flex items-center gap-3 mt-1.5 text-[11px] font-label-md text-on-surface uppercase">
+                <span class="flex items-center gap-1 font-bold text-primary"><span class="material-symbols-outlined text-sm">near_me</span> 1.8 KM</span>
+                <span class="text-outline">•</span>
+                <span class="font-bold">EST. 6 MIN</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('modal-stops-list').classList.add('hidden');" class="w-9 h-9 bg-primary-container text-on-primary-container border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] shrink-0 cursor-pointer" title="Centrar en mapa">
+            <span class="material-symbols-outlined text-lg font-bold">my_location</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STOP 02 -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-2.5 shadow-[2px_2px_0px_#0d1c2e]">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 bg-surface-container-low text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e] shrink-0">
+              02
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="bg-secondary text-surface-bright font-headline-sm text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">PENDIENTE</span>
+              </div>
+              <h4 class="font-headline-md text-base text-on-surface font-extrabold uppercase leading-tight">[02] CONT-02 CREE</h4>
+              <p class="font-body-sm text-xs text-on-surface-variant font-medium">Centro Rehabilitación • Blvd. Constituyentes</p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] font-label-md text-on-surface uppercase">
+                <span class="flex items-center gap-1 font-bold"><span class="material-symbols-outlined text-sm text-primary">distance</span> +2.4 KM</span>
+                <span class="text-outline">•</span>
+                <span class="">EST. 14 MIN</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('modal-stops-list').classList.add('hidden');" class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] shrink-0 cursor-pointer" title="Centrar en mapa">
+            <span class="material-symbols-outlined text-lg">location_searching</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STOP 03 -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-2.5 shadow-[2px_2px_0px_#0d1c2e]">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 bg-surface-container-low text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e] shrink-0">
+              03
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="bg-secondary text-surface-bright font-headline-sm text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">PROGRAMADO</span>
+              </div>
+              <h4 class="font-headline-md text-base text-on-surface font-extrabold uppercase leading-tight">[03] CONT-03 MORELOS</h4>
+              <p class="font-body-sm text-xs text-on-surface-variant font-medium">Mercado Municipal • Calle Morelos y Revolución</p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] font-label-md text-on-surface uppercase">
+                <span class="flex items-center gap-1 font-bold"><span class="material-symbols-outlined text-sm text-primary">distance</span> +4.1 KM</span>
+                <span class="text-outline">•</span>
+                <span class="">EST. 28 MIN</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('modal-stops-list').classList.add('hidden');" class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] shrink-0 cursor-pointer">
+            <span class="material-symbols-outlined text-lg">location_searching</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STOP 04 -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-2.5 shadow-[2px_2px_0px_#0d1c2e]">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 bg-surface-container-low text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e] shrink-0">
+              04
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="bg-secondary text-surface-bright font-headline-sm text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">PROGRAMADO</span>
+              </div>
+              <h4 class="font-headline-md text-base text-on-surface font-extrabold uppercase leading-tight">[04] CONT-04 PLAZA CENTRAL</h4>
+              <p class="font-body-sm text-xs text-on-surface-variant font-medium">Jardín Niños Héroes • Calle 5 de Mayo</p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] font-label-md text-on-surface uppercase">
+                <span class="flex items-center gap-1 font-bold"><span class="material-symbols-outlined text-sm text-primary">distance</span> +6.8 KM</span>
+                <span class="text-outline">•</span>
+                <span class="">EST. 45 MIN</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('modal-stops-list').classList.add('hidden');" class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] shrink-0 cursor-pointer">
+            <span class="material-symbols-outlined text-lg">location_searching</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STOP 05 -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-2.5 shadow-[2px_2px_0px_#0d1c2e]">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 bg-surface-container-low text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e] shrink-0">
+              05
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="bg-secondary text-surface-bright font-headline-sm text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">PROGRAMADO</span>
+              </div>
+              <h4 class="font-headline-md text-base text-on-surface font-extrabold uppercase leading-tight">[05] CONT-05 MALECÓN NORTE</h4>
+              <p class="font-body-sm text-xs text-on-surface-variant font-medium">Paseo Obregón esq. Rosales • Zona Costera</p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] font-label-md text-on-surface uppercase">
+                <span class="flex items-center gap-1 font-bold"><span class="material-symbols-outlined text-sm text-primary">distance</span> +9.5 KM</span>
+                <span class="text-outline">•</span>
+                <span class="">EST. 1H 10M</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('modal-stops-list').classList.add('hidden');" class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] shrink-0 cursor-pointer">
+            <span class="material-symbols-outlined text-lg">location_searching</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STOP 06 -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-2.5 shadow-[2px_2px_0px_#0d1c2e]">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 bg-surface-container-low text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e] shrink-0">
+              06
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="bg-secondary text-surface-bright font-headline-sm text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">PROGRAMADO</span>
+              </div>
+              <h4 class="font-headline-md text-base text-on-surface font-extrabold uppercase leading-tight">[06] CONT-06 POLIDEPORTIVO</h4>
+              <p class="font-body-sm text-xs text-on-surface-variant font-medium">Complejo Deportivo Sur • Av. Deportistas</p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] font-label-md text-on-surface uppercase">
+                <span class="flex items-center gap-1 font-bold"><span class="material-symbols-outlined text-sm text-primary">distance</span> +13.2 KM</span>
+                <span class="text-outline">•</span>
+                <span class="">EST. 1H 45M</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('modal-stops-list').classList.add('hidden');" class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] shrink-0 cursor-pointer">
+            <span class="material-symbols-outlined text-lg">location_searching</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STOP 07 -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-2.5 shadow-[2px_2px_0px_#0d1c2e]">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 bg-surface-container-low text-on-surface border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e] shrink-0">
+              07
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="bg-secondary text-surface-bright font-headline-sm text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">PROGRAMADO</span>
+              </div>
+              <h4 class="font-headline-md text-base text-on-surface font-extrabold uppercase leading-tight">[07] CONT-07 MERCADO BRAVO</h4>
+              <p class="font-body-sm text-xs text-on-surface-variant font-medium">Centro de Abastos Nicolás Bravo</p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] font-label-md text-on-surface uppercase">
+                <span class="flex items-center gap-1 font-bold"><span class="material-symbols-outlined text-sm text-primary">distance</span> +16.0 KM</span>
+                <span class="text-outline">•</span>
+                <span class="">EST. 2H 30M</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('modal-stops-list').classList.add('hidden');" class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] shrink-0 cursor-pointer">
+            <span class="material-symbols-outlined text-lg">location_searching</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STOP 08 (DESTINO FINAL) -->
+      <div class="border-2 border-on-surface bg-surface-container-lowest p-2.5 shadow-[3px_3px_0px_#0d1c2e]">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-2.5">
+            <div class="w-10 h-10 bg-on-surface text-surface-bright border-2 border-on-surface flex items-center justify-center font-headline-sm font-bold shadow-[2px_2px_0px_#0d1c2e] shrink-0">
+              08
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="bg-on-surface text-surface-bright font-headline-sm text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider">DESTINO FINAL</span>
+              </div>
+              <h4 class="font-headline-md text-base text-on-surface font-extrabold uppercase leading-tight">[08] CONT-08 EL CENTENARIO</h4>
+              <p class="font-body-sm text-xs text-on-surface-variant font-medium">Terminal El Centenario • Carr. Transpeninsular Km 14</p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] font-label-md text-on-surface uppercase">
+                <span class="flex items-center gap-1 font-bold"><span class="material-symbols-outlined text-sm text-primary">flag</span> 20.5 KM FINAL</span>
+                <span class="text-outline">•</span>
+                <span class="">EST. 4 HORAS</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="document.getElementById('modal-stops-list').classList.add('hidden');" class="w-9 h-9 bg-surface-container-lowest text-on-surface border-2 border-on-surface flex items-center justify-center shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] shrink-0 cursor-pointer">
+            <span class="material-symbols-outlined text-lg">location_searching</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sheet Footer Actions -->
+    <div class="px-space-md py-3 border-t-2 border-on-surface bg-surface-container-lowest flex gap-2 shrink-0">
+      <button onclick="document.getElementById('modal-stops-list').classList.add('hidden'); document.getElementById('modal-stops-list').classList.remove('flex');" class="w-full h-touch-lg bg-on-surface text-surface-bright border-2 border-on-surface font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-2 shadow-[3px_3px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-transform cursor-pointer uppercase">
+        <span class="material-symbols-outlined text-xl">map</span>
+        <span class="">VOLVER AL MAPA</span>
+      </button>
+    </div>
+
+  </div>
+</div></body></html>

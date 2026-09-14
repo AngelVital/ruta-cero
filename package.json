@@ -1,0 +1,15 @@
+{
+  "name": "ruta-cero",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Smart Waste Collection Mobile Operations HUD — Imported from Stitch Project 13352991854495087010",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  }
+}

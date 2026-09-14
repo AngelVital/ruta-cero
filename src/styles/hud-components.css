@@ -1,0 +1,340 @@
+/* ==========================================================================
+   Ruta Cero • Tactical HUD Specific Components
+   ========================================================================== */
+
+/* App Wrapper & Simulator Canvas */
+.hud-canvas {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px;
+  background: radial-gradient(circle at 50% 0%, #172437 0%, #0a111c 100%);
+}
+
+.simulator-toolbar {
+  width: 100%;
+  max-width: 440px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background-color: #0f172a;
+  border: 2px solid #1e293b;
+  color: #94a3b8;
+  font-family: var(--font-headline);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.simulator-toolbar-btn {
+  background: none;
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  padding: 4px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-headline);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.simulator-toolbar-btn:hover {
+  background-color: #1e293b;
+}
+
+/* Rugged Mobile Chassis */
+.mobile-chassis {
+  width: 100%;
+  max-width: 412px;
+  height: 890px;
+  max-height: calc(100vh - 80px);
+  background-color: var(--color-surface);
+  border: 4px solid #0f172a;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 8px #1e293b;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fullscreen mode override */
+.mobile-chassis.fullscreen-mode {
+  max-width: 600px;
+  height: 100vh;
+  max-height: 100vh;
+  border: none;
+  box-shadow: none;
+}
+
+/* Tactical Status Bar (Top) */
+.hud-status-bar {
+  height: 38px;
+  background-color: #0f172a;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-family: var(--font-headline);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid #1e293b;
+  z-index: 50;
+  flex-shrink: 0;
+}
+
+.hud-status-bar-indicators {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.telemetry-tag {
+  color: #00a86b;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* Main Content Screen Area */
+.screen-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--color-surface);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Bottom Tactical Navigation Bar */
+.hud-bottom-nav {
+  min-height: 64px;
+  background-color: #0f172a;
+  border-top: 3px solid #00a86b;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  z-index: 50;
+  flex-shrink: 0;
+}
+
+.nav-tab-item {
+  background: none;
+  border: none;
+  border-right: 1px solid #1e293b;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 2px;
+  cursor: pointer;
+  font-family: var(--font-headline);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: all 0.1s ease;
+}
+
+.nav-tab-item:last-child {
+  border-right: none;
+}
+
+.nav-tab-item .material-symbols-outlined {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+
+.nav-tab-item:hover {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+.nav-tab-item.active {
+  background-color: #132238;
+  color: #00a86b;
+  box-shadow: inset 0 -3px 0 #00a86b;
+}
+
+/* Screen Header Bar */
+.screen-header-bar {
+  padding: 14px 16px;
+  background-color: #ffffff;
+  border-bottom: 2px solid #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.screen-header-title {
+  font-family: var(--font-headline);
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Segmented Capacity Meter (4 Blocks) */
+.capacity-meter-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.capacity-blocks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  height: 28px;
+  background-color: #e2e8f0;
+  border: 2px solid #0f172a;
+  overflow: hidden;
+}
+
+.capacity-block {
+  background-color: #cbd5e1;
+  transition: background-color 0.2s ease;
+  border-right: 0;
+}
+
+.capacity-block:last-child {
+  border-right: none;
+}
+
+.capacity-block.filled-optimal { background-color: var(--color-cap-optimal); }
+.capacity-block.filled-warning { background-color: var(--color-cap-warning); }
+.capacity-block.filled-critical { background-color: var(--color-cap-critical); }
+
+/* Stepper Control (52px Glove Friendly) */
+.tactical-stepper {
+  display: flex;
+  align-items: center;
+  border: 2px solid #0f172a;
+  box-shadow: var(--shadow-resting);
+  background-color: #ffffff;
+}
+
+.stepper-btn {
+  width: 52px;
+  height: 52px;
+  background-color: #f1f5f9;
+  border: none;
+  font-family: var(--font-headline);
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepper-btn:active {
+  background-color: #e2e8f0;
+}
+
+.stepper-value-display {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-headline);
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  border-left: 2px solid #0f172a;
+  border-right: 2px solid #0f172a;
+  padding: 0 12px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* QR Scanner Viewfinder & Laser */
+.qr-scanner-viewport {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  background-color: #020617;
+  border: 3px solid #0f172a;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-reticle {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+}
+
+.qr-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: #00a86b;
+  border-style: solid;
+}
+
+.qr-corner.tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; }
+.qr-corner.tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; }
+.qr-corner.bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; }
+.qr-corner.br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; }
+
+.qr-laser-beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #00a86b;
+  box-shadow: 0 0 12px #00a86b, 0 0 24px #78fbb6;
+  animation: scanLaser 2.4s infinite ease-in-out;
+}
+
+@keyframes scanLaser {
+  0% { top: 10px; opacity: 0.8; }
+  50% { top: 180px; opacity: 1; }
+  100% { top: 10px; opacity: 0.8; }
+}
+
+/* Toast Notifications */
+.hud-toast {
+  position: absolute;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 2px solid #00a86b;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-headline);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  z-index: 100;
+  animation: toastSlideUp 0.25s ease-out;
+}
+
+@keyframes toastSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

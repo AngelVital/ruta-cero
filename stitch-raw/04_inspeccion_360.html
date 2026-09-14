@@ -1,0 +1,704 @@
+<!DOCTYPE html><html class="light" lang="es" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Inspección 360° - Verificación de Unidad</title>
+<!-- Fonts: Barlow Condensed & Atkinson Hyperlegible Next -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&amp;family=Barlow+Condensed:wght@500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#ffffff",
+            "on-primary-fixed": "#002111",
+            "on-secondary-container": "#5c647a",
+            "on-background": "#0d1c2e",
+            "surface-container-highest": "#d5e3fc",
+            "on-secondary-fixed-variant": "#3f465c",
+            "on-tertiary-fixed-variant": "#004b73",
+            "on-tertiary-container": "#002f4a",
+            "secondary-container": "#dae2fd",
+            "surface-container-high": "#dce9ff",
+            "tertiary-fixed": "#cce5ff",
+            "surface-dim": "#ccdbf3",
+            "tertiary-fixed-dim": "#93ccff",
+            "on-tertiary-fixed": "#001d31",
+            "surface-tint": "#006d43",
+            "primary": "#006d43",
+            "inverse-on-surface": "#eaf1ff",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#359ade",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed": "#131b2e",
+            "secondary-fixed": "#dae2fd",
+            "primary-fixed-dim": "#59de9b",
+            "tertiary": "#006398",
+            "surface": "#f8f9ff",
+            "on-surface-variant": "#3d4a41",
+            "surface-container": "#e6eeff",
+            "inverse-surface": "#233144",
+            "surface-variant": "#d5e3fc",
+            "primary-fixed": "#78fbb6",
+            "background": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "outline": "#6d7a70",
+            "inverse-primary": "#59de9b",
+            "on-primary-container": "#00331d",
+            "on-surface": "#0d1c2e",
+            "primary-container": "#00a86b",
+            "surface-container-low": "#eff4ff",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "secondary-fixed-dim": "#bec6e0",
+            "surface-bright": "#f8f9ff",
+            "on-primary-fixed-variant": "#005232",
+            "outline-variant": "#bccabe",
+            "secondary": "#565e74"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "8px",
+            "space-2xl": "48px",
+            "space-xl": "32px",
+            "space-md": "16px",
+            "touch-min": "48px",
+            "space-2xs": "4px",
+            "gutter-mobile": "16px",
+            "space-sm": "12px",
+            "gutter-tablet": "24px",
+            "touch-lg": "56px",
+            "space-lg": "24px"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Barlow Condensed"],
+            "headline-md": ["Barlow Condensed"],
+            "headline-sm": ["Barlow Condensed"],
+            "label-lg": ["Barlow Condensed"],
+            "label-md": ["Barlow Condensed"],
+            "body-sm": ["Atkinson Hyperlegible Next"],
+            "body-md": ["Atkinson Hyperlegible Next"],
+            "body-lg": ["Atkinson Hyperlegible Next"],
+            "display": ["Barlow Condensed"],
+            "headline-lg": ["Barlow Condensed"],
+            "label-sm": ["Barlow Condensed"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["26px", { "lineHeight": "30px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "26px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "22px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.06em", "fontWeight": "700" }],
+            "label-md": ["14px", { "lineHeight": "18px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "display": ["44px", { "lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "label-sm": ["12px", { "lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Glove-friendly mechanical feedback & tactile offsets */
+    .btn-tactile {
+      box-shadow: 3px 3px 0px #0d1c2e;
+      transition: transform 0.05s ease, box-shadow 0.05s ease;
+    }
+    .btn-tactile:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #0d1c2e;
+    }
+
+    .card-hud {
+      box-shadow: 3px 3px 0px #0d1c2e;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased pb-36 selection:bg-primary-container selection:text-on-primary-container">
+<!-- TOP APP BAR / BRAND HEADER ANCHOR (FROM SHARED COMPONENT SCHEMA) -->
+<header class="bg-on-surface text-surface-bright px-space-md py-space-sm border-b-2 border-on-surface flex items-center justify-between sticky top-0 z-40">
+<button class="flex items-center gap-1 bg-surface-container-lowest text-on-surface border-2 border-surface-bright px-space-sm py-1 font-label-md text-label-md uppercase tracking-wider hud-press transition-transform" type="button">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span class="">Regresar</span>
+</button>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-primary-fixed uppercase block tracking-widest leading-none">UNIDAD ACTIVA</span>
+<span class="font-headline-md text-headline-md text-surface-bright font-bold tracking-wider leading-none mt-1 inline-block">CAMIÓN-08</span>
+</div>
+</header>
+<!-- MAIN HUD CANVAS -->
+<main class="flex-1 w-full max-w-2xl mx-auto px-4 pt-4 space-y-4">
+<!-- HERO / TITLE & PROTOCOL STATUS BENTO -->
+<section class="bg-surface-container-lowest border-2 border-on-surface card-hud p-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b-2 border-surface-container">
+<div>
+<div class="flex items-center gap-2">
+<span class="bg-primary text-on-primary font-label-sm text-label-sm px-2 py-0.5 uppercase tracking-widest">
+              FASE 01
+            </span>
+<span class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+              TURNO MATUTINO • 06:00 HRS
+            </span>
+</div>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface uppercase tracking-tight mt-0.5">
+            INSPECCIÓN 360° DE LA UNIDAD
+          </h1>
+</div>
+<div class="flex items-center gap-2 self-start sm:self-auto bg-surface-container-high border-2 border-on-surface px-3 py-1.5">
+<span class="material-symbols-outlined text-primary text-2xl">verified_user</span>
+<div class="text-right">
+<p class="font-label-sm text-label-sm uppercase leading-tight text-on-surface-variant">CHECKLIST</p>
+<p class="font-headline-sm leading-none text-on-surface font-black">10 PUNTOS</p>
+</div>
+</div>
+</div>
+<!-- PROGRESS TRACKER COMPONENT (FIELD-SPEC SEGMENTED GAUGE) -->
+<div class="pt-3">
+<div class="flex justify-between items-center mb-1.5">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider font-bold">
+            PROGRESO DE VERIFICACIÓN TÉCNICA
+          </span>
+<span class="font-headline-sm text-primary font-bold" id="progress-percent">
+            80% COMPLETO
+          </span>
+</div>
+<!-- Segmented blocks (10 equal parts for 10 items) -->
+<div class="grid grid-cols-10 gap-1 h-3.5 bg-surface border-2 border-on-surface p-0.5">
+<div class="bg-primary-container"></div>
+<div class="bg-primary-container"></div>
+<div class="bg-primary-container"></div>
+<div class="bg-primary-container"></div>
+<div class="bg-primary-container"></div>
+<div class="bg-primary-container"></div>
+<div class="bg-primary-container"></div>
+<div class="bg-primary-container"></div>
+<div class="bg-surface-container-highest border-r border-on-surface"></div>
+<div class="bg-surface-container-highest"></div>
+</div>
+<div class="flex justify-between text-on-surface-variant font-label-sm text-label-sm mt-1 uppercase">
+<span id="checked-counter" class="">8 DE 10 REVISADOS</span>
+<span class="text-error font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-error inline-block"></span>
+            1 CRÍTICO DETECTADO
+          </span>
+</div>
+</div>
+</section>
+<!-- INSTRUCTION BANNER (DIRECT SUNLIGHT ACCESSIBLE) -->
+<div class="flex items-center gap-3 bg-tertiary-fixed border-2 border-on-surface p-2.5">
+<span class="material-symbols-outlined text-tertiary font-bold">info</span>
+<p class="text-on-tertiary-container font-body-sm text-body-sm leading-tight">
+<strong>Protocolo Operativo:</strong> Verifique físicamente cada parámetro antes de iniciar la ruta.</p>
+</div>
+<!-- 10 MANDATORY CHECKLIST ITEMS -->
+<section class="bg-surface-container-lowest border-2 border-on-surface card-hud p-4">
+  <div class="flex items-center justify-between pb-2.5 border-b-2 border-surface-container">
+    <div class="flex items-center gap-2">
+      <span class="bg-on-surface text-surface-bright font-label-sm text-label-sm px-2 py-0.5 uppercase tracking-widest font-bold">
+        REGISTRO OBLIGATORIO
+      </span>
+      <span class="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider flex items-center gap-1">
+        <span class="w-1.5 h-1.5 bg-primary inline-block"></span>
+        LECTURA DE SALIDA
+      </span>
+    </div>
+    <span class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-2 py-0.5 font-bold uppercase tracking-wider">
+      VERIFICADO EN TABLERO
+    </span>
+  </div>
+
+  <div class="mt-3">
+    <div class="flex items-center justify-between mb-1">
+      <label class="font-headline-sm font-bold uppercase text-on-surface flex items-center gap-1.5" for="odometer-input">
+        <span class="material-symbols-outlined text-primary text-[22px]">speed</span>
+        KILOMETRAJE INICIAL DE RUTA (ODÓMETRO)
+      </label>
+      <span class="font-mono text-[11px] text-on-surface-variant font-bold uppercase">UNIDAD: CAMIÓN-08</span>
+    </div>
+    <p class="text-on-surface-variant font-body-sm text-body-sm mb-3">
+      Ingrese el valor exacto marcado en el odómetro digital/análogo antes de iniciar la marcha.
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+      <div class="sm:col-span-8 flex items-center border-2 border-on-surface bg-surface shadow-[2px_2px_0px_#0d1c2e]">
+        <button type="button" class="h-touch-min px-3 bg-surface-container hover:bg-surface-container-high border-r-2 border-on-surface font-headline-sm font-bold text-on-surface select-none active:translate-x-[1px] active:translate-y-[1px] transition-transform">
+          -1
+        </button>
+        <input id="odometer-input" type="text" inputmode="numeric" value="148,520" class="w-full min-h-[48px] px-3 bg-transparent text-center font-mono font-black text-2xl tracking-wider text-on-surface border-0 focus:ring-0 uppercase">
+        <span class="px-3 font-label-md text-label-md font-bold text-on-surface-variant uppercase border-l-2 border-on-surface/30 bg-surface-container/50 min-h-[48px] flex items-center">
+          KM
+        </span>
+        <button type="button" class="h-touch-min px-3 bg-surface-container hover:bg-surface-container-high border-l-2 border-on-surface font-headline-sm font-bold text-on-surface select-none active:translate-x-[1px] active:translate-y-[1px] transition-transform">
+          +1
+        </button>
+      </div>
+
+      <button type="button" class="sm:col-span-4 h-touch-min bg-surface-container-high hover:bg-surface-container-highest text-on-surface border-2 border-on-surface btn-tactile flex items-center justify-center gap-2 px-3 font-label-md text-label-md uppercase font-bold">
+        <span class="material-symbols-outlined text-xl text-primary">photo_camera</span>
+        <span class="">FOTO EVIDENCIA</span>
+      </button>
+    </div>
+  </div>
+</section><div class="space-y-3.5" id="checklist-container">
+<!-- ITEM 1: Aceite de motor -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">oil_barrel</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">01. TREN MOTRIZ</span>
+<span class="bg-primary-container text-on-primary-container px-1 text-[10px] font-bold uppercase tracking-wider">OK</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Aceite de motor
+              </h2>
+
+</div>
+</div>
+</div>
+<!-- 3-State Glove-Friendly Selector -->
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-primary-container text-on-primary-container shadow-[2px_2px_0px_#0d1c2e] font-black" type="button">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+</article>
+<!-- ITEM 2: Líquido refrigerante -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">format_h4</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">02. ENFRIAMIENTO</span>
+<span class="bg-primary-container text-on-primary-container px-1 text-[10px] font-bold uppercase tracking-wider">OK</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Líquido refrigerante
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-primary-container text-on-primary-container shadow-[2px_2px_0px_#0d1c2e] font-black" type="button">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+</article>
+<!-- ITEM 3: Nivel de combustible -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">local_gas_station</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">03. AUTONOMÍA</span>
+<span class="bg-primary-container text-on-primary-container px-1 text-[10px] font-bold uppercase tracking-wider">OK</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Nivel de combustible
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-primary-container text-on-primary-container shadow-[2px_2px_0px_#0d1c2e] font-black" type="button">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+</article>
+<!-- ITEM 4: Estado de llantas (presión y dibujo) -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">tire_repair</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">04. RODAMIENTO</span>
+<span class="bg-primary-container text-on-primary-container px-1 text-[10px] font-bold uppercase tracking-wider">OK</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Estado de llantas (presión y dibujo)
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-primary-container text-on-primary-container shadow-[2px_2px_0px_#0d1c2e] font-black" type="button">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+</article>
+<!-- ITEM 5: Sistema de luces (CRÍTICO CON OBSERVACIÓN EXPANDIDA) -->
+<article class="bg-error-container/30 border-2 border-error card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-error/10 flex items-center justify-center border-2 border-error shrink-0">
+<span class="material-symbols-outlined text-error text-[26px]">highlight</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-error uppercase font-bold">05. ILUMINACIÓN &amp; SEÑALIZACIÓN</span>
+<span class="bg-error text-on-error px-1 text-[10px] font-bold uppercase tracking-wider">ANOMALÍA</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Sistema de luces (faros, direccionales y freno)
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-error bg-error text-on-error shadow-[2px_2px_0px_#93000a] font-black" type="button">
+<span class="material-symbols-outlined text-lg">warning</span>
+            MAL
+          </button>
+</div>
+<!-- OBSERVACIONES TECHNICAL INPUT FIELD (EXPANDED FOR ANOMALY) -->
+<div class="mt-1 border-2 border-error bg-surface-container-lowest p-2">
+<div class="flex items-center justify-between mb-1">
+<label class="font-label-sm text-label-sm uppercase font-bold text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+              NOTA TÉCNICA OBLIGATORIA (MAL)
+            </label>
+
+</div>
+<input class="w-full min-h-[48px] px-3 bg-surface border-2 border-on-surface text-on-surface font-body-sm focus:border-error focus:ring-0 rounded-none text-sm" type="text" value="Foco direccional posterior derecho parpadea rápido. Reemplazar ampolleta 24V antes de salida.">
+</div>
+</article>
+<!-- ITEM 6: Sistema de frenos -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">minor_crash</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">06. SEGURIDAD DINÁMICA</span>
+<span class="bg-primary-container text-on-primary-container px-1 text-[10px] font-bold uppercase tracking-wider">OK</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Sistema de frenos
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-primary-container text-on-primary-container shadow-[2px_2px_0px_#0d1c2e] font-black" type="button">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+</article>
+<!-- ITEM 7: Limpiaparabrisas (plumas y aspersor) -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">cloud_download</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">07. VISIBILIDAD</span>
+<span class="bg-secondary-container text-on-secondary-container px-1 text-[10px] font-bold uppercase tracking-wider">PRECAUCIÓN</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Limpiaparabrisas (plumas y aspersor)
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-yellow-400 text-on-surface font-black shadow-[2px_2px_0px_#0d1c2e]" type="button">
+<span class="material-symbols-outlined text-lg">error_outline</span>
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+<div class="pt-1">
+<input class="w-full min-h-[48px] px-3 bg-surface border-2 border-on-surface text-on-surface font-body-sm focus:ring-0 rounded-none text-sm placeholder:text-outline" placeholder="Agregar observación sobre aspersor o plumas..." type="text" value="Nivel de agua bajo en depósito de limpiavidrios.">
+</div>
+</article>
+<!-- ITEM 8: Espejos retrovisores -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">view_array</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">08. CAMPO VISUAL</span>
+<span class="bg-primary-container text-on-primary-container px-1 text-[10px] font-bold uppercase tracking-wider">OK</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Espejos retrovisores
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-primary-container text-on-primary-container shadow-[2px_2px_0px_#0d1c2e] font-black" type="button">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+</article>
+<!-- ITEM 9: Equipo de seguridad (chaleco, conos, botiquín) -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">medical_services</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">09. EPP &amp; VIALIDAD</span>
+<span class="bg-surface-container text-on-surface-variant px-1 text-[10px] font-bold uppercase tracking-wider">PENDIENTE</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Equipo de seguridad (chaleco, conos, botiquín)
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+<div class="pt-1">
+<input class="w-full min-h-[48px] px-3 bg-surface border-2 border-on-surface text-on-surface font-body-sm focus:ring-0 rounded-none text-sm placeholder:text-outline" placeholder="Agregar observación técnica de EPP..." type="text">
+</div>
+</article>
+<!-- ITEM 10: Extintor de incendios (vigencia y manómetro) -->
+<article class="bg-surface-container-lowest border-2 border-on-surface card-hud p-3.5 flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 bg-surface-container flex items-center justify-center border-2 border-on-surface shrink-0">
+<span class="material-symbols-outlined text-on-surface text-[26px]">fire_extinguisher</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">10. RESPUESTA ANTE EMERGENCIA</span>
+<span class="bg-surface-container text-on-surface-variant px-1 text-[10px] font-bold uppercase tracking-wider">PENDIENTE</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase text-on-surface leading-snug">
+                Extintor de incendios (vigencia y manómetro)
+              </h2>
+
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            BIEN
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            REGULAR
+          </button>
+<button class="h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]" type="button">
+            MAL
+          </button>
+</div>
+<div class="pt-1">
+<input class="w-full min-h-[48px] px-3 bg-surface border-2 border-on-surface text-on-surface font-body-sm focus:ring-0 rounded-none text-sm placeholder:text-outline" placeholder="Agregar observación (ej. fecha de vencimiento)..." type="text">
+</div>
+</article>
+</div>
+<!-- SUMMARY ACTION CARD -->
+<section class="bg-surface-container border-2 border-on-surface p-4 mt-6">
+<div class="flex items-center justify-between pb-3 border-b-2 border-on-surface/20">
+<div>
+<p class="font-label-sm text-label-sm uppercase text-on-surface-variant">FIRMA DEL OPERADOR</p>
+<p class="font-headline-sm text-on-surface font-bold">M. SANDOVAL (ID: 8842)</p>
+</div>
+
+</div>
+<!-- MAIN TACTILE ACTION BUTTON -->
+<div class="pt-3">
+<button class="w-full h-touch-lg bg-primary text-on-primary border-2 border-on-surface btn-tactile flex items-center justify-center gap-3 font-headline-sm uppercase tracking-wide" type="button">
+<span class="material-symbols-outlined text-2xl font-bold">checklist_rtl</span>
+<span class="">FINALIZAR Y REGISTRAR INSPECCIÓN 360°</span>
+</button>
+<p class="text-center text-on-surface-variant font-label-sm text-label-sm uppercase tracking-widest mt-2">
+          DATOS REGISTRADOS LOCALMENTE Y SINCRONIZADOS AL SERVIDOR DE FLOTA
+        </p>
+</div>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (MANDATORY SHARED COMPONENT SCHEMA) -->
+<!-- Contextual Destination Rule: Ruta is currently active destination -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-xs py-space-xs pb-safe min-h-touch-lg bg-surface-container-lowest border-t-2 border-on-surface shadow-[0px_-4px_0px_#0d1c2e]">
+<!-- Tab 1: Ruta (Active) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container min-h-touch-min border-2 border-on-surface px-space-sm py-space-2xs shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#ruta">
+<span class="material-symbols-outlined text-2xl" data-icon="route">route</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5 font-bold">Ruta</span>
+</a>
+<!-- Tab 2: Escanear (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant min-h-touch-min px-space-sm py-space-2xs hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#escanear">
+<span class="material-symbols-outlined text-2xl" data-icon="qr_code_2">qr_code_2</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5">Escanear</span>
+</a>
+<!-- Tab 3: Registro (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant min-h-touch-min px-space-sm py-space-2xs hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#registro">
+<span class="material-symbols-outlined text-2xl" data-icon="checklist">checklist</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5">Registro</span>
+</a>
+<!-- Tab 4: Incidencia (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant min-h-touch-min px-space-sm py-space-2xs hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#incidencia">
+<span class="material-symbols-outlined text-2xl" data-icon="warning">warning</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5">Incidencia</span>
+</a>
+</nav>
+<!-- Interactive script for tactile glove toggles and progress update -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const articles = document.querySelectorAll('#checklist-container article');
+      
+      articles.forEach((card) => {
+        const buttons = card.querySelectorAll('.grid.grid-cols-3 button');
+        buttons.forEach((btn, idx) => {
+          btn.addEventListener('click', () => {
+            // Reset siblings
+            buttons.forEach(b => {
+              b.className = "h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container active:translate-x-[1px] active:translate-y-[1px]";
+              const icon = b.querySelector('.material-symbols-outlined');
+              if (icon) icon.remove();
+            });
+
+            // Apply selected state
+            if (idx === 0) {
+              // BIEN (Green)
+              btn.className = "h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-primary-container text-on-primary-container shadow-[2px_2px_0px_#0d1c2e] font-black";
+              btn.innerHTML = '<span class="material-symbols-outlined text-lg">check_circle</span> BIEN';
+            } else if (idx === 1) {
+              // REGULAR (Yellow)
+              btn.className = "h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-on-surface bg-yellow-400 text-on-surface shadow-[2px_2px_0px_#0d1c2e] font-black";
+              btn.innerHTML = '<span class="material-symbols-outlined text-lg">error_outline</span> REGULAR';
+            } else {
+              // MAL (Red)
+              btn.className = "h-touch-min flex items-center justify-center gap-1 font-label-md text-label-md uppercase border-2 border-error bg-error text-on-error shadow-[2px_2px_0px_#93000a] font-black";
+              btn.innerHTML = '<span class="material-symbols-outlined text-lg">warning</span> MAL';
+            }
+          });
+        });
+      });
+    });
+  </script>
+
+
+
+
+</body></html>

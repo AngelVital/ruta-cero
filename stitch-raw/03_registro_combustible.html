@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Registro de Combustible - Inspección Pre-operativa</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&amp;family=Barlow+Condensed:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#bccabe",
+            "on-primary-container": "#00331d",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary": "#ffffff",
+            "outline": "#6d7a70",
+            "surface-container-high": "#dce9ff",
+            "inverse-on-surface": "#eaf1ff",
+            "error-container": "#ffdad6",
+            "on-surface-variant": "#3d4a41",
+            "on-primary-fixed": "#002111",
+            "surface-dim": "#ccdbf3",
+            "tertiary-container": "#359ade",
+            "surface-container-highest": "#d5e3fc",
+            "on-error": "#ffffff",
+            "surface-bright": "#f8f9ff",
+            "on-tertiary-fixed": "#001d31",
+            "surface-container": "#e6eeff",
+            "on-background": "#0d1c2e",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#0d1c2e",
+            "primary-container": "#00a86b",
+            "tertiary-fixed-dim": "#93ccff",
+            "secondary": "#565e74",
+            "on-secondary-fixed": "#131b2e",
+            "inverse-surface": "#233144",
+            "on-secondary-fixed-variant": "#3f465c",
+            "secondary-fixed": "#dae2fd",
+            "on-primary-fixed-variant": "#005232",
+            "tertiary-fixed": "#cce5ff",
+            "inverse-primary": "#59de9b",
+            "primary": "#006d43",
+            "surface": "#f8f9ff",
+            "secondary-container": "#dae2fd",
+            "background": "#f8f9ff",
+            "error": "#ba1a1a",
+            "primary-fixed": "#78fbb6",
+            "on-tertiary-container": "#002f4a",
+            "on-primary": "#ffffff",
+            "on-secondary-container": "#5c647a",
+            "surface-variant": "#d5e3fc",
+            "on-error-container": "#93000a",
+            "primary-fixed-dim": "#59de9b",
+            "on-secondary": "#ffffff",
+            "surface-tint": "#006d43",
+            "secondary-fixed-dim": "#bec6e0",
+            "tertiary": "#006398",
+            "on-tertiary-fixed-variant": "#004b73"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-md": "16px",
+            "space-sm": "12px",
+            "space-xs": "8px",
+            "gutter-tablet": "24px",
+            "space-2xs": "4px",
+            "space-lg": "24px",
+            "touch-min": "48px",
+            "space-xl": "32px",
+            "space-2xl": "48px",
+            "gutter-mobile": "16px",
+            "touch-lg": "56px"
+          },
+          "fontFamily": {
+            "body-md": ["Atkinson Hyperlegible Next"],
+            "label-sm": ["Barlow Condensed"],
+            "headline-lg": ["Barlow Condensed"],
+            "display": ["Barlow Condensed"],
+            "headline-md": ["Barlow Condensed"],
+            "body-sm": ["Atkinson Hyperlegible Next"],
+            "label-md": ["Barlow Condensed"],
+            "body-lg": ["Atkinson Hyperlegible Next"],
+            "headline-lg-mobile": ["Barlow Condensed"],
+            "headline-sm": ["Barlow Condensed"],
+            "label-lg": ["Barlow Condensed"]
+          },
+          "fontSize": {
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-sm": ["12px", { "lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+            "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "display": ["44px", { "lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "26px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "label-md": ["14px", { "lineHeight": "18px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "30px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "22px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.06em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .hud-shadow-solid {
+      box-shadow: 4px 4px 0px #0d1c2e;
+    }
+    .hud-shadow-solid-sm {
+      box-shadow: 2px 2px 0px #0d1c2e;
+    }
+    .hud-press:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #0d1c2e;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col justify-between selection:bg-primary selection:text-on-primary antialiased pb-32">
+<!-- TOP APP BAR -->
+<header class="bg-surface-container-lowest text-primary border-b-2 border-on-surface shadow-[0px_4px_0px_#0d1c2e] sticky top-0 z-40">
+</header>
+<!-- SUBHEADER / TECH HUD NAV -->
+<section class="bg-on-surface text-surface-bright px-space-md py-space-sm border-b-2 border-on-surface flex items-center justify-between">
+<button class="flex items-center gap-1 bg-surface-container-lowest text-on-surface border-2 border-surface-bright px-space-sm py-1 font-label-md text-label-md uppercase tracking-wider hud-press transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_back">arrow_back</span>
+<span>Regresar</span>
+</button>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-primary-fixed uppercase block tracking-widest leading-none">UNIDAD ACTIVA</span>
+<span class="font-headline-md text-headline-md text-surface-bright font-bold tracking-wider leading-none mt-1 inline-block">CAMIÓN-08</span>
+</div>
+</section>
+<!-- MAIN OPERATIONAL CONTENT -->
+<main class="w-full max-w-md mx-auto px-space-md pt-space-md space-y-space-md">
+<!-- Screen Title Badge -->
+<div class="border-2 border-on-surface bg-surface-container-lowest p-space-sm hud-shadow-solid flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest block mb-0.5">CHECKLIST PRE-OPERATIVO</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold uppercase tracking-wider text-on-surface leading-tight">
+          NIVEL DE COMBUSTIBLE
+        </h1>
+</div>
+</div>
+<!-- TARJETA PRINCIPAL: TANQUE & MEDICIÓN -->
+<section class="border-2 border-on-surface bg-surface-container-lowest p-space-md hud-shadow-solid space-y-space-md">
+<div class="flex items-center justify-between border-b-2 border-on-surface pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="local_gas_station">local_gas_station</span>
+<span class="font-headline-sm text-headline-sm font-bold uppercase text-on-surface">MEDIDOR DE TANQUE DIESEL</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-container-high border border-on-surface px-2 py-0.5 font-bold">CAP. 250 L</span>
+</div>
+<!-- TANQUE GRÁFICO TÉCNICO SEGMENTADO -->
+<div class="space-y-space-xs bg-surface-container-low p-space-sm border-2 border-on-surface">
+<div class="flex justify-between items-end pb-1">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md uppercase text-secondary font-bold tracking-wider">NIVEL DETECTADO</span>
+<span class="font-label-sm text-[11px] text-outline font-bold uppercase tracking-wide">SISTEMA DIÉSEL FIELD-SPEC</span>
+</div>
+<div class="flex items-baseline gap-1.5 text-right">
+<span class="font-display text-display font-black text-on-surface leading-none tracking-tight" id="level-percentage">85%</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tracking-wide" id="level-status">85% ACTUAL</span>
+</div>
+</div>
+<!-- Indicador de segmentos HUD (6 bloques: 15%, 25%, 50%, 75%, 85%, 100%) -->
+<div class="grid grid-cols-6 gap-1 h-12 bg-surface-container-lowest p-1 border-2 border-on-surface" id="tank-segments">
+<!-- Bloque 1 (15%) -->
+<div class="tank-segment h-full border flex items-center justify-center transition-all bg-primary border-on-surface" data-threshold="15">
+<span class="font-label-sm text-[10px] font-bold text-on-primary">15%</span>
+</div>
+<!-- Bloque 2 (25%) -->
+<div class="tank-segment h-full border flex items-center justify-center transition-all bg-primary border-on-surface" data-threshold="25">
+<span class="font-label-sm text-[10px] font-bold text-on-primary">25%</span>
+</div>
+<!-- Bloque 3 (50%) -->
+<div class="tank-segment h-full border flex items-center justify-center transition-all bg-primary border-on-surface" data-threshold="50">
+<span class="font-label-sm text-[10px] font-bold text-on-primary">50%</span>
+</div>
+<!-- Bloque 4 (75%) -->
+<div class="tank-segment h-full border flex items-center justify-center transition-all bg-primary border-on-surface" data-threshold="75">
+<span class="font-label-sm text-[10px] font-bold text-on-primary">75%</span>
+</div>
+<!-- Bloque 5 (85%) -->
+<div class="tank-segment h-full border-2 border-on-surface flex items-center justify-center relative overflow-hidden transition-all bg-primary" data-threshold="85">
+<span class="font-label-sm text-[10px] font-bold text-on-primary">85%</span>
+<div class="segment-pulse absolute inset-0 bg-white/20 animate-pulse"></div>
+</div>
+<!-- Bloque 6 (100%) -->
+<div class="tank-segment h-full border flex items-center justify-center transition-all bg-surface-container-high border-outline opacity-60" data-threshold="100">
+<span class="font-label-sm text-[10px] font-bold text-on-surface-variant">100%</span>
+<div class="segment-pulse absolute inset-0 bg-white/20 animate-pulse hidden"></div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-1 font-label-sm text-label-sm text-on-surface-variant">
+<span>0 LITROS (E)</span>
+<span class="text-on-surface font-bold text-label-md" id="liters-calculated">212.5 L ESTIMADOS</span>
+<span>250 L (F)</span>
+</div>
+<!-- BOTONES DE AJUSTE FINO [-5%] / [+5%] -->
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant">
+<span class="font-label-sm text-[11px] uppercase tracking-wider text-secondary font-bold">AJUSTE DE PRECISIÓN:</span>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center w-8 h-8 border-2 border-on-surface bg-surface-container-lowest text-on-surface font-bold text-base hud-shadow-solid-sm active:translate-x-[1px] active:translate-y-[1px] transition-transform select-none" id="btn-step-down" type="button">
+      -
+    </button>
+<span class="font-label-sm text-label-sm font-bold text-on-surface min-w-[36px] text-center" id="step-display">±5%</span>
+<button class="flex items-center justify-center w-8 h-8 border-2 border-on-surface bg-surface-container-lowest text-on-surface font-bold text-base hud-shadow-solid-sm active:translate-x-[1px] active:translate-y-[1px] transition-transform select-none" id="btn-step-up" type="button">
+      +
+    </button>
+</div>
+</div>
+</div>
+<!-- SELECTORES RÁPIDOS INDUSTRIALES (Glove-friendly) -->
+<div class="space-y-space-xs">
+<label class="font-label-md text-label-md uppercase text-on-surface block font-bold tracking-wider">
+          SELECCIÓN RÁPIDA DE NIVEL
+</label>
+<div class="grid grid-cols-2 gap-space-xs" id="quick-select-grid">
+<!-- Botón Vacío (15%) -->
+<button class="quick-btn min-h-touch-min p-space-xs border-2 border-on-surface bg-surface-container-lowest text-left font-label-md text-label-md uppercase hud-press flex flex-col justify-center transition-colors" data-level="15" data-status="CRÍTICO" data-sub="Crítico &lt; 35 L" data-title="VACÍO (0-15%)" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="btn-title text-error font-bold">VACÍO (0-15%)</span>
+<span class="btn-check material-symbols-outlined text-[18px] hidden" data-icon="check_circle">check_circle</span>
+</div>
+<span class="btn-sub font-body-sm text-body-sm text-secondary leading-tight mt-0.5">Crítico &lt; 35 L</span>
+</button>
+<!-- Botón Reserva (25%) -->
+<button class="quick-btn min-h-touch-min p-space-xs border-2 border-on-surface bg-surface-container-lowest text-left font-label-md text-label-md uppercase hud-press flex flex-col justify-center transition-colors" data-level="25" data-status="RESERVA" data-sub="62.5 Litros" data-title="RESERVA (25%)" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="btn-title text-on-surface font-bold">RESERVA (25%)</span>
+<span class="btn-check material-symbols-outlined text-[18px] hidden" data-icon="check_circle">check_circle</span>
+</div>
+<span class="btn-sub font-body-sm text-body-sm text-secondary leading-tight mt-0.5">62.5 Litros</span>
+</button>
+<!-- Botón Medio Tanque (50%) -->
+<button class="quick-btn min-h-touch-min p-space-xs border-2 border-on-surface bg-surface-container-lowest text-left font-label-md text-label-md uppercase hud-press flex flex-col justify-center transition-colors" data-level="50" data-status="1/2 MEDIO" data-sub="125.0 Litros" data-title="MEDIO TANQUE (50%)" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="btn-title text-on-surface font-bold">MEDIO TANQUE (50%)</span>
+<span class="btn-check material-symbols-outlined text-[18px] hidden" data-icon="check_circle">check_circle</span>
+</div>
+<span class="btn-sub font-body-sm text-body-sm text-secondary leading-tight mt-0.5">125.0 Litros</span>
+</button>
+<!-- Botón Tres Cuartos (75%) -->
+<button class="quick-btn min-h-touch-min p-space-xs border-2 border-on-surface bg-surface-container-lowest text-left font-label-md text-label-md uppercase hud-press flex flex-col justify-center transition-colors" data-level="75" data-status="3/4 TANQUE" data-sub="187.5 Litros" data-title="TRES CUARTOS (75%)" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="btn-title text-on-surface font-bold">TRES CUARTOS (75%)</span>
+<span class="btn-check material-symbols-outlined text-[18px] hidden" data-icon="check_circle">check_circle</span>
+</div>
+<span class="btn-sub font-body-sm text-body-sm text-secondary leading-tight mt-0.5">187.5 Litros</span>
+</button>
+<!-- Botón 85% ACTIVO INICIALMENTE -->
+<button class="quick-btn min-h-touch-min p-space-xs border-2 border-on-surface bg-primary text-on-primary text-left font-label-md text-label-md uppercase hud-shadow-solid-sm flex flex-col justify-center relative transition-colors" data-level="85" data-status="85% ACTUAL" data-sub="212.5 Litros" data-title="ACTUAL (85%)" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="btn-title font-bold text-on-primary">ACTUAL (85%)</span>
+<span class="btn-check material-symbols-outlined text-[18px] text-on-primary inline-block" data-icon="check_circle">check_circle</span>
+</div>
+<span class="btn-sub font-body-sm text-body-sm text-surface-bright leading-tight font-bold mt-0.5">212.5 Litros</span>
+</button>
+<!-- Botón Lleno (100%) -->
+<button class="quick-btn min-h-touch-min p-space-xs border-2 border-on-surface bg-surface-container-lowest text-left font-label-md text-label-md uppercase hud-press flex flex-col justify-center transition-colors" data-level="100" data-status="LLENO" data-sub="250.0 Litros" data-title="LLENO (100%)" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="btn-title text-on-surface font-bold">LLENO (100%)</span>
+<span class="btn-check material-symbols-outlined text-[18px] hidden" data-icon="check_circle">check_circle</span>
+</div>
+<span class="btn-sub font-body-sm text-body-sm text-secondary leading-tight mt-0.5">250.0 Litros</span>
+</button>
+</div>
+</div>
+</section>
+<!-- BOTÓN DE ACCIÓN PRINCIPAL FIJADO / DESTACADO -->
+<div class="pt-space-xs pb-space-lg">
+<button class="w-full h-[60px] bg-primary-container text-on-primary border-2 border-on-surface font-headline-md text-headline-md font-bold uppercase tracking-wider hud-shadow-solid hud-press flex items-center justify-center gap-space-xs transition-transform" id="btn-confirm-save" type="button">
+<span class="material-symbols-outlined text-[26px]" data-icon="check_circle">check_circle</span>
+<span>CONFIRMAR Y ACTUALIZAR</span>
+</button>
+</div>
+</main>
+<!-- BOTTOM NAVIGATION BAR -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-xs py-space-xs pb-safe min-h-touch-lg bg-surface-container-lowest border-t-2 border-on-surface shadow-[0px_-4px_0px_#0d1c2e]">
+<!-- Destino 1: Ruta (ACTIVO) -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container min-h-touch-min border-2 border-on-surface px-space-sm py-space-2xs shadow-[2px_2px_0px_#0d1c2e] active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75">
+<span class="material-symbols-outlined" data-icon="route">route</span>
+<span class="font-label-sm text-label-sm uppercase">Ruta</span>
+</button>
+<!-- Destino 2: Escanear -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant min-h-touch-min px-space-sm py-space-2xs hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75">
+<span class="material-symbols-outlined" data-icon="qr_code_2">qr_code_2</span>
+<span class="font-label-sm text-label-sm uppercase">Escanear</span>
+</button>
+<!-- Destino 3: Registro -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant min-h-touch-min px-space-sm py-space-2xs hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75">
+<span class="material-symbols-outlined" data-icon="checklist">checklist</span>
+<span class="font-label-sm text-label-sm uppercase">Registro</span>
+</button>
+</nav>
+<!-- JAVASCRIPT DE INTERACTIVIDAD -->
+<script>
+  (function () {
+    const TANK_CAPACITY = 250;
+    let currentLevel = 85;
+
+    const levelDisplay = document.getElementById('level-percentage');
+    const statusDisplay = document.getElementById('level-status');
+    const litersDisplay = document.getElementById('liters-calculated');
+    const segmentElements = document.querySelectorAll('.tank-segment');
+    const quickButtons = document.querySelectorAll('.quick-btn');
+    const btnStepDown = document.getElementById('btn-step-down');
+    const btnStepUp = document.getElementById('btn-step-up');
+    const btnConfirm = document.getElementById('btn-confirm-save');
+
+    function getStatusLabel(level) {
+      if (level <= 15) return 'CRÍTICO';
+      if (level <= 30) return 'RESERVA';
+      if (level <= 60) return '1/2 MEDIO';
+      if (level <= 80) return '3/4 TANQUE';
+      if (level < 100) return '85% ACTUAL';
+      return 'LLENO';
+    }
+
+    function updateFuelLevel(newLevel, explicitStatus = null) {
+      currentLevel = Math.max(0, Math.min(100, Math.round(newLevel)));
+      const liters = ((currentLevel / 100) * TANK_CAPACITY).toFixed(1);
+
+      // 1. Actualizar texto de nivel y litros
+      if (levelDisplay) {
+        levelDisplay.textContent = `${currentLevel}%`;
+      }
+      if (statusDisplay) {
+        statusDisplay.textContent = explicitStatus || getStatusLabel(currentLevel);
+        if (currentLevel <= 15) {
+          statusDisplay.className = 'font-headline-sm text-headline-sm text-error font-bold tracking-wide';
+        } else {
+          statusDisplay.className = 'font-headline-sm text-headline-sm text-primary font-bold tracking-wide';
+        }
+      }
+      if (litersDisplay) {
+        litersDisplay.textContent = `${liters} L ESTIMADOS`;
+      }
+
+      // 2. Actualizar visualmente la barra técnica segmentada
+      segmentElements.forEach((segment) => {
+        const threshold = parseInt(segment.getAttribute('data-threshold'), 10);
+        const spanText = segment.querySelector('span');
+        let pulseEl = segment.querySelector('.segment-pulse');
+
+        if (currentLevel >= threshold) {
+          // Bloque activo / lleno
+          segment.classList.remove('bg-surface-container-high', 'border-outline', 'opacity-60');
+          segment.classList.add('bg-primary', 'border-on-surface');
+          if (spanText) {
+            spanText.classList.remove('text-on-surface-variant');
+            spanText.classList.add('text-on-primary');
+          }
+          if (pulseEl) {
+            pulseEl.classList.remove('hidden');
+          }
+        } else {
+          // Bloque vacío / atenuado
+          segment.classList.add('bg-surface-container-high', 'border-outline', 'opacity-60');
+          segment.classList.remove('bg-primary', 'border-on-surface');
+          if (spanText) {
+            spanText.classList.add('text-on-surface-variant');
+            spanText.classList.remove('text-on-primary');
+          }
+          if (pulseEl) {
+            pulseEl.classList.add('hidden');
+          }
+        }
+      });
+
+      // 3. Actualizar estado visual de los botones de selección rápida
+      quickButtons.forEach((btn) => {
+        const btnLevel = parseInt(btn.getAttribute('data-level'), 10);
+        const titleEl = btn.querySelector('.btn-title');
+        const subEl = btn.querySelector('.btn-sub');
+        const checkEl = btn.querySelector('.btn-check');
+
+        if (btnLevel === currentLevel) {
+          // Activar botón seleccionado
+          btn.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'hud-press');
+          btn.classList.add('bg-primary', 'text-on-primary', 'hud-shadow-solid-sm');
+
+          if (titleEl) {
+            titleEl.classList.remove('text-error', 'text-on-surface');
+            titleEl.classList.add('text-on-primary');
+          }
+          if (subEl) {
+            subEl.classList.remove('text-secondary');
+            subEl.classList.add('text-surface-bright', 'font-bold');
+          }
+          if (checkEl) {
+            checkEl.classList.remove('hidden');
+            checkEl.classList.add('inline-block', 'text-on-primary');
+          }
+        } else {
+          // Desactivar botón
+          btn.classList.remove('bg-primary', 'text-on-primary', 'hud-shadow-solid-sm');
+          btn.classList.add('bg-surface-container-lowest', 'hud-press');
+
+          if (titleEl) {
+            titleEl.classList.remove('text-on-primary');
+            if (btnLevel <= 15) {
+              titleEl.classList.add('text-error');
+            } else {
+              titleEl.classList.add('text-on-surface');
+            }
+          }
+          if (subEl) {
+            subEl.classList.remove('text-surface-bright', 'font-bold');
+            subEl.classList.add('text-secondary');
+          }
+          if (checkEl) {
+            checkEl.classList.remove('inline-block');
+            checkEl.classList.add('hidden');
+          }
+        }
+      });
+    }
+
+    // Listeners para botones rápidos
+    quickButtons.forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const level = parseInt(this.getAttribute('data-level'), 10);
+        const status = this.getAttribute('data-status');
+        updateFuelLevel(level, status);
+      });
+    });
+
+    // Listeners de ajuste fino [-5%] y [+5%]
+    if (btnStepDown) {
+      btnStepDown.addEventListener('click', function () {
+        updateFuelLevel(currentLevel - 5);
+      });
+    }
+
+    if (btnStepUp) {
+      btnStepUp.addEventListener('click', function () {
+        updateFuelLevel(currentLevel + 5);
+      });
+    }
+
+    // Feedback visual al presionar Confirmar y Actualizar
+    if (btnConfirm) {
+      btnConfirm.addEventListener('click', function () {
+        const originalText = this.innerHTML;
+        this.innerHTML = '<span class="material-symbols-outlined text-[26px]">task_alt</span> <span>¡ACTUALIZADO CON ÉXITO!</span>';
+        this.classList.add('bg-primary');
+        setTimeout(() => {
+          this.innerHTML = originalText;
+          this.classList.remove('bg-primary');
+        }, 1800);
+      });
+    }
+
+    // Inicializar con el valor activo (85%)
+    updateFuelLevel(85, '85% ACTUAL');
+  })();
+</script>
+</body></html>

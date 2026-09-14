@@ -1,0 +1,259 @@
+/* ==========================================================================
+   Ruta Cero • Field-Spec HUD Global Styles
+   Strict 0px Radius Architecture & High-Glare Legibility
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--radius-sharp) !important; /* Strict sharp angles */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background-color: #0b1320; /* Technical dark canvas backdrop */
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow-x: hidden;
+}
+
+/* Material Symbols alignment */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: middle;
+}
+
+/* Typography Utility Classes */
+.font-display {
+  font-family: var(--font-headline);
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.font-headline-lg {
+  font-family: var(--font-headline);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.font-headline-md {
+  font-family: var(--font-headline);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.font-headline-sm {
+  font-family: var(--font-headline);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.font-label-lg {
+  font-family: var(--font-headline);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.font-label-md {
+  font-family: var(--font-headline);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.font-label-sm {
+  font-family: var(--font-headline);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.font-mono-bold {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* Tactical Mechanical Buttons */
+.btn-tactical {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--touch-min);
+  padding: 0 20px;
+  font-family: var(--font-headline);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: var(--border-structural);
+  box-shadow: var(--shadow-resting);
+  cursor: pointer;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+  background-color: #ffffff;
+  color: var(--color-outline);
+}
+
+.btn-tactical:active,
+.btn-tactical.active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-active);
+}
+
+.btn-tactical-primary {
+  background-color: var(--color-primary-container);
+  color: #ffffff;
+  min-height: var(--touch-primary);
+}
+
+.btn-tactical-primary:hover {
+  background-color: #00935d;
+}
+
+.btn-tactical-dark {
+  background-color: var(--color-outline);
+  color: #ffffff;
+  box-shadow: 4px 4px 0px rgba(0, 168, 107, 0.4);
+}
+
+.btn-tactical-dark:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 168, 107, 0.4);
+}
+
+.btn-tactical-danger {
+  background-color: var(--color-cap-critical);
+  color: #ffffff;
+}
+
+.btn-tactical-secondary {
+  background-color: #ffffff;
+  color: var(--color-outline);
+}
+
+.btn-tactical-sm {
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+/* Material Badges */
+.badge-material {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-headline);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.badge-material-plastico { background-color: var(--color-waste-plastic); }
+.badge-material-carton { background-color: var(--color-waste-cardboard); }
+.badge-material-papel { background-color: var(--color-waste-paper); }
+
+.badge-material-plastic { background-color: var(--color-waste-plastic); }
+.badge-material-cardboard { background-color: var(--color-waste-cardboard); }
+.badge-material-paper { background-color: var(--color-waste-paper); }
+
+/* Capacity Status Indicators */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-headline);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 2px solid var(--color-outline);
+}
+
+.status-pill-optimal {
+  background-color: var(--color-cap-optimal);
+  color: #ffffff;
+}
+
+.status-pill-warning {
+  background-color: var(--color-cap-warning);
+  color: #0f172a;
+}
+
+.status-pill-critical {
+  background-color: var(--color-cap-critical);
+  color: #ffffff;
+}
+
+/* Tactile Cards */
+.card-tactical {
+  background-color: #ffffff;
+  border: var(--border-structural);
+  box-shadow: var(--shadow-resting);
+  padding: var(--space-md);
+  position: relative;
+}
+
+.card-tactical-accent {
+  border-top: 4px solid var(--color-primary-container);
+}
+
+/* Form Inputs */
+.input-tactical {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-on-surface);
+  background-color: #ffffff;
+  border: var(--border-structural);
+  outline: none;
+}
+
+.input-tactical:focus {
+  border-color: var(--color-primary-container);
+  box-shadow: 0 0 0 2px rgba(0, 168, 107, 0.3);
+}

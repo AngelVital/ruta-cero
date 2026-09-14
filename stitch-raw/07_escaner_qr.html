@@ -1,0 +1,461 @@
+<!DOCTYPE html><html class="light" lang="es" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Escanear Código QR - Contenedor</title>
+<!-- Google Fonts: Barlow Condensed & Atkinson Hyperlegible Next -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&amp;family=Barlow+Condensed:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration with Design System Tokens -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-highest": "#d5e3fc",
+            "inverse-surface": "#233144",
+            "tertiary-fixed": "#cce5ff",
+            "surface-dim": "#ccdbf3",
+            "surface-container-high": "#dce9ff",
+            "on-primary-fixed": "#002111",
+            "secondary-fixed-dim": "#bec6e0",
+            "surface-container-low": "#eff4ff",
+            "surface-container": "#e6eeff",
+            "on-secondary-fixed": "#131b2e",
+            "on-error": "#ffffff",
+            "surface-variant": "#d5e3fc",
+            "on-tertiary-fixed-variant": "#004b73",
+            "tertiary-container": "#359ade",
+            "on-error-container": "#93000a",
+            "on-secondary": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "primary": "#006d43",
+            "on-primary": "#ffffff",
+            "on-surface": "#0d1c2e",
+            "primary-container": "#00a86b",
+            "secondary-container": "#dae2fd",
+            "outline": "#6d7a70",
+            "secondary-fixed": "#dae2fd",
+            "primary-fixed": "#78fbb6",
+            "on-primary-fixed-variant": "#005232",
+            "primary-fixed-dim": "#59de9b",
+            "on-surface-variant": "#3d4a41",
+            "on-tertiary-container": "#002f4a",
+            "error": "#ba1a1a",
+            "surface-bright": "#f8f9ff",
+            "on-secondary-fixed-variant": "#3f465c",
+            "tertiary-fixed-dim": "#93ccff",
+            "surface-tint": "#006d43",
+            "on-primary-container": "#00331d",
+            "outline-variant": "#bccabe",
+            "inverse-primary": "#59de9b",
+            "on-tertiary-fixed": "#001d31",
+            "background": "#f8f9ff",
+            "on-background": "#0d1c2e",
+            "secondary": "#565e74",
+            "tertiary": "#006398",
+            "inverse-on-surface": "#eaf1ff",
+            "on-secondary-container": "#5c647a",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface": "#f8f9ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "touch-lg": "56px",
+            "gutter-mobile": "16px",
+            "space-xl": "32px",
+            "gutter-tablet": "24px",
+            "space-2xs": "4px",
+            "space-2xl": "48px",
+            "space-md": "16px",
+            "space-lg": "24px",
+            "touch-min": "48px",
+            "space-sm": "12px",
+            "space-xs": "8px"
+          },
+          "fontFamily": {
+            "body-lg": ["Atkinson Hyperlegible Next"],
+            "label-sm": ["Barlow Condensed"],
+            "headline-sm": ["Barlow Condensed"],
+            "body-md": ["Atkinson Hyperlegible Next"],
+            "body-sm": ["Atkinson Hyperlegible Next"],
+            "headline-md": ["Barlow Condensed"],
+            "label-lg": ["Barlow Condensed"],
+            "headline-lg-mobile": ["Barlow Condensed"],
+            "headline-lg": ["Barlow Condensed"],
+            "label-md": ["Barlow Condensed"],
+            "display": ["Barlow Condensed"]
+          },
+          "fontSize": {
+            "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+            "label-sm": ["12px", {"lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+            "headline-sm": ["18px", {"lineHeight": "22px", "letterSpacing": "0.04em", "fontWeight": "600"}],
+            "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+            "headline-md": ["22px", {"lineHeight": "26px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+            "label-lg": ["16px", {"lineHeight": "20px", "letterSpacing": "0.06em", "fontWeight": "700"}],
+            "headline-lg-mobile": ["26px", {"lineHeight": "30px", "letterSpacing": "0.03em", "fontWeight": "700"}],
+            "headline-lg": ["32px", {"lineHeight": "36px", "letterSpacing": "0.03em", "fontWeight": "700"}],
+            "label-md": ["14px", {"lineHeight": "18px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+            "display": ["44px", {"lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "700"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    
+    @keyframes scanLineAnimation {
+      0% { top: 6%; opacity: 0.8; }
+      50% { top: 92%; opacity: 1; }
+      100% { top: 6%; opacity: 0.8; }
+    }
+
+    .scanner-laser {
+      animation: scanLineAnimation 2.4s ease-in-out infinite;
+    }
+
+    /* Tactile glove-friendly button depress feedback */
+    .btn-tactile:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #0d1c2e !important;
+    }
+
+    /* Neo-brutalist solid offsets */
+    .hard-shadow-sm {
+      box-shadow: 2px 2px 0px #0d1c2e;
+    }
+    .hard-shadow-md {
+      box-shadow: 4px 4px 0px #0d1c2e;
+    }
+    .hard-shadow-lg {
+      box-shadow: 6px 6px 0px #0d1c2e;
+    }
+    .hard-shadow-top {
+      box-shadow: 0px -4px 0px #0d1c2e;
+    }
+    .hard-shadow-bottom {
+      box-shadow: 0px 4px 0px #0d1c2e;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col pb-28 select-none">
+<!-- ==================== 1. TOP APP BAR (MANDATED SHARED COMPONENT) ==================== -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface border-b-2 border-on-surface dark:border-outline shadow-[0px_4px_0px_#0d1c2e] dark:shadow-none flex justify-between items-center w-full px-space-md py-space-sm h-touch-lg sticky top-0 z-40">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary text-2xl font-bold" data-icon="local_shipping">local_shipping</span>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface uppercase tracking-wider leading-none">
+          RUTA 04&nbsp;</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-bold mt-0.5 tracking-wider uppercase">
+          Escanear Código QR - Contenedor
+        </p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="min-w-touch-min min-h-touch-min flex items-center justify-center bg-surface-container-lowest border-2 border-on-surface text-on-surface hard-shadow-sm active:translate-x-[2px] active:translate-y-[2px] transition-all duration-75" id="torchToggleBtn" onclick="toggleTorch()" title="Activar/Desactivar Linterna">
+<span class="material-symbols-outlined text-2xl text-on-surface transition-colors" data-icon="flashlight_on" id="torchIcon">flashlight_on</span>
+</button>
+</div>
+</header>
+<!-- ==================== MAIN CONTENT CANVAS (GLOVE-FRIENDLY HUD) ==================== -->
+<main class="flex-1 px-gutter-mobile pt-space-md space-y-space-md max-w-xl mx-auto w-full">
+<!-- SUB-HUD STATUS STRIP -->
+<!-- ==================== 2. CAMERA VIEWPORT (ACTIVE SCANNER HUD) ==================== -->
+<section class="relative bg-inverse-surface border-2 border-on-surface overflow-hidden aspect-[4/3] flex flex-col justify-between p-space-md hard-shadow-md">
+<!-- High-contrast camera simulated backdrop with gridlines -->
+<div class="absolute inset-0 opacity-25 pointer-events-none" style="background-image: radial-gradient(#78fbb6 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Simulated blurred street background camera texture -->
+<div class="absolute inset-0 bg-[#16222f] opacity-90 flex items-center justify-center">
+<!-- SVG simulated QR target in real environment -->
+<svg class="w-44 h-44 text-surface-dim opacity-40" fill="currentColor" viewBox="0 0 24 24">
+<path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-5 0h2v3h-2v-3zm2 3h3v2h-3v-2zm3 2h2v3h-2v-3zm-3 2h3v2h-3v-2zm-2-2h2v2h-2v-2zm-3 2h2v2h-2v-2z"></path>
+</svg>
+</div>
+<!-- Live Sweeping Laser Indicator -->
+<div class="scanner-laser absolute left-4 right-4 h-1 bg-primary-fixed shadow-[0_0_12px_#59de9b] z-20 flex items-center justify-center">
+<span class="px-2 py-0.5 bg-primary-container text-on-primary-container border border-on-surface font-label-sm text-label-sm font-bold uppercase tracking-widest text-[10px]">
+          LINEA ESCANER IR
+        </span>
+</div>
+<!-- HUD Top Viewport Badges -->
+<div class="relative z-10 flex items-center justify-between">
+<button aria-label="Linterna integrada" class="min-w-touch-min min-h-touch-min bg-on-surface text-surface-bright border-2 border-primary-fixed-dim flex items-center justify-center btn-tactile p-2" id="cameraTorchBtn" onclick="toggleTorch()">
+<span class="material-symbols-outlined text-2xl text-primary-fixed" data-icon="highlight" id="cameraTorchIcon">highlight</span>
+</button>
+</div>
+<!-- Viewfinder Reticle with Brutalist Rugged Brackets -->
+<div class="relative z-10 self-center w-52 h-52 border-2 border-dashed border-primary-fixed/50 flex flex-col justify-between p-1 pointer-events-none">
+<!-- Top corners -->
+<div class="flex justify-between w-full">
+<div class="w-6 h-6 border-t-4 border-l-4 border-primary-container"></div>
+<div class="w-6 h-6 border-t-4 border-r-4 border-primary-container"></div>
+</div>
+<!-- Target In-View Banner Lock -->
+<div class="self-center bg-primary-container text-on-primary-container border-2 border-on-surface px-3 py-1 font-headline-sm text-headline-sm font-bold uppercase tracking-wide hard-shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm font-bold" data-icon="check_circle">check_circle</span>
+<span class="">QR: CONT-04-MALECÓN</span>
+</div>
+<!-- Bottom corners -->
+<div class="flex justify-between w-full">
+<div class="w-6 h-6 border-b-4 border-l-4 border-primary-container"></div>
+<div class="w-6 h-6 border-b-4 border-r-4 border-primary-container"></div>
+</div>
+</div>
+<!-- Bottom Viewfinder Status Row -->
+</section><section class="bg-surface-container-lowest border-2 border-on-surface p-space-md hard-shadow-md space-y-space-md">
+<div class="flex items-center justify-between border-b-2 border-on-surface pb-space-xs">
+<div>
+<span class="inline-flex items-center gap-1 bg-primary-fixed text-on-primary-fixed border border-on-surface font-label-sm text-label-sm uppercase font-bold px-2 py-0.5">
+<span class="material-symbols-outlined text-sm font-bold" data-icon="check_circle">check_circle</span>
+        LECTURA DE QR CORRECTA
+      </span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface uppercase mt-1">CONT-04 • MALECÓN</h2>
+</div>
+<div class="w-12 h-12 bg-primary-container border-2 border-on-surface flex items-center justify-center hard-shadow-sm text-white">
+<span class="material-symbols-outlined text-3xl font-bold" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+</div>
+<div class="space-y-space-xs pt-space-xs">
+<button class="btn-tactile w-full h-[60px] bg-primary-container hover:bg-primary text-white border-2 border-on-surface hard-shadow-md flex items-center justify-center gap-space-sm font-headline-md text-headline-md font-bold uppercase tracking-wider" onclick="iniciarRecoleccion()">
+<span class="">INICIAR REPORTE</span>
+<span class="material-symbols-outlined text-2xl" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</section><section class="bg-surface-container border-2 border-on-surface p-space-md hard-shadow-md space-y-space-xs"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-xl text-primary" data-icon="help_outline">help_outline</span><span class="font-label-md text-label-md uppercase font-bold text-on-surface">¿CÓDIGO QR DAÑADO O ILEGIBLE?</span></div><p class="font-body-sm text-body-sm text-on-surface-variant">Si la cámara no detecta la etiqueta o está obstruida, ingresa el identificador manualmente.</p><button class="btn-tactile w-full h-[48px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border-2 border-on-surface hard-shadow-md flex items-center justify-center gap-space-sm font-headline-sm text-headline-sm font-bold uppercase mt-1" onclick="abrirModalManual()"><span class="material-symbols-outlined text-xl" data-icon="keyboard">keyboard</span><span class="">INGRESAR MANUALMENTE</span></button></section>
+<!-- ==================== 3. LIVE DETECTION CARD & QUICK ACTIONS ==================== -->
+<!-- ==================== 4. MANUAL FALLBACK & QUICK ROUTE CONTAINER PICKER ==================== -->
+<!-- ==================== 5. TELEMETRY JSON PAYLOAD INSPECTOR ==================== -->
+</main>
+<!-- ==================== MODAL FLOTANTE DE INGRESO MANUAL ==================== -->
+<div aria-labelledby="modalTitle" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center p-gutter-mobile bg-on-surface/70 backdrop-blur-sm hidden" id="manualEntryModal" role="dialog">
+<div class="bg-surface-container-lowest border-2 border-on-surface w-full max-w-md hard-shadow-lg p-space-md space-y-space-md animate-in fade-in zoom-in-95 duration-150">
+<!-- Header Modal -->
+<div class="flex items-center justify-between border-b-2 border-on-surface pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-2xl text-primary font-bold" data-icon="edit_note">edit_note</span>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface uppercase tracking-wide" id="modalTitle">
+          Ingresar ID de Contenedor
+        </h3>
+</div>
+<button aria-label="Cerrar ventana modal" class="w-9 h-9 flex items-center justify-center bg-surface-container border-2 border-on-surface text-on-surface hard-shadow-sm active:translate-x-[2px] active:translate-y-[2px]" onclick="cerrarModalManual()">
+<span class="material-symbols-outlined text-xl font-bold" data-icon="close">close</span>
+</button>
+</div>
+<!-- Contenido e Input -->
+<div class="space-y-space-sm">
+<label class="block font-label-md text-label-md uppercase font-bold text-on-surface" for="manualInputId">
+        Código / Clave del Contenedor
+      </label>
+<div class="relative">
+<input class="w-full h- touch-min px-space-sm bg-surface-container-low border-2 border-on-surface font-headline-sm text-headline-sm uppercase tracking-wider text-on-surface placeholder:text-on-surface-variant/60 focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary hard-shadow-sm uppercase" id="manualInputId" onkeydown="if(event.key === 'Enter') confirmarIngresoManual()" placeholder="Ej: CONT-04 o CONT-08" type="text">
+<span class="material-symbols-outlined absolute right-3 top-3 text-on-surface-variant pointer-events-none" data-icon="tag">tag</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Verifica el identificador numérico o alfanumérico pintado en la estructura del contenedor.
+      </p>
+<!-- Accesos Rápidos de Contenedores Frecuentes / de Ruta -->
+<div class="pt-space-2xs">
+<span class="block font-label-sm text-label-sm uppercase font-bold text-on-surface-variant mb-1">
+          Contenedores en esta ruta:
+        </span>
+<div class="flex flex-wrap gap-space-xs">
+<button class="btn-tactile px-2.5 py-1 bg-surface-container border border-on-surface font-headline-sm text-xs font-bold text-on-surface uppercase hard-shadow-sm" onclick="setManualValue('CONT-04')" type="button">CONT-04 (MALECÓN)</button>
+<button class="btn-tactile px-2.5 py-1 bg-surface-container border border-on-surface font-headline-sm text-xs font-bold text-on-surface uppercase hard-shadow-sm" onclick="setManualValue('CONT-08')" type="button">
+            CONT-08 (SUR)
+          </button>
+<button class="btn-tactile px-2.5 py-1 bg-surface-container border border-on-surface font-headline-sm text-xs font-bold text-on-surface uppercase hard-shadow-sm" onclick="setManualValue('CONT-12')" type="button">
+            CONT-12 (NORTE)
+          </button>
+</div>
+</div>
+</div>
+<!-- Botones de Acción -->
+<div class="pt-space-xs space-y-space-xs">
+<button class="btn-tactile w-full h-[52px] bg-primary-container hover:bg-primary text-white border-2 border-on-surface hard-shadow-md flex items-center justify-center gap-space-xs font-headline-sm text-headline-sm font-bold uppercase tracking-wide" onclick="confirmarIngresoManual()" type="button">
+<span class="material-symbols-outlined text-2xl" data-icon="task_alt">task_alt</span>
+<span class="">Confirmar e Iniciar Reporte</span>
+</button>
+<button class="btn-tactile w-full h-[44px] bg-surface-container hover:bg-surface-container-high text-on-surface border-2 border-on-surface hard-shadow-sm flex items-center justify-center font-headline-sm text-headline-sm font-bold uppercase" onclick="cerrarModalManual()" type="button">
+<span class="">Cancelar</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ==================== MANDATED SHARED COMPONENT: BottomNavBar ==================== -->
+<!-- Contextual active destination: 'Escanear' mapped directly from prompt specifications -->
+<nav class="fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-space-xs py-space-xs pb-safe min-h-touch-lg bg-surface-container-lowest dark:bg-inverse-surface border-t-2 border-on-surface dark:border-outline shadow-[0px_-4px_0px_#0d1c2e] dark:shadow-none">
+<!-- Tab 1: Ruta (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant min-h-touch-min px-space-sm py-space-2xs hover:bg-surface-container dark:hover:bg-surface-container-high active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#ruta">
+<span class="material-symbols-outlined text-2xl" data-icon="route">route</span>
+<span class="font-label-sm text-label-sm uppercase font-bold mt-0.5">Ruta</span>
+</a>
+<!-- Tab 2: Escanear (ACTIVE AS MANDATED BY PAGE INTENT) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container dark:bg-primary-fixed-dim dark:text-on-primary-fixed min-h-touch-min border-2 border-on-surface dark:border-outline px-space-sm py-space-2xs shadow-[2px_2px_0px_#0d1c2e] hover:bg-surface-container dark:hover:bg-surface-container-high active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#escanear">
+<span class="material-symbols-outlined text-2xl" data-icon="qr_code_2">qr_code_2</span>
+<span class="font-label-sm text-label-sm uppercase font-bold mt-0.5">Escanear</span>
+</a>
+<!-- Tab 3: Registro (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant min-h-touch-min px-space-sm py-space-2xs hover:bg-surface-container dark:hover:bg-surface-container-high active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-75" href="#registro">
+<span class="material-symbols-outlined text-2xl" data-icon="checklist">checklist</span>
+<span class="font-label-sm text-label-sm uppercase font-bold mt-0.5">Registro</span>
+</a>
+<!-- Tab 4: Incidencia (Inactive) -->
+
+</nav>
+<!-- Interactive Scripting for Field Simulation -->
+<script>
+    let torchState = false;
+
+    function toggleTorch() {
+      torchState = !torchState;
+      const torchIcon = document.getElementById('torchIcon');
+      const torchBtn = document.getElementById('torchToggleBtn');
+      const camBtn = document.getElementById('cameraTorchBtn');
+      const camIcon = document.getElementById('cameraTorchIcon');
+
+      if (torchState) {
+        // Top app bar torch button - ACTIVE (clearly visible, highlighted, icon maintained)
+        torchBtn.classList.remove('bg-surface-container-lowest', 'text-on-surface');
+        torchBtn.classList.add('bg-primary-container', 'text-white');
+        if (torchIcon) {
+          torchIcon.textContent = 'flashlight_on';
+          torchIcon.classList.remove('text-on-surface');
+          torchIcon.classList.add('text-white');
+        }
+
+        // Camera viewport torch button - ACTIVE
+        if (camBtn) {
+          camBtn.classList.remove('bg-on-surface');
+          camBtn.classList.add('bg-primary-container');
+        }
+        if (camIcon) {
+          camIcon.textContent = 'highlight';
+          camIcon.classList.remove('text-primary-fixed');
+          camIcon.classList.add('text-white');
+        }
+      } else {
+        // Top app bar torch button - INACTIVE
+        torchBtn.classList.remove('bg-primary-container', 'text-white');
+        torchBtn.classList.add('bg-surface-container-lowest', 'text-on-surface');
+        if (torchIcon) {
+          torchIcon.textContent = 'flashlight_on';
+          torchIcon.classList.remove('text-white');
+          torchIcon.classList.add('text-on-surface');
+        }
+
+        // Camera viewport torch button - INACTIVE
+        if (camBtn) {
+          camBtn.classList.remove('bg-primary-container');
+          camBtn.classList.add('bg-on-surface');
+        }
+        if (camIcon) {
+          camIcon.textContent = 'highlight';
+          camIcon.classList.remove('text-white');
+          camIcon.classList.add('text-primary-fixed');
+        }
+      }
+    }
+
+    function abrirModalManual() {
+      const modal = document.getElementById('manualEntryModal');
+      const input = document.getElementById('manualInputId');
+      if (modal) {
+        modal.classList.remove('hidden');
+        if (input) {
+          setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 50);
+        }
+      }
+    }
+
+    function cerrarModalManual() {
+      const modal = document.getElementById('manualEntryModal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function setManualValue(val) {
+      const input = document.getElementById('manualInputId');
+      if (input) {
+        input.value = val;
+        input.focus();
+      }
+    }
+
+    function confirmarIngresoManual() {
+      const input = document.getElementById('manualInputId');
+      const val = input ? input.value.trim().toUpperCase() : '';
+      if (!val) {
+        alert('Por favor, ingresa un ID o código válido para continuar.');
+        if (input) input.focus();
+        return;
+      }
+      cerrarModalManual();
+      alert("Contenedor ingresado manualmente: " + val + ". Iniciando reporte de recolección.");
+    }
+
+    function seleccionarContenedor(id, direccion) {
+      document.getElementById('manualCodeInput').value = id;
+      alert("Contenedor asignado manualmente: " + id + " (" + direccion + ")");
+    }
+
+    function buscarManual() {
+      const code = document.getElementById('manualCodeInput').value.trim();
+      if (code) {
+        alert("Buscando e indexando contenedor: " + code);
+      } else {
+        alert("Por favor ingrese una clave de contenedor válida.");
+      }
+    }
+
+    function iniciarRecoleccion() {
+      alert("Recolección iniciada para CONT-04 Plaza Central. Redirigiendo a registro de pesaje y tara.");
+    }
+
+    function reintentarEscaneo() {
+      alert("Reiniciando sensor óptico de cámara...");
+    }
+
+    // Cerrar modal al presionar Escape o clic fuera
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        cerrarModalManual();
+      }
+    });
+
+    document.getElementById('manualEntryModal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        cerrarModalManual();
+      }
+    });
+  </script>
+
+
+
+
+</body></html>

@@ -1,0 +1,87 @@
+/**
+ * Field-Spec HUD Design System Tokens
+ * Source: Stitch Project 13352991854495087010
+ */
+
+:root {
+  /* Surface & Base Colors */
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #ccdbf3;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e6eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d5e3fc;
+  
+  /* Text & Structural Neutrals */
+  --color-on-surface: #0d1c2e;
+  --color-on-surface-variant: #3d4a41;
+  --color-inverse-surface: #233144;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-outline: #0f172a;
+  --color-outline-variant: #bccabe;
+
+  /* Primary Operational Emerald */
+  --color-primary: #006d43;
+  --color-primary-container: #00a86b;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #00331d;
+  --color-primary-fixed: #78fbb6;
+  --color-primary-fixed-dim: #59de9b;
+
+  /* Secondary Neutral Slate */
+  --color-secondary: #565e74;
+  --color-secondary-container: #dae2fd;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #5c647a;
+
+  /* Tertiary Cyan */
+  --color-tertiary: #006398;
+  --color-tertiary-container: #359ade;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #002f4a;
+
+  /* System Status & Critical */
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+
+  /* Waste Classification Badges */
+  --color-waste-plastic: #0284c7;
+  --color-waste-cardboard: #d97706;
+  --color-waste-paper: #4f46e5;
+
+  /* Capacity Semantics */
+  --color-cap-optimal: #00a86b;
+  --color-cap-warning: #eab308;
+  --color-cap-critical: #e11d48;
+
+  /* Typography */
+  --font-headline: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Atkinson Hyperlegible Next', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Spacing */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Glove Touch Target Minimums */
+  --touch-min: 48px;
+  --touch-action: 56px;
+  --touch-primary: 60px;
+
+  /* Mechanical Depth Model */
+  --radius-sharp: 0px;
+  --border-structural: 2px solid #0f172a;
+  --border-subtle: 1px solid #0f172a;
+  --shadow-resting: 4px 4px 0px #0f172a;
+  --shadow-active: 2px 2px 0px #0f172a;
+  --shadow-inset: inset 2px 2px 0px rgba(0, 0, 0, 0.25);
+}
