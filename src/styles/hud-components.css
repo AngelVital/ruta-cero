@@ -2,7 +2,7 @@
    Ruta Cero • Tactical HUD Specific Components
    ========================================================================== */
 
-/* App Wrapper & Simulator Canvas */
+/* App Wrapper */
 .hud-canvas {
   min-height: 100vh;
   display: flex;
@@ -13,47 +13,11 @@
   background: radial-gradient(circle at 50% 0%, #172437 0%, #0a111c 100%);
 }
 
-.simulator-toolbar {
-  width: 100%;
-  max-width: 440px;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  background-color: #0f172a;
-  border: 2px solid #1e293b;
-  color: #94a3b8;
-  font-family: var(--font-headline);
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.simulator-toolbar-btn {
-  background: none;
-  border: 1px solid #334155;
-  color: #f1f5f9;
-  padding: 4px 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-headline);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.simulator-toolbar-btn:hover {
-  background-color: #1e293b;
-}
-
 /* Rugged Mobile Chassis */
 .mobile-chassis {
-  width: 100%;
-  max-width: 412px;
-  height: 890px;
-  max-height: calc(100vh - 80px);
+  width: min(100%, 390px);
+  height: min(calc(100vh - 48px), 844px);
+  max-height: calc(100vh - 48px);
   background-color: var(--color-surface);
   border: 4px solid #0f172a;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 8px #1e293b;
@@ -61,15 +25,6 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
-}
-
-/* Fullscreen mode override */
-.mobile-chassis.fullscreen-mode {
-  max-width: 600px;
-  height: 100vh;
-  max-height: 100vh;
-  border: none;
-  box-shadow: none;
 }
 
 /* Tactical Status Bar (Top) */

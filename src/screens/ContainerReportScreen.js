@@ -20,6 +20,52 @@ function getMaterialWeightMap(container) {
   return {};
 }
 
+function getPhotoEvidence(container) {
+  return container && container.photoEvidence && typeof container.photoEvidence === 'object'
+    ? { ...container.photoEvidence }
+    : {};
+}
+
+function getIncidentData(container) {
+  return container && container.incidents && typeof container.incidents === 'object'
+    ? { ...container.incidents }
+    : {};
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function renderPhotoEvidenceSection(title, prefix, photoEvidence) {
+  const photos = [
+    { key: `${prefix}Exterior`, label: 'FOTO EXTERIOR', icon: 'photo_camera' },
+    { key: `${prefix}Interior`, label: 'FOTO INTERIOR', icon: 'camera' }
+  ];
+
+  return `
+    <div class="card-tactical photo-evidence-section" style="padding: 12px 14px;">
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+        <span class="material-symbols-outlined" style="font-size: 19px; color: var(--color-primary);">photo_library</span>
+        <span class="font-label-sm" style="color: #0f172a; font-weight: 800;">${title}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        ${photos.map((photo) => `
+          <button type="button" class="btn-tactical btn-photo-evidence ${photoEvidence[photo.key] ? 'active' : ''}" data-photo-key="${photo.key}" style="min-height: 64px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 22px;">${photo.icon}</span>
+            <span style="font-size: 11px; font-weight: 800; text-align: center;">${photo.label}</span>
+            <span class="photo-evidence-status" style="font-size: 10px;">${photoEvidence[photo.key] ? 'CAPTURADA' : 'PENDIENTE'}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
 function renderMaterialWeightBars(selectedMaterials, materialWeights) {
   if (!selectedMaterials.length) {
     return '';
@@ -36,19 +82,21 @@ function renderMaterialWeightBars(selectedMaterials, materialWeights) {
         const currentValue = Number(materialWeights[matKey]) || 0;
 
         return `
-          <div class="card-tactical material-weight-bar" data-material="${matKey}" style="padding: 10px 12px; border-left: 6px solid ${mat.color}; display: flex; align-items: center; gap: 10px; background: #f8fafc;">
-            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+          <div class="card-tactical material-weight-bar" data-material="${matKey}" style="padding: 10px 12px; border-left: 6px solid ${mat.color}; display: flex; flex-direction: column; align-items: stretch; gap: 8px; background: #f8fafc;">
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
               <span class="material-symbols-outlined" style="color: ${mat.color}; font-size: 22px;">${mat.icon}</span>
               <span class="font-headline-sm" style="font-size: 14px; letter-spacing: 0.04em; color: #0f172a;">${mat.label}</span>
             </div>
-            <div style="flex: 1; min-width: 0; display: flex; justify-content: flex-end;">
+            <div style="width: 100%; min-width: 0; display: flex;">
               ${renderStepperControl({
                 id: `weight-${matKey}`,
                 value: currentValue,
                 unit: 'KG',
                 step: 1,
                 min: 0,
-                max: 2000
+                max: 2000,
+                editable: true,
+                inputClass: 'material-weight-input'
               })}
             </div>
           </div>
@@ -70,6 +118,9 @@ export function renderContainerReportScreen(state) {
     : [container.material || 'plastico'];
 
   const materialWeights = getMaterialWeightMap(container);
+  const photoEvidence = getPhotoEvidence(container);
+  const incidents = getIncidentData(container);
+  const incidentComments = container.incidentComments || '';
   selectedMaterials.forEach((matKey) => {
     if (materialWeights[matKey] === undefined) {
       materialWeights[matKey] = 0;
@@ -93,6 +144,8 @@ export function renderContainerReportScreen(state) {
         <h2 class="font-headline-lg" style="color: #0f172a; margin: 0;">${container.id} • ${container.code}</h2>
         <p class="font-body-sm" style="color: #475569; margin-top: 4px;">${container.address}</p>
       </div>
+
+      ${renderPhotoEvidenceSection('EVIDENCIA INICIAL DEL CONTENEDOR', 'initial', photoEvidence)}
 
       <!-- Capacity Level Selector with Dynamic Bar Update -->
       <div class="card-tactical" style="padding: 14px; display: flex; flex-direction: column; gap: 10px;">
@@ -209,32 +262,33 @@ export function renderContainerReportScreen(state) {
         </label>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
-            <input type="checkbox" style="width: 20px; height: 20px; accent-color: #00a86b;">
+            <input type="checkbox" class="incident-checkbox" data-incident="damaged" ${incidents.damaged ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #00a86b;">
             <span>Contenedor dañado</span>
           </label>
           <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
-            <input type="checkbox" style="width: 20px; height: 20px; accent-color: #00a86b;">
+            <input type="checkbox" class="incident-checkbox" data-incident="graffiti" ${incidents.graffiti ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #00a86b;">
             <span>Grafiti / vandalismo</span>
           </label>
           <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
-            <input type="checkbox" style="width: 20px; height: 20px; accent-color: #00a86b;">
+            <input type="checkbox" class="incident-checkbox" data-incident="outsideWaste" ${incidents.outsideWaste ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #00a86b;">
             <span>Residuos fuera del contenedor</span>
           </label>
           <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
-            <input type="checkbox" style="width: 20px; height: 20px; accent-color: #00a86b;">
+            <input type="checkbox" class="incident-checkbox" data-incident="mixedWaste" ${incidents.mixedWaste ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #00a86b;">
             <span>Residuos mezclados</span>
           </label>
         </div>
+        <label class="font-label-sm" for="incident-comments" style="color: #475569; display: block; margin-top: 12px; margin-bottom: 6px;">
+          COMENTARIOS DE LA INCIDENCIA
+        </label>
+        <textarea id="incident-comments" rows="3" placeholder="Describe la incidencia o daño observado..." style="width: 100%; resize: vertical; padding: 10px; border: 2px solid #cbd5e1; font: inherit; color: #0f172a;">${escapeHtml(incidentComments)}</textarea>
       </div>
 
-      <button type="button" class="btn-tactical btn-tactical-secondary" id="btn-container-photo" style="min-height: 48px;">
-        <span class="material-symbols-outlined" style="font-size: 20px;">photo_camera</span>
-        <span>FOTOGRAFÍA DE CONTENEDOR VACIADO</span>
-      </button>
+      ${renderPhotoEvidenceSection('EVIDENCIA DESPUÉS DE LA RECOLECCIÓN', 'final', photoEvidence)}
 
       <button type="button" class="btn-tactical btn-tactical-primary" id="btn-save-container-report">
         <span class="material-symbols-outlined" style="font-size: 22px;">check_circle</span>
-        <span>GUARDAR Y SIGUIENTE CONTENEDOR</span>
+        <span>GUARDAR REPORTE Y CONTINUAR</span>
       </button>
     </div>
   `;
@@ -252,6 +306,9 @@ export function attachContainerReportEvents(containerEl, store) {
   const materialWeights = (stop && stop.materialWeights && typeof stop.materialWeights === 'object')
     ? { ...stop.materialWeights }
     : {};
+  const photoEvidence = getPhotoEvidence(stop);
+  const incidents = getIncidentData(stop);
+  let incidentComments = stop && stop.incidentComments ? stop.incidentComments : '';
 
   selectedMaterials.forEach((matKey) => {
     if (materialWeights[matKey] === undefined) {
@@ -294,15 +351,39 @@ export function attachContainerReportEvents(containerEl, store) {
     materialBars.forEach((bar) => {
       const matKey = bar.getAttribute('data-material');
       const internalStepper = bar.querySelector('.tactical-stepper');
+      const weightInput = bar.querySelector('.material-weight-input');
 
       if (!internalStepper || !matKey || internalStepper.dataset.bound === 'true') {
         return;
       }
 
       internalStepper.dataset.bound = 'true';
-      attachStepperEvents(internalStepper, (newVal) => {
-        materialWeights[matKey] = newVal;
+      const updateMaterialWeight = (newVal) => {
+        const normalizedValue = Math.min(2000, Math.max(0, Math.floor(Number(newVal) || 0)));
+        materialWeights[matKey] = normalizedValue;
+        const stepperValue = internalStepper.querySelector('.stepper-value');
+        if (stepperValue) {
+          stepperValue.textContent = normalizedValue;
+        }
+        if (weightInput) {
+          weightInput.value = normalizedValue;
+        }
         syncTotalWeight();
+      };
+
+      attachStepperEvents(internalStepper, (newVal) => {
+        updateMaterialWeight(newVal);
+      });
+
+      weightInput?.addEventListener('input', (event) => {
+        event.currentTarget.value = event.currentTarget.value.replace(/[^0-9]/g, '');
+        if (event.currentTarget.value !== '') {
+          updateMaterialWeight(event.currentTarget.value);
+        }
+      });
+
+      weightInput?.addEventListener('blur', (event) => {
+        updateMaterialWeight(event.currentTarget.value);
       });
     });
   }
@@ -352,19 +433,21 @@ export function attachContainerReportEvents(containerEl, store) {
             const mat = materialOptions.find(item => item.key === matKey) || materialOptions[0];
             materialWeightsPanel.insertAdjacentHTML(
               'beforeend', `
-                <div class="card-tactical material-weight-bar" data-material="${matKey}" style="padding: 10px 12px; border-left: 6px solid ${mat.color}; display: flex; align-items: center; gap: 10px; background: #f8fafc;">
-                  <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                <div class="card-tactical material-weight-bar" data-material="${matKey}" style="padding: 10px 12px; border-left: 6px solid ${mat.color}; display: flex; flex-direction: column; align-items: stretch; gap: 8px; background: #f8fafc;">
+                  <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                     <span class="material-symbols-outlined" style="color: ${mat.color}; font-size: 22px;">${mat.icon}</span>
                     <span class="font-headline-sm" style="font-size: 14px; letter-spacing: 0.04em; color: #0f172a;">${mat.label}</span>
                   </div>
-                  <div style="flex: 1; min-width: 0; display: flex; justify-content: flex-end;">
+                  <div style="width: 100%; min-width: 0; display: flex;">
                     ${renderStepperControl({
                       id: `weight-${matKey}`,
                       value: Number(materialWeights[matKey]) || 0,
                       unit: 'KG',
                       step: 1,
                       min: 0,
-                      max: 2000
+                      max: 2000,
+                      editable: true,
+                      inputClass: 'material-weight-input'
                     })}
                   </div>
                 </div>
@@ -377,6 +460,27 @@ export function attachContainerReportEvents(containerEl, store) {
         }
       }
     });
+  });
+
+  containerEl.querySelectorAll('.incident-checkbox').forEach((checkbox) => {
+    checkbox.addEventListener('change', (event) => {
+      const incidentKey = event.currentTarget.getAttribute('data-incident');
+      if (!incidentKey) {
+        return;
+      }
+
+      incidents[incidentKey] = event.currentTarget.checked;
+      if (stop) {
+        stop.incidents = { ...incidents };
+      }
+    });
+  });
+
+  containerEl.querySelector('#incident-comments')?.addEventListener('input', (event) => {
+    incidentComments = event.currentTarget.value;
+    if (stop) {
+      stop.incidentComments = incidentComments;
+    }
   });
 
   const presetButtons = containerEl.querySelectorAll('.btn-capacity-preset');
@@ -443,11 +547,35 @@ export function attachContainerReportEvents(containerEl, store) {
     });
   });
 
-  containerEl.querySelector('#btn-container-photo')?.addEventListener('click', () => {
-    store.showToast('Foto del contenedor capturada con marca de tiempo', 'info');
+  containerEl.querySelectorAll('.btn-photo-evidence').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      const photoKey = event.currentTarget.getAttribute('data-photo-key');
+      if (!photoKey) {
+        return;
+      }
+
+      photoEvidence[photoKey] = new Date().toISOString();
+      if (stop) {
+        stop.photoEvidence = { ...photoEvidence };
+      }
+
+      event.currentTarget.classList.add('active');
+      const status = event.currentTarget.querySelector('.photo-evidence-status');
+      if (status) {
+        status.textContent = 'CAPTURADA';
+      }
+      store.showToast(`${photoKey.includes('initial') ? 'Evidencia inicial' : 'Evidencia final'} capturada`, 'info');
+    });
   });
 
   containerEl.querySelector('#btn-save-container-report')?.addEventListener('click', () => {
+    const requiredPhotos = ['initialExterior', 'initialInterior', 'finalExterior', 'finalInterior'];
+    const missingPhotos = requiredPhotos.filter((photoKey) => !photoEvidence[photoKey]);
+    if (missingPhotos.length > 0) {
+      store.showToast('Captura las fotos exterior e interior del inicio y del final', 'info');
+      return;
+    }
+
     const materialTotals = { ...materialWeights };
     const finalKg = selectedMaterials.reduce((sum, matKey) => sum + (Number(materialTotals[matKey]) || 0), 0);
 
@@ -456,15 +584,22 @@ export function attachContainerReportEvents(containerEl, store) {
       stop.material = selectedMaterials[0];
       stop.materialWeights = { ...materialTotals };
       stop.collectedKg = finalKg;
+      stop.incidents = { ...incidents };
+      stop.incidentComments = incidentComments;
     }
+
+    store.showToast(`¡Contenedor ${store.state.activeContainerId} registrado con éxito!`);
 
     store.completeContainerReport(store.state.activeContainerId, {
       fillLevel: currentFill,
       collectedKg: finalKg,
       materials: [...selectedMaterials],
-      materialWeights: { ...materialTotals }
+      materialWeights: { ...materialTotals },
+      photoEvidence: { ...photoEvidence },
+      incidents: { ...incidents },
+      incidentComments
     });
-    store.showToast(`¡Contenedor ${store.state.activeContainerId} registrado con éxito!`);
+
     store.setScreen('map');
   });
 }

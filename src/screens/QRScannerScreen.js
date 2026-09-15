@@ -64,9 +64,6 @@ export function renderQRScannerScreen(state) {
               ${currentContainer.address}
             </p>
           </div>
-          <span class="badge-material badge-material-${currentContainer.material}">
-            ${currentContainer.material.toUpperCase()}
-          </span>
         </div>
 
         <!-- Action Button -->

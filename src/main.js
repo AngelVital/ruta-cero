@@ -8,7 +8,6 @@
 import { store } from './state/store.js';
 import { renderAppHeader } from './components/AppHeader.js';
 import { renderNavigationBar, attachNavigationBarEvents } from './components/NavigationBar.js';
-import { renderSimulatorToolbar } from './components/DeviceSimulator.js';
 
 // Screens
 import { renderDispatchScreen, attachDispatchScreenEvents } from './screens/DispatchScreen.js';
@@ -77,25 +76,18 @@ function renderApp() {
   // Master Shell Layout
   appEl.innerHTML = `
     <div class="hud-canvas">
-      ${renderSimulatorToolbar(state)}
-      
-      <div class="mobile-chassis ${state.fullscreenMode ? 'fullscreen-mode' : ''}" id="main-mobile-chassis">
+      <div class="mobile-chassis" id="main-mobile-chassis">
         ${renderAppHeader(state)}
-        
+
         <main class="screen-viewport" id="screen-viewport-root">
           ${screenHtml}
         </main>
-        
+
         ${renderNavigationBar(state)}
         ${toastHtml}
       </div>
     </div>
   `;
-
-  // Attach Simulator Toolbar events
-  document.getElementById('btn-toggle-fullscreen')?.addEventListener('click', () => {
-    store.toggleFullscreen();
-  });
 
   // Attach Navigation events
   attachNavigationBarEvents(appEl, store);

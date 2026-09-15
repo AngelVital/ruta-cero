@@ -7,7 +7,6 @@ class TacticalStore {
   constructor() {
     this.state = {
       currentScreen: 'dispatch',
-      fullscreenMode: false,
       unit: {
         id: 'U-14',
         model: 'Freightliner M2 Econovo',
@@ -155,11 +154,6 @@ class TacticalStore {
     this.notify();
   }
 
-  toggleFullscreen() {
-    this.state.fullscreenMode = !this.state.fullscreenMode;
-    this.notify();
-  }
-
   selectContainer(id) {
     this.state.activeContainerId = id;
     this.notify();
@@ -207,6 +201,15 @@ class TacticalStore {
       if (reportData.materials) {
         stop.materials = reportData.materials;
         stop.material = reportData.materials[0] || stop.material;
+      }
+      if (reportData.photoEvidence) {
+        stop.photoEvidence = { ...reportData.photoEvidence };
+      }
+      if (reportData.incidents) {
+        stop.incidents = { ...reportData.incidents };
+      }
+      if (reportData.incidentComments !== undefined) {
+        stop.incidentComments = reportData.incidentComments;
       }
       this.state.route.completedCount = this.state.stops.filter(s => s.status === 'completed').length;
 
