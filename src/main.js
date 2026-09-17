@@ -27,6 +27,15 @@ function renderApp() {
   const oldViewport = document.getElementById('screen-viewport-root');
   const screenChanged = previousScreen !== null && previousScreen !== state.currentScreen;
   const savedScrollTop = (!screenChanged && oldViewport) ? oldViewport.scrollTop : 0;
+
+  if (screenChanged && oldViewport) {
+    oldViewport.querySelectorAll('video').forEach((video) => {
+      video.pause();
+      video.srcObject?.getTracks().forEach(track => track.stop());
+      video.srcObject = null;
+    });
+  }
+
   previousScreen = state.currentScreen;
 
   // Select active screen renderer and attach event handler

@@ -108,6 +108,7 @@ export function attachQRScannerEvents(container, store) {
   const barcodeStatus = container.querySelector('#barcode-status');
   let cameraControls = null;
   let cameraStarting = false;
+  let cameraStopRequested = false;
   let flashlightOn = false;
 
   const setStatus = (message, color = '#64748b') => {
@@ -118,10 +119,13 @@ export function attachQRScannerEvents(container, store) {
   };
 
   const stopCamera = () => {
+    cameraStopRequested = true;
     cameraControls?.stop();
     cameraControls = null;
-    video?.srcObject?.getTracks().forEach(track => track.stop());
+    const stream = video?.srcObject;
+    stream?.getTracks().forEach(track => track.stop());
     if (video) {
+      video.pause();
       video.srcObject = null;
     }
     scanArea?.classList.remove('camera-active');
@@ -162,16 +166,18 @@ export function attachQRScannerEvents(container, store) {
     }
   });
 
-  const validateBarcode = () => {
-    const scannedValue = barcodeInput?.value.trim().toUpperCase();
+  const validateBarcode = (value = barcodeInput?.value) => {
+    const scannedValue = String(value || '').trim().toUpperCase();
     const matchedContainer = store.state.stops.find(stop => stop.id.toUpperCase() === scannedValue);
 
     if (!matchedContainer) {
       if (barcodeStatus) {
-        barcodeStatus.textContent = 'Código no válido: no coincide con ningún contenedor.';
+        barcodeStatus.textContent = scannedValue
+          ? `Código detectado: ${scannedValue}. No coincide con ningún ID de contenedor.`
+          : 'No se recibió ningún código. Intenta acercar y enfocar la etiqueta.';
         barcodeStatus.style.color = '#e11d48';
       }
-      store.showToast('Código no válido', 'info');
+      store.showToast(scannedValue ? 'Código detectado, pero no corresponde a un contenedor' : 'No se pudo leer el código', 'info');
       barcodeInput?.focus();
       return;
     }
@@ -198,11 +204,14 @@ export function attachQRScannerEvents(container, store) {
     BarcodeFormat.EAN_8,
     BarcodeFormat.EAN_13,
     BarcodeFormat.ITF,
+    BarcodeFormat.RSS_14,
+    BarcodeFormat.RSS_EXPANDED,
     BarcodeFormat.UPC_A,
     BarcodeFormat.UPC_E
   ];
   const hints = new Map();
   hints.set(DecodeHintType.POSSIBLE_FORMATS, barcodeFormats);
+  hints.set(DecodeHintType.TRY_HARDER, true);
 
   const startCamera = async () => {
     if (cameraStarting || cameraControls) return;
@@ -217,6 +226,7 @@ export function attachQRScannerEvents(container, store) {
     }
 
     cameraStarting = true;
+    cameraStopRequested = false;
     setStatus('Solicitando acceso a la cámara...');
     try {
       const codeReader = new BrowserMultiFormatReader(hints);
@@ -227,8 +237,12 @@ export function attachQRScannerEvents(container, store) {
 
         barcodeInput.value = result.getText();
         setStatus(`Código leído: ${result.getText()}`);
-        validateBarcode();
+        validateBarcode(result.getText());
       });
+      if (cameraStopRequested) {
+        stopCamera();
+        return;
+      }
       showCameraActive();
       setStatus('Cámara activa. Centra el código de barras en el visor.');
     } catch (error) {
@@ -264,4 +278,6 @@ export function attachQRScannerEvents(container, store) {
   });
 
   startCamera();
+
+  window.addEventListener('pagehide', stopCamera, { once: true });
 }
