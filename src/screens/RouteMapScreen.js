@@ -103,7 +103,7 @@ export function renderRouteMapScreen(state) {
     <div style="padding: 12px 16px 6px 16px; background-color: #ffffff; border-bottom: 2px solid #0f172a; display: flex; justify-content: space-between; align-items: center;">
       <h2 class="font-headline-sm" style="margin: 0;">PUNTOS PROGRAMADOS (${state.stops.length})</h2>
       <button type="button" class="btn-tactical btn-tactical-sm btn-tactical-primary" id="btn-quick-scan-active">
-        <span class="material-symbols-outlined" style="font-size: 16px;">qr_code_scanner</span>
+        <span class="material-symbols-outlined" style="font-size: 16px;">barcode_reader</span>
         <span>ESCANEAR</span>
       </button>
     </div>

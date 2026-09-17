@@ -251,6 +251,41 @@
   justify-content: center;
 }
 
+.barcode-camera {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.barcode-camera-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #cbd5e1;
+  font-family: var(--font-headline);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.barcode-camera-placeholder .material-symbols-outlined {
+  font-size: 42px;
+  color: #00a86b;
+}
+
+.barcode-scanner-viewport:not(.camera-active) .barcode-camera,
+.barcode-scanner-viewport:not(.camera-active) .qr-reticle,
+.barcode-scanner-viewport:not(.camera-active) .qr-laser-beam {
+  display: none;
+}
+
 .qr-reticle {
   width: 200px;
   height: 200px;

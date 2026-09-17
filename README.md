@@ -23,7 +23,7 @@ La navegación permite cambiar entre estas vistas:
 2. **Inspección 360°:** revisión de nueve puntos del vehículo y comentarios.
 3. **Registro de combustible:** litros cargados, preset de carga y odómetro.
 4. **Mapa de ruta:** seguimiento de las paradas y el avance de la ruta R-04.
-5. **Escáner QR:** identificación de contenedores.
+5. **Escáner de código de barras:** usa la cámara para identificar contenedores por su ID.
 6. **Reporte de contenedor:** nivel de llenado, materiales y kilos recolectados.
 
 Las acciones actualizan el store central y provocan el re-render de la interfaz. Al completar un reporte, la parada se marca como completada y se activa automáticamente la siguiente parada pendiente.
@@ -43,6 +43,8 @@ npm run dev
 ```
 
 Vite iniciará el servidor en `http://localhost:5173`. La configuración permite acceder desde otros dispositivos de la red local.
+
+> Para usar la cámara, abre la aplicación en `http://localhost:5173` en el mismo equipo. En un teléfono u otro equipo de la red, usa HTTPS; los navegadores bloquean la cámara en conexiones HTTP normales por IP y al abrir `index.html` directamente.
 
 ## Comandos disponibles
 
