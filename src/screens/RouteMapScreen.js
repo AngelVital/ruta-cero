@@ -7,6 +7,15 @@ export function renderRouteMapScreen(state) {
   const activeStop = state.stops.find(s => s.status === 'active') || state.stops[2];
 
   return `
+    <div class="route-google-map" aria-label="Mapa de ruta programada">
+      <iframe
+        src="https://www.google.com/maps/d/embed?mid=1yKiTG3Rm9MWtsufpbGwYzn4AMAsxxOU&ehbc=2E312F"
+        title="Mapa de ruta programada"
+        loading="lazy"
+        allowfullscreen
+      ></iframe>
+    </div>
+
     <div class="screen-header-bar">
       <div class="screen-header-title">
         <span class="material-symbols-outlined" style="color: var(--color-primary);">alt_route</span>
