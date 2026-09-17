@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "Ruta Cero",
+    "slug": "ruta-cero",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": { "backgroundColor": "#0d1c2e" },
+    "assetBundlePatterns": ["**/*"]
+  }
+}

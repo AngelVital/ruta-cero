@@ -32,6 +32,21 @@ export function renderDispatchScreen(state) {
       </div>
     </div>
 
+    <div class="dispatch-telemetry-strip">
+      <div>
+        <span class="font-label-sm">TURNO ACTIVO</span>
+        <strong>${state.operator.shift}</strong>
+      </div>
+      <div>
+        <span class="font-label-sm">BASE DE SALIDA</span>
+        <strong>${state.operator.depot}</strong>
+      </div>
+      <div>
+        <span class="font-label-sm">CAPACIDAD UNIDAD</span>
+        <strong>${state.unit.compactorCapacity}</strong>
+      </div>
+    </div>
+
     <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
       <!-- Rapid Diagnostic Badges -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">

@@ -2,14 +2,25 @@
   "name": "ruta-cero",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
-  "description": "Smart Waste Collection Mobile Operations HUD — Imported from Stitch Project 13352991854495087010",
+  "description": "HUD tactico de operaciones de campo para Expo",
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "expo": "~57.0.23",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-web": "^0.21.0",
+    "react-native-safe-area-context": "~5.7.0"
   },
   "devDependencies": {
-    "vite": "^6.0.7"
+    "@types/react": "~19.2.4",
+    "typescript": "~6.0.3"
   }
 }

@@ -10,12 +10,16 @@
   align-items: center;
   justify-content: flex-start;
   padding: 16px;
-  background: radial-gradient(circle at 50% 0%, #172437 0%, #0a111c 100%);
+  background:
+    linear-gradient(rgba(0, 168, 107, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 168, 107, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, #1b2d43 0%, #080f19 72%);
+  background-size: 32px 32px, 32px 32px, auto;
 }
 
 /* Rugged Mobile Chassis */
 .mobile-chassis {
-  width: min(100%, 390px);
+  width: min(100%, 1180px);
   height: min(calc(100vh - 48px), 844px);
   max-height: calc(100vh - 48px);
   background-color: var(--color-surface);
@@ -45,6 +49,16 @@
   flex-shrink: 0;
 }
 
+.hud-status-bar::after {
+  content: 'FIELD-SPEC / OPERACIONES DE CAMPO';
+  color: #64748b;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  margin-left: auto;
+  padding-left: 16px;
+}
+
 .hud-status-bar-indicators {
   display: flex;
   align-items: center;
@@ -66,6 +80,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
+}
+
+.screen-viewport::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.42), transparent 32%);
+  z-index: 1;
 }
 
 /* Bottom Tactical Navigation Bar */
@@ -142,6 +165,45 @@
   gap: 8px;
 }
 
+.dispatch-telemetry-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: #132238;
+  color: #fff;
+  border-bottom: 2px solid #0f172a;
+  padding: 10px 16px;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.dispatch-telemetry-strip > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dispatch-telemetry-strip > div + div {
+  border-left: 1px solid #334155;
+  padding-left: 12px;
+}
+
+.dispatch-telemetry-strip .font-label-sm {
+  color: #7dd3fc;
+  font-size: 10px;
+}
+
+.dispatch-telemetry-strip strong {
+  color: #f8fafc;
+  font-family: var(--font-headline);
+  font-size: 15px;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Segmented Capacity Meter (4 Blocks) */
 .capacity-meter-wrap {
   display: flex;
@@ -172,6 +234,29 @@
 .capacity-block.filled-optimal { background-color: var(--color-cap-optimal); }
 .capacity-block.filled-warning { background-color: var(--color-cap-warning); }
 .capacity-block.filled-critical { background-color: var(--color-cap-critical); }
+
+@media (min-width: 760px) {
+  .hud-canvas { padding: 24px; }
+  .mobile-chassis { height: min(calc(100vh - 48px), 920px); }
+  .hud-status-bar { height: 46px; padding: 0 22px; }
+  .screen-header-bar { padding: 18px 28px; }
+  .screen-header-title { font-size: 24px; }
+  .screen-viewport > div[style*="padding: 16px"] {
+    padding: 24px 28px !important;
+    max-width: 1080px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .hud-bottom-nav { min-height: 72px; }
+  .nav-tab-item { font-size: 13px; }
+}
+
+@media (max-width: 600px) {
+  .hud-status-bar::after { display: none; }
+  .dispatch-telemetry-strip { padding: 9px 12px; gap: 8px; }
+  .dispatch-telemetry-strip > div + div { padding-left: 8px; }
+  .dispatch-telemetry-strip strong { font-size: 13px; }
+}
 
 /* Stepper Control (52px Glove Friendly) */
 .tactical-stepper {
