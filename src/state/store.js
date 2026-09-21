@@ -7,6 +7,7 @@ class TacticalStore {
   constructor() {
     this.state = {
       currentScreen: 'dispatch',
+      screenTransition: null,
       unit: {
         id: 'U-14',
         model: 'Freightliner M2 Econovo',
@@ -133,8 +134,9 @@ class TacticalStore {
     this.listeners.forEach(l => l(this.state));
   }
 
-  setScreen(screenName) {
+  setScreen(screenName, transition = 'slide-left') {
     this.state.currentScreen = screenName;
+    this.state.screenTransition = transition;
     this.notify();
   }
 

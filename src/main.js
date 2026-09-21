@@ -37,6 +37,8 @@ function renderApp() {
   }
 
   previousScreen = state.currentScreen;
+  const screenTransition = state.screenTransition;
+  state.screenTransition = null;
 
   // Select active screen renderer and attach event handler
   let screenHtml = '';
@@ -88,7 +90,7 @@ function renderApp() {
       <div class="mobile-chassis" id="main-mobile-chassis">
         ${renderAppHeader(state)}
 
-        <main class="screen-viewport" id="screen-viewport-root">
+        <main class="screen-viewport${screenTransition === 'slide-left' ? ' screen-transition-slide-left' : ''}" id="screen-viewport-root">
           ${screenHtml}
         </main>
 

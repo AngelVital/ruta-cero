@@ -184,7 +184,7 @@ export function attachQRScannerEvents(container, store) {
 
     stopCamera();
     store.selectContainer(matchedContainer.id);
-    store.setScreen('report');
+    store.setScreen('report', 'slide-left');
   };
 
   container.querySelector('#btn-validate-barcode')?.addEventListener('click', validateBarcode);

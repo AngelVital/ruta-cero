@@ -68,6 +68,28 @@
   flex-direction: column;
 }
 
+.screen-transition-slide-left {
+  animation: screenSlideLeft 0.32s ease-out both;
+}
+
+.screen-viewport > * {
+  animation: screenContentReveal 0.28s ease-out both;
+}
+
+.screen-viewport > *:nth-child(2) { animation-delay: 0.04s; }
+.screen-viewport > *:nth-child(3) { animation-delay: 0.08s; }
+.screen-viewport > *:nth-child(4) { animation-delay: 0.12s; }
+
+@keyframes screenContentReveal {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes screenSlideLeft {
+  from { transform: translateX(100%); opacity: 0.7; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
 .route-google-map {
   width: 100%;
   height: 260px;
@@ -116,7 +138,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  transition: all 0.1s ease;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 .nav-tab-item:last-child {
@@ -126,11 +148,17 @@
 .nav-tab-item .material-symbols-outlined {
   font-size: 22px;
   margin-bottom: 2px;
+  transition: transform 0.18s ease;
 }
 
 .nav-tab-item:hover {
   background-color: #1e293b;
   color: #f8fafc;
+}
+
+.nav-tab-item:hover .material-symbols-outlined,
+.nav-tab-item.active .material-symbols-outlined {
+  transform: translateY(-2px) scale(1.08);
 }
 
 .nav-tab-item.active {
@@ -242,7 +270,7 @@
 .qr-scanner-viewport {
   position: relative;
   width: 100%;
-  height: 320px;
+  height: 240px;
   background-color: #020617;
   border: 3px solid #0f172a;
   overflow: hidden;
@@ -343,6 +371,15 @@
   letter-spacing: 0.04em;
   z-index: 100;
   animation: toastSlideUp 0.25s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @keyframes toastSlideUp {
