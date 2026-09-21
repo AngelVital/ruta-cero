@@ -35,81 +35,65 @@ class TacticalStore {
           id: 'CONT-01',
           code: 'AYUNTAMIENTO',
           address: 'Av. de los Deportistas',
-          material: 'plastico',
-          fillLevel: 0,
-          status: 'active',
-          time: '06:45 AM',
-          collectedKg: 0
+          latitude: 24.123721,
+          longitude: -110.316029,
+          status: 'active'
         },
         {
           id: 'CONT-02',
           code: 'CREE',
           address: 'Carretera al Norte, El Conchalito',
-          material: 'carton',
-          fillLevel: 0,
-          status: 'pending',
-          time: '07:18 AM',
-          collectedKg: 0
+          latitude: 24.137975,
+          longitude: -110.337452,
+          status: 'pending'
         },
         {
           id: 'CONT-03',
           code: 'PARQUE MORELOS',
           address: 'Blvd. Gral. Agustín Olachea',
-          material: 'papel',
-          fillLevel: 0,
-          status: 'pending',
-          time: '08:00 AM',
-          collectedKg: 0
+          latitude: 24.142479,
+          longitude: -110.312830,
+          status: 'pending'
         },
         {
           id: 'CONT-04',
           code: 'MALECÓN',
           address: 'Paseo Álvaro Obregón 12, Col. Centro',
-          material: 'plastico',
-          fillLevel: 0,
-          status: 'pending',
-          time: '08:45 AM',
-          collectedKg: 0
+          latitude: 24.158041,
+          longitude: -110.319819,
+          status: 'pending'
         },
         {
           id: 'CONT-05',
           code: 'UABCS',
           address: 'Blvd. Forjadores',
-          material: 'carton',
-          fillLevel: 0,
-          status: 'pending',
-          time: '09:30 AM',
-          collectedKg: 0
+          latitude: 24.098210,
+          longitude: -110.316907,
+          status: 'pending'
         },
         {
           id: 'CONT-06',
           code: 'CAMINO REAL',
           address: 'Circuito los Bledales',
-          material: 'plastico',
-          fillLevel: 0,
-          status: 'pending',
-          time: '10:15 AM',
-          collectedKg: 0
+          latitude: 24.061530,
+          longitude: -110.298913,
+          status: 'pending'
         },
         {
           id: 'CONT-07',
           code: 'SEP',
           address: 'Luis Donaldo Colosio, Las Arboledas',
-          material: 'papel',
-          fillLevel: 0,
-          status: 'pending',
-          time: '11:00 AM',
-          collectedKg: 0
+          latitude: 24.134313,
+          longitude: -110.328148,
+          status: 'pending'
         },
         {
           id: 'CONT-08',
           code: 'EL CENTENARIO',
           address: 'El Centenario',
-          material: 'carton',
-          fillLevel: 0,
-          status: 'pending',
-          time: '11:45 AM',
-          collectedKg: 0
+          latitude: 24.102749,
+          longitude: -110.413680,
+          status: 'pending'
         }
       ],
       activeContainerId: 'CONT-01',

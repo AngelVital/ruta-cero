@@ -4,13 +4,18 @@
  */
 
 export function renderRouteMapScreen(state) {
-  const activeStop = state.stops.find(s => s.status === 'active') || state.stops[2];
+  const activeStop = state.stops.find(s => s.id === state.activeContainerId)
+    || state.stops.find(s => s.status === 'active')
+    || state.stops[0];
+  const destination = `${activeStop.latitude},${activeStop.longitude}`;
+  const mapsUrl = `https://www.google.com/maps?q=${destination}&output=embed`;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
 
   return `
-    <div class="route-google-map" aria-label="Mapa de ruta programada">
+    <div class="route-google-map" aria-label="Ubicación de ${activeStop.id}">
       <iframe
-        src="https://www.google.com/maps/d/embed?mid=1yKiTG3Rm9MWtsufpbGwYzn4AMAsxxOU&ehbc=2E312F"
-        title="Mapa de ruta programada"
+        src="${mapsUrl}"
+        title="Ubicación de ${activeStop.id}"
         loading="lazy"
         allowfullscreen
       ></iframe>
@@ -19,9 +24,13 @@ export function renderRouteMapScreen(state) {
     <div class="screen-header-bar">
       <div class="screen-header-title">
         <span class="material-symbols-outlined" style="color: var(--color-primary);">alt_route</span>
-        <span>RUTA R-04 • CENTRO</span>
+        <span>${activeStop.id} • ${activeStop.code}</span>
       </div>
       <div style="display: flex; gap: 6px;">
+        <a class="btn-tactical btn-tactical-sm btn-tactical-primary" href="${directionsUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+          <span class="material-symbols-outlined" style="font-size: 16px;">directions</span>
+          <span>CÓMO LLEGAR</span>
+        </a>
         <span class="status-pill status-pill-optimal" style="font-size: 11px;">
           ${state.route.completedCount}/${state.stops.length} HECHO
         </span>
@@ -124,27 +133,29 @@ export function renderRouteMapScreen(state) {
         return `
           <div 
             class="card-tactical stop-item-card" 
-            style="cursor: pointer; ${isActive ? 'border-color: #0284c7; box-shadow: 4px 4px 0px #0284c7;' : ''}"
+            style="cursor: pointer; ${stop.id === activeStop.id ? 'border-color: #0284c7; box-shadow: 4px 4px 0px #0284c7;' : ''}"
             data-container-id="${stop.id}"
           >
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
-              <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: flex-start; gap: 8px; flex: 1; min-width: 0;">
+                <span class="material-symbols-outlined" title="Ver ubicación en el mapa" aria-label="Ver ubicación en el mapa" style="color: #0284c7; font-size: 22px; flex-shrink: 0;">location_on</span>
                 <span class="font-headline-sm" style="color: #0f172a; font-size: 17px;">[${String(index + 1).padStart(2, '0')}] ${stop.id} • ${stop.code}</span>
-                
               </div>
               <div style="flex-shrink: 0;">${statusBadge}</div>
             </div>
 
             <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px solid #e2e8f0; margin-top: 4px;">
             <p class="font-body-sm" style="color: #475569; font-size: 13px; margin-top: 2px;">${stop.address}</p>
-              <button 
-                type="button" 
-                class="btn-tactical btn-tactical-sm btn-report-stop" 
-                data-container-id="${stop.id}"
-                style="padding: 0 10px; height: 36px; font-size: 12px;"
-              >
-                ${isCompleted ? 'VER REPORTE' : 'REGISTRAR'}
-              </button>
+              ${isCompleted ? `
+                <button
+                  type="button"
+                  class="btn-tactical btn-tactical-sm btn-report-stop"
+                  data-container-id="${stop.id}"
+                  style="padding: 0 10px; height: 36px; font-size: 12px;"
+                >
+                  VER REPORTE
+                </button>
+              ` : ''}
             </div>
           </div>
         `;
@@ -158,11 +169,21 @@ export function attachRouteMapEvents(container, store) {
     store.setScreen('scanner');
   });
 
-  const stopCards = container.querySelectorAll('.stop-item-card, .btn-report-stop');
-  stopCards.forEach(card => {
+  container.querySelectorAll('.stop-item-card').forEach(card => {
     card.addEventListener('click', (e) => {
       e.stopPropagation();
       const cid = card.getAttribute('data-container-id');
+      if (cid) {
+        store.selectContainer(cid);
+        document.getElementById('screen-viewport-root')?.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+
+  container.querySelectorAll('.btn-report-stop').forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cid = button.getAttribute('data-container-id');
       if (cid) {
         store.selectContainer(cid);
         store.setScreen('report');

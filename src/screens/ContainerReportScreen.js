@@ -109,13 +109,14 @@ function renderMaterialWeightBars(selectedMaterials, materialWeights) {
 export function renderContainerReportScreen(state) {
   const container = state.stops.find(s => s.id === state.activeContainerId) || state.stops[3];
 
-  let initialFill = container.fillLevel !== undefined ? container.fillLevel : 75;
+  const hasInitialFill = container.fillLevel !== undefined;
+  let initialFill = container.fillLevel ?? 0;
   let initialKg = container.collectedKg || 0;
 
   // Selected materials (supports multiple)
   let selectedMaterials = Array.isArray(container.materials) && container.materials.length > 0
     ? [...container.materials]
-    : [container.material || 'plastico'];
+    : container.material ? [container.material] : [];
 
   const materialWeights = getMaterialWeightMap(container);
   const photoEvidence = getPhotoEvidence(container);
@@ -159,7 +160,7 @@ export function renderContainerReportScreen(state) {
             class="card-tactical btn-capacity-preset" 
             data-level="low"
             data-pct="20"
-            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${initialFill <= 40 ? '#00a86b' : '#0f172a'}; background: ${initialFill <= 40 ? '#ecfdf5' : '#ffffff'}; box-shadow: ${initialFill <= 40 ? '3px 3px 0px #00a86b' : 'var(--shadow-resting)'};"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${hasInitialFill && initialFill <= 40 ? '#00a86b' : '#0f172a'}; background: ${hasInitialFill && initialFill <= 40 ? '#ecfdf5' : '#ffffff'}; box-shadow: ${hasInitialFill && initialFill <= 40 ? '3px 3px 0px #00a86b' : 'var(--shadow-resting)'};"
           >
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 32px; height: 32px; background-color: #d1fae5; border: 2px solid #0f172a; display: flex; align-items: center; justify-content: center;">
@@ -170,8 +171,8 @@ export function renderContainerReportScreen(state) {
                 <div class="font-body-sm" style="color: #64748b; font-size: 12px;">No se requiere recolección</div>
               </div>
             </div>
-            <span class="material-symbols-outlined capacity-check-icon" style="color: ${initialFill <= 40 ? '#00a86b' : '#cbd5e1'}; font-size: 22px;">
-              ${initialFill <= 40 ? 'check_circle' : 'radio_button_unchecked'}
+            <span class="material-symbols-outlined capacity-check-icon" style="color: ${hasInitialFill && initialFill <= 40 ? '#00a86b' : '#cbd5e1'}; font-size: 22px;">
+              ${hasInitialFill && initialFill <= 40 ? 'check_circle' : 'radio_button_unchecked'}
             </span>
           </button>
 
@@ -180,7 +181,7 @@ export function renderContainerReportScreen(state) {
             class="card-tactical btn-capacity-preset" 
             data-level="medium"
             data-pct="55"
-            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${initialFill > 40 && initialFill <= 75 ? '#d97706' : '#0f172a'}; background: ${initialFill > 40 && initialFill <= 75 ? '#fffbeb' : '#ffffff'}; box-shadow: ${initialFill > 40 && initialFill <= 75 ? '3px 3px 0px #d97706' : 'var(--shadow-resting)'};"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? '#d97706' : '#0f172a'}; background: ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? '#fffbeb' : '#ffffff'}; box-shadow: ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? '3px 3px 0px #d97706' : 'var(--shadow-resting)'};"
           >
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 32px; height: 32px; background-color: #fef3c7; border: 2px solid #0f172a; display: flex; align-items: center; justify-content: center;">
@@ -191,8 +192,8 @@ export function renderContainerReportScreen(state) {
                 <div class="font-body-sm" style="color: #64748b; font-size: 12px;">Recolección recomendada</div>
               </div>
             </div>
-            <span class="material-symbols-outlined capacity-check-icon" style="color: ${initialFill > 40 && initialFill <= 75 ? '#d97706' : '#cbd5e1'}; font-size: 22px;">
-              ${initialFill > 40 && initialFill <= 75 ? 'check_circle' : 'radio_button_unchecked'}
+            <span class="material-symbols-outlined capacity-check-icon" style="color: ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? '#d97706' : '#cbd5e1'}; font-size: 22px;">
+              ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? 'check_circle' : 'radio_button_unchecked'}
             </span>
           </button>
 
@@ -201,7 +202,7 @@ export function renderContainerReportScreen(state) {
             class="card-tactical btn-capacity-preset" 
             data-level="critical"
             data-pct="90"
-            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${initialFill > 75 ? '#e11d48' : '#0f172a'}; background: ${initialFill > 75 ? '#fef2f2' : '#ffffff'}; box-shadow: ${initialFill > 75 ? '3px 3px 0px #e11d48' : 'var(--shadow-resting)'};"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${hasInitialFill && initialFill > 75 ? '#e11d48' : '#0f172a'}; background: ${hasInitialFill && initialFill > 75 ? '#fef2f2' : '#ffffff'}; box-shadow: ${hasInitialFill && initialFill > 75 ? '3px 3px 0px #e11d48' : 'var(--shadow-resting)'};"
           >
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 32px; height: 32px; background-color: #fee2e2; border: 2px solid #0f172a; display: flex; align-items: center; justify-content: center;">
@@ -212,8 +213,8 @@ export function renderContainerReportScreen(state) {
                 <div class="font-body-sm" style="color: #64748b; font-size: 12px;">Recolección urgente</div>
               </div>
             </div>
-            <span class="material-symbols-outlined capacity-check-icon" style="color: ${initialFill > 75 ? '#e11d48' : '#cbd5e1'}; font-size: 22px;">
-              ${initialFill > 75 ? 'check_circle' : 'radio_button_unchecked'}
+            <span class="material-symbols-outlined capacity-check-icon" style="color: ${hasInitialFill && initialFill > 75 ? '#e11d48' : '#cbd5e1'}; font-size: 22px;">
+              ${hasInitialFill && initialFill > 75 ? 'check_circle' : 'radio_button_unchecked'}
             </span>
           </button>
         </div>
@@ -301,7 +302,7 @@ export function attachContainerReportEvents(containerEl, store) {
 
   let selectedMaterials = (stop && Array.isArray(stop.materials) && stop.materials.length > 0)
     ? [...stop.materials]
-    : [(stop && stop.material) || 'plastico'];
+    : (stop && stop.material ? [stop.material] : []);
 
   const materialWeights = (stop && stop.materialWeights && typeof stop.materialWeights === 'object')
     ? { ...stop.materialWeights }
