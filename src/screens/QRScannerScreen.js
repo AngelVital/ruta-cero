@@ -13,7 +13,7 @@ export function renderQRScannerScreen(state) {
     <div class="screen-header-bar">
       <div class="screen-header-title">
         <span class="material-symbols-outlined" style="color: var(--color-primary);">barcode_reader</span>
-        <span>ESCANEAR CÓDIGO DE BARRAS</span>
+        <span>ESCANEAR CÓDIGO QR</span>
       </div>
       <button type="button" class="btn-tactical btn-tactical-sm" id="btn-scanner-cancel">
         CANCELAR
@@ -22,7 +22,7 @@ export function renderQRScannerScreen(state) {
 
     <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
       <!-- Camera Viewport with Tactical Reticle -->
-      <div class="qr-scanner-viewport barcode-scanner-viewport" id="barcode-scan-area" role="button" tabindex="0" aria-label="Abrir cámara para escanear código de barras">
+      <div class="qr-scanner-viewport barcode-scanner-viewport" id="barcode-scan-area" role="button" tabindex="0" aria-label="Abrir cámara para escanear código QR">
         <video id="barcode-camera" class="barcode-camera" autoplay muted playsinline></video>
         <div id="barcode-camera-placeholder" class="barcode-camera-placeholder">
           <span class="material-symbols-outlined">photo_camera</span>
@@ -47,7 +47,7 @@ export function renderQRScannerScreen(state) {
         <!-- Viewport Top Overlay -->
         <div style="position: absolute; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: center;">
           <div style="background: rgba(15, 23, 42, 0.85); color: #00a86b; padding: 4px 8px; border: 1px solid #00a86b; font-family: var(--font-mono); font-size: 11px;">
-            CÁMARA DE BARRAS ACTIVA
+            CÁMARA ACTIVA
           </div>
           <button type="button" class="btn-tactical btn-tactical-sm" id="btn-toggle-flashlight" style="background: rgba(15, 23, 42, 0.85); color: #ffffff; width: 40px; height: 40px; padding: 0;" title="Linterna">
             <span class="material-symbols-outlined" style="font-size: 20px;">flashlight_on</span>
@@ -59,7 +59,7 @@ export function renderQRScannerScreen(state) {
 
         <!-- Viewport Bottom Message -->
         <div style="position: absolute; bottom: 12px; text-align: center; color: #cbd5e1; font-family: var(--font-headline); font-size: 13px; letter-spacing: 0.05em;">
-          APUNTE LA CÁMARA AL CÓDIGO DE BARRAS DEL CONTENEDOR
+          APUNTE LA CÁMARA AL CÓDIGO QR DEL CONTENEDOR
         </div>
       </div>
 
@@ -197,6 +197,7 @@ export function attachQRScannerEvents(container, store) {
   barcodeInput?.focus();
 
   const barcodeFormats = [
+    BarcodeFormat.QR_CODE,
     BarcodeFormat.CODE_128,
     BarcodeFormat.CODE_39,
     BarcodeFormat.CODE_93,
