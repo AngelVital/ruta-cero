@@ -31,19 +31,6 @@ export function renderQRScannerScreen(state) {
         <!-- Laser Scan Line -->
         <div class="qr-laser-beam" id="barcode-laser"></div>
 
-        <!-- Reticle -->
-        <div class="qr-reticle">
-          <div class="qr-corner tl"></div>
-          <div class="qr-corner tr"></div>
-          <div class="qr-corner bl"></div>
-          <div class="qr-corner br"></div>
-
-          <!-- Center Targeting Reticle -->
-          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0.3;">
-            <span class="material-symbols-outlined" style="font-size: 48px; color: #ffffff;">filter_center_focus</span>
-          </div>
-        </div>
-
         <!-- Viewport Top Overlay -->
         <div style="position: absolute; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: center;">
           <div style="background: rgba(15, 23, 42, 0.85); color: #00a86b; padding: 4px 8px; border: 1px solid #00a86b; font-family: var(--font-mono); font-size: 11px;">
@@ -110,6 +97,7 @@ export function attachQRScannerEvents(container, store) {
   let cameraStarting = false;
   let cameraStopRequested = false;
   let flashlightOn = false;
+  let barcodeValidated = false;
 
   const setStatus = (message, color = '#64748b') => {
     if (barcodeStatus) {
@@ -167,6 +155,8 @@ export function attachQRScannerEvents(container, store) {
   });
 
   const validateBarcode = (value = barcodeInput?.value) => {
+    if (barcodeValidated) return;
+
     const scannedValue = String(value || '').trim().toUpperCase();
     const matchedContainer = store.state.stops.find(stop => stop.id.toUpperCase() === scannedValue);
 
@@ -182,6 +172,7 @@ export function attachQRScannerEvents(container, store) {
       return;
     }
 
+    barcodeValidated = true;
     stopCamera();
     store.selectContainer(matchedContainer.id);
     store.setScreen('report', 'slide-left');
