@@ -7,7 +7,7 @@ export function renderNavigationBar(state) {
   const tabs = [
     { id: 'dispatch', label: 'Despacho', icon: 'local_shipping' },
     { id: 'map', label: 'Mapa R-04', icon: 'map' },
-    { id: 'scanner', label: 'Escáner barras', icon: 'barcode_reader' },
+    { id: 'scanner', label: 'Escáner QR', icon: 'barcode_reader' },
     { id: 'report', label: 'Reporte', icon: 'assignment' }
   ];
 
