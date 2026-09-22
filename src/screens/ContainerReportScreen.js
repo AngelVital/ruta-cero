@@ -66,10 +66,6 @@ function renderPhotoEvidenceSection(title, prefix, photoEvidence) {
 }
 
 function renderMaterialWeightBars(selectedMaterials, materialWeights) {
-  if (!selectedMaterials.length) {
-    return '';
-  }
-
   return `
     <div id="material-weights-panel" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
       <div class="font-label-sm" style="color: #0f172a; font-weight: 800; display: flex; align-items: center; gap: 6px;">
@@ -554,14 +550,16 @@ export function attachContainerReportEvents(containerEl, store) {
         return;
       }
 
+      const evidenceButton = event.currentTarget;
+
       openPhotoCapture(() => {
         photoEvidence[photoKey] = new Date().toISOString();
         if (stop) {
           stop.photoEvidence = { ...photoEvidence };
         }
 
-        event.currentTarget.classList.add('active');
-        const status = event.currentTarget.querySelector('.photo-evidence-status');
+        evidenceButton.classList.add('active');
+        const status = evidenceButton.querySelector('.photo-evidence-status');
         if (status) {
           status.textContent = 'CAPTURADA';
         }
