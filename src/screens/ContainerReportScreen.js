@@ -54,10 +54,10 @@ function renderPhotoEvidenceSection(title, prefix, photoEvidence) {
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         ${photos.map((photo) => `
-          <button type="button" class="btn-tactical btn-photo-evidence ${photoEvidence[photo.key] ? 'active' : ''}" data-photo-key="${photo.key}" style="min-height: 64px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+          <button type="button" class="btn-tactical btn-photo-evidence ${photoEvidence[photo.key] ? 'active' : ''}" data-photo-key="${photo.key}" aria-pressed="${photoEvidence[photo.key] ? 'true' : 'false'}" style="min-height: 64px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; ${photoEvidence[photo.key] ? 'background-color: #ecfdf5; color: #047857; border-color: #047857; box-shadow: 3px 3px 0px #047857;' : ''}">
             <span class="material-symbols-outlined" style="font-size: 22px;">${photo.icon}</span>
             <span style="font-size: 11px; font-weight: 800; text-align: center;">${photo.label}</span>
-            <span class="photo-evidence-status" style="font-size: 10px;">${photoEvidence[photo.key] ? 'CAPTURADA' : 'PENDIENTE'}</span>
+            <span class="photo-evidence-status" style="font-size: 10px;">${photoEvidence[photo.key] ? 'EVIDENCIA CAPTURADA' : 'PENDIENTE'}</span>
           </button>
         `).join('')}
       </div>
@@ -559,11 +559,15 @@ export function attachContainerReportEvents(containerEl, store) {
         }
 
         evidenceButton.classList.add('active');
+        evidenceButton.setAttribute('aria-pressed', 'true');
+        evidenceButton.style.backgroundColor = '#ecfdf5';
+        evidenceButton.style.color = '#047857';
+        evidenceButton.style.borderColor = '#047857';
+        evidenceButton.style.boxShadow = '3px 3px 0px #047857';
         const status = evidenceButton.querySelector('.photo-evidence-status');
         if (status) {
-          status.textContent = 'CAPTURADA';
+          status.textContent = 'EVIDENCIA CAPTURADA';
         }
-        store.showToast(`${photoKey.includes('initial') ? 'Evidencia inicial' : 'Evidencia final'} capturada`, 'info');
       }, (message) => store.showToast(message, 'info'));
     });
   });

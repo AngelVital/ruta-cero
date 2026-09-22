@@ -108,6 +108,7 @@ class TacticalStore {
         mirrors: null,
         safetyGear: null,
         extinguisher: null,
+        odometerPhotoEvidence: false,
         completed: false
       },
       inspectionComments: {},
@@ -141,6 +142,11 @@ class TacticalStore {
 
   selectContainer(id) {
     this.state.activeContainerId = id;
+    this.state.stops.forEach((stop) => {
+      if (stop.status !== 'completed') {
+        stop.status = stop.id === id ? 'active' : 'pending';
+      }
+    });
     this.notify();
   }
 

@@ -120,7 +120,7 @@ export function renderRouteMapScreen(state) {
     <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; background-color: #f1f5f9; flex: 1;">
       ${state.stops.map((stop, index) => {
         const isCompleted = stop.status === 'completed';
-        const isActive = stop.status === 'active';
+        const isActive = !isCompleted && stop.id === state.activeContainerId;
         
         let statusBadge = `<span class="status-pill" style="background-color: #94a3b8; color: #ffffff; font-size: 11px;">PENDIENTE</span>`;
         if (isCompleted) {

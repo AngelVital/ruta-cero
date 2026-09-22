@@ -5,6 +5,7 @@ import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
  */
 
 export function renderInspection360Screen(state) {
+  const odometerPhotoCaptured = Boolean(state.inspection360.odometerPhotoEvidence);
   const checkItems = [
     { key: 'tires', title: '1. ESTADO DE LLANTAS', desc: 'Desgaste, presión y birlos', icon: 'tire_repair' },
     { key: 'fluids', title: '2. ACEITE DE MOTOR', desc: 'Aceite de motor, anticongelante y dirección', icon: 'oil_barrel' },
@@ -108,9 +109,9 @@ export function renderInspection360Screen(state) {
         </div>
 
         <!-- Button directly below for Odometer Photographic Evidence -->
-        <button type="button" class="btn-tactical btn-tactical-secondary" id="btn-odometer-photo" style="min-height: 48px; width: 100%;">
-          <span class="material-symbols-outlined" style="font-size: 20px; color: var(--color-primary);">photo_camera</span>
-          <span>FOTO EVIDENCIA DEL ODÓMETRO</span>
+        <button type="button" class="btn-tactical btn-tactical-secondary ${odometerPhotoCaptured ? 'active' : ''}" id="btn-odometer-photo" aria-pressed="${odometerPhotoCaptured ? 'true' : 'false'}" style="min-height: 48px; width: 100%; ${odometerPhotoCaptured ? 'background-color: #ecfdf5; color: #047857; border-color: #047857; box-shadow: 3px 3px 0px #047857;' : ''}">
+          <span class="material-symbols-outlined" style="font-size: 20px; color: ${odometerPhotoCaptured ? '#047857' : 'var(--color-primary)'};">${odometerPhotoCaptured ? 'check_circle' : 'photo_camera'}</span>
+          <span id="odometer-photo-status">${odometerPhotoCaptured ? 'EVIDENCIA CAPTURADA' : 'FOTO EVIDENCIA DEL ODÓMETRO'}</span>
         </button>
       </div>
 
@@ -193,7 +194,19 @@ export function renderInspection360Screen(state) {
         const inspectionKeys = ['tires', 'fluids', 'hydraulics', 'lights', 'brakes', 'wipers', 'mirrors', 'safetyGear', 'extinguisher'];
         const filled = inspectionKeys.filter(k => state.inspection360[k] !== null && state.inspection360[k] !== undefined).length;
         const total = inspectionKeys.length;
-        const allFilled = filled === total;
+        const odometerPhotoCaptured = Boolean(state.inspection360.odometerPhotoEvidence);
+        const missingComments = inspectionKeys.filter(key => {
+          const value = state.inspection360[key];
+          const comment = (state.inspectionComments && state.inspectionComments[key]) || '';
+          return (value === 'REGULAR' || value === 'MAL') && !comment.trim();
+        }).length;
+        const allFilled = filled === total && odometerPhotoCaptured && missingComments === 0;
+        const missingPoints = total - filled;
+        const missingStatus = missingPoints > 0
+          ? `FALTAN ${missingPoints} PUNTO${missingPoints !== 1 ? 'S' : ''}${odometerPhotoCaptured ? '' : ' Y FOTO DEL ODÓMETRO'}`
+          : !odometerPhotoCaptured
+            ? 'FALTA FOTO DEL ODÓMETRO'
+            : `FALTA${missingComments !== 1 ? 'N' : ''} ${missingComments} COMENTARIO${missingComments !== 1 ? 'S' : ''}`;
         return `
           <button
             type="button"
@@ -203,7 +216,7 @@ export function renderInspection360Screen(state) {
             style="${!allFilled ? 'opacity: 0.45; cursor: not-allowed;' : ''}"
           >
             <span class="material-symbols-outlined" style="font-size: 22px;">verified</span>
-            <span>${allFilled ? 'CONFIRMAR Y FIRMAR INSPECCIÓN' : `FALTAN ${total - filled} CAMPO${total - filled !== 1 ? 'S' : ''} POR REVISAR`}</span>
+            <span>${allFilled ? 'CONFIRMAR Y FIRMAR INSPECCIÓN' : missingStatus}</span>
           </button>
         `;
       })()}
@@ -238,18 +251,67 @@ export function attachInspection360Events(container, store) {
   });
 
   // Odometer photo evidence
-  container.querySelector('#btn-odometer-photo')?.addEventListener('click', () => {
+  container.querySelector('#btn-odometer-photo')?.addEventListener('click', (event) => {
+    const evidenceButton = event.currentTarget;
     openPhotoCapture(
-      () => store.showToast('Foto del odómetro capturada como evidencia', 'info'),
+      () => {
+        store.state.inspection360.odometerPhotoEvidence = true;
+        evidenceButton.classList.add('active');
+        evidenceButton.setAttribute('aria-pressed', 'true');
+        evidenceButton.style.backgroundColor = '#ecfdf5';
+        evidenceButton.style.color = '#047857';
+        evidenceButton.style.borderColor = '#047857';
+        evidenceButton.style.boxShadow = '3px 3px 0px #047857';
+        const icon = evidenceButton.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.textContent = 'check_circle';
+          icon.style.color = '#047857';
+        }
+        const status = evidenceButton.querySelector('#odometer-photo-status');
+        if (status) {
+          status.textContent = 'EVIDENCIA CAPTURADA';
+        }
+        updateConfirmButton();
+      },
       (message) => store.showToast(message, 'info')
     );
   });
+
+  const inspectionKeys = ['tires', 'fluids', 'hydraulics', 'lights', 'brakes', 'wipers', 'mirrors', 'safetyGear', 'extinguisher'];
+  const updateConfirmButton = () => {
+    const confirmBtn = container.querySelector('#btn-confirm-inspection');
+    if (!confirmBtn) return;
+
+    const filled = inspectionKeys.filter(key => store.state.inspection360[key] !== null && store.state.inspection360[key] !== undefined).length;
+    const total = inspectionKeys.length;
+    const odometerPhotoCaptured = Boolean(store.state.inspection360.odometerPhotoEvidence);
+    const missingComments = inspectionKeys.filter(key => {
+      const value = store.state.inspection360[key];
+      const comment = (store.state.inspectionComments && store.state.inspectionComments[key]) || '';
+      return (value === 'REGULAR' || value === 'MAL') && !comment.trim();
+    }).length;
+    const allFilled = filled === total && odometerPhotoCaptured && missingComments === 0;
+    const missingPoints = total - filled;
+    confirmBtn.disabled = !allFilled;
+    confirmBtn.style.opacity = allFilled ? '1' : '0.45';
+    confirmBtn.style.cursor = allFilled ? '' : 'not-allowed';
+    confirmBtn.querySelector('span:last-child').textContent = allFilled
+      ? 'CONFIRMAR Y FIRMAR INSPECCIÓN'
+      : missingPoints > 0
+        ? `FALTAN ${missingPoints} PUNTO${missingPoints !== 1 ? 'S' : ''}${odometerPhotoCaptured ? '' : ' Y FOTO DEL ODÓMETRO'}`
+        : !odometerPhotoCaptured
+          ? 'FALTA FOTO DEL ODÓMETRO'
+          : `FALTA${missingComments !== 1 ? 'N' : ''} ${missingComments} COMENTARIO${missingComments !== 1 ? 'S' : ''}`;
+  };
 
   // Attach input listeners to any initially rendered comment textareas
   container.querySelectorAll('.inspection-comment-input').forEach(textarea => {
     textarea.addEventListener('input', (e) => {
       const k = e.currentTarget.getAttribute('data-comment-key');
-      if (k) store.updateInspectionComment(k, e.currentTarget.value);
+      if (k) {
+        store.updateInspectionComment(k, e.currentTarget.value);
+        updateConfirmButton();
+      }
     });
   });
 
@@ -321,6 +383,7 @@ export function attachInspection360Events(container, store) {
           const textarea = boxDiv.querySelector('.inspection-comment-input');
           textarea?.addEventListener('input', (ev) => {
             store.updateInspectionComment(key, ev.currentTarget.value);
+            updateConfirmButton();
           });
           textarea?.focus();
         } else {
@@ -332,29 +395,25 @@ export function attachInspection360Events(container, store) {
           if (textarea) textarea.style.borderColor = borderColor;
         }
       }
-    });
 
-    // After each toggle, update the confirm button state without full re-render
-    const inspectionKeys = ['tires', 'fluids', 'hydraulics', 'lights', 'brakes', 'wipers', 'mirrors', 'safetyGear', 'extinguisher'];
-    const confirmBtn = container.querySelector('#btn-confirm-inspection');
-    if (confirmBtn) {
-      const filled = inspectionKeys.filter(k => store.state.inspection360[k] !== null && store.state.inspection360[k] !== undefined).length;
-      const total = inspectionKeys.length;
-      const allFilled = filled === total;
-      confirmBtn.disabled = !allFilled;
-      confirmBtn.style.opacity = allFilled ? '1' : '0.45';
-      confirmBtn.style.cursor = allFilled ? '' : 'not-allowed';
-      confirmBtn.querySelector('span:last-child').textContent = allFilled
-        ? 'CONFIRMAR Y FIRMAR INSPECCIÓN'
-        : `FALTAN ${total - filled} CAMPO${total - filled !== 1 ? 'S' : ''} POR REVISAR`;
-    }
+      // Actualiza el avance en el mismo clic, sin reconstruir la pantalla.
+      updateConfirmButton();
+    });
   });
 
   // Confirm inspection and save all comments
   container.querySelector('#btn-confirm-inspection')?.addEventListener('click', () => {
-    const inspectionKeys = ['tires', 'fluids', 'hydraulics', 'lights', 'brakes', 'wipers', 'mirrors', 'safetyGear', 'extinguisher'];
-    const allFilled = inspectionKeys.every(k => store.state.inspection360[k] !== null && store.state.inspection360[k] !== undefined);
-    if (!allFilled) return;
+    const allFilled = inspectionKeys.every(k => store.state.inspection360[k] !== null && store.state.inspection360[k] !== undefined)
+      && Boolean(store.state.inspection360.odometerPhotoEvidence);
+    const missingCommentKey = inspectionKeys.find(key => {
+      const value = store.state.inspection360[key];
+      const comment = (store.state.inspectionComments && store.state.inspectionComments[key]) || '';
+      return (value === 'REGULAR' || value === 'MAL') && !comment.trim();
+    });
+    if (!allFilled || missingCommentKey) {
+      container.querySelector(`[data-comment-key="${missingCommentKey}"]`)?.focus();
+      return;
+    }
 
     container.querySelectorAll('.inspection-comment-input').forEach(input => {
       const k = input.getAttribute('data-comment-key');

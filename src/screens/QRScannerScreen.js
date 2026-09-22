@@ -6,7 +6,7 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 
 export function renderQRScannerScreen(state) {
-  const currentContainer = state.stops.find(s => s.id === state.activeContainerId) || state.stops[0];
+  const selectableContainers = state.stops.filter(stop => stop.status !== 'completed');
 
   return `
     <div class="screen-header-bar">
@@ -35,6 +35,9 @@ export function renderQRScannerScreen(state) {
           <div style="background: rgba(15, 23, 42, 0.85); color: #00a86b; padding: 4px 8px; border: 1px solid #00a86b; font-family: var(--font-mono); font-size: 11px;">
             CÁMARA ACTIVA
           </div>
+          <div id="barcode-countdown" style="background: rgba(15, 23, 42, 0.85); color: #ffffff; padding: 4px 8px; border: 1px solid #ffffff; font-family: var(--font-mono); font-size: 11px; display: none;">
+            LECTURA AUTOMÁTICA: 10 s
+          </div>
           <button type="button" class="btn-tactical btn-tactical-sm" id="btn-toggle-flashlight" style="background: rgba(15, 23, 42, 0.85); color: #ffffff; width: 40px; height: 40px; padding: 0;" title="Linterna">
             <span class="material-symbols-outlined" style="font-size: 20px;">flashlight_on</span>
           </button>
@@ -49,35 +52,21 @@ export function renderQRScannerScreen(state) {
         </div>
       </div>
 
-      <div class="card-tactical card-tactical-accent" style="padding: 14px; display: flex; flex-direction: column; gap: 8px;">
-        <label class="font-label-sm" for="barcode-input" style="color: #0f172a;">CÓDIGO LEÍDO / ENTRADA DEL LECTOR</label>
-        <div style="display: flex; gap: 8px;">
-          <input id="barcode-input" type="text" autocomplete="off" inputmode="text" placeholder="Ej. CONT-01" aria-describedby="barcode-status" style="flex: 1; min-width: 0; padding: 12px; border: 2px solid #0f172a; font: inherit; color: #0f172a; text-transform: uppercase;">
-          <button type="button" class="btn-tactical btn-tactical-primary" id="btn-validate-barcode" title="Validar código">
-            <span class="material-symbols-outlined">search</span>
-          </button>
-        </div>
-        <p id="barcode-status" class="font-body-sm" style="color: #64748b; font-size: 13px; margin: 0;" aria-live="polite">
-          Se solicitará permiso para usar la cámara. El reporte se abrirá cuando el código coincida con un contenedor.
-        </p>
-      </div>
-
-      <!-- Manual ID Fallback Modal Trigger -->
-      <div class="card-tactical" style="padding: 12px 14px;">
+      <div id="manual-selection-fallback" class="card-tactical" style="padding: 12px 14px; display: none;">
         <span class="font-label-sm" style="color: #475569; display: block; margin-bottom: 6px;">
-          PRUEBA RÁPIDA O ENTRADA MANUAL
+          LECTURA AUTOMÁTICA NO COMPLETADA
         </span>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          ${state.stops.slice(0, 5).map(s => `
-            <button 
-              type="button" 
-              class="btn-tactical btn-tactical-sm btn-quick-select-container ${s.id === currentContainer.id ? 'active' : ''}" 
-              data-id="${s.id}"
-              style="padding: 4px 10px; font-size: 12px;"
-            >
-              ${s.id} (${s.code})
+        <button type="button" class="btn-tactical btn-tactical-sm" id="btn-show-pending-containers">
+          <span class="material-symbols-outlined">format_list_bulleted</span>
+          ELEGIR CONTENEDOR MANUALMENTE
+        </button>
+        <div id="pending-containers-list" style="display: none; gap: 8px; flex-direction: column; margin-top: 10px;">
+          ${selectableContainers.length ? selectableContainers.map(stop => `
+            <button type="button" class="btn-tactical btn-tactical-sm btn-pending-container" data-id="${stop.id}" style="justify-content: space-between; padding: 8px 10px; font-size: 12px;">
+              <span>${stop.id}</span>
+              <span>${stop.code}</span>
             </button>
-          `).join('')}
+          `).join('') : '<span class="font-body-sm">No hay contenedores pendientes.</span>'}
         </div>
       </div>
     </div>
@@ -90,22 +79,42 @@ export function attachQRScannerEvents(container, store) {
   const cameraPlaceholder = container.querySelector('#barcode-camera-placeholder');
   const laser = container.querySelector('#barcode-laser');
   const closeCameraButton = container.querySelector('#btn-close-camera');
-  const barcodeInput = container.querySelector('#barcode-input');
-  const barcodeStatus = container.querySelector('#barcode-status');
+  const countdown = container.querySelector('#barcode-countdown');
+  const manualSelectionFallback = container.querySelector('#manual-selection-fallback');
+  const showPendingContainersButton = container.querySelector('#btn-show-pending-containers');
+  const pendingContainersList = container.querySelector('#pending-containers-list');
   let cameraControls = null;
   let cameraStarting = false;
   let cameraStopRequested = false;
   let flashlightOn = false;
   let barcodeValidated = false;
+  let countdownTimer = null;
+  let countdownTimeout = null;
 
-  const setStatus = (message, color = '#64748b') => {
-    if (barcodeStatus) {
-      barcodeStatus.textContent = message;
-      barcodeStatus.style.color = color;
-    }
+  const clearCountdown = () => {
+    window.clearInterval(countdownTimer);
+    window.clearTimeout(countdownTimeout);
+    countdownTimer = null;
+    countdownTimeout = null;
+  };
+
+  const startCountdown = () => {
+    clearCountdown();
+    let secondsRemaining = 10;
+    if (countdown) countdown.textContent = `LECTURA AUTOMÁTICA: ${secondsRemaining} s`;
+    countdownTimer = window.setInterval(() => {
+      secondsRemaining -= 1;
+      if (countdown) countdown.textContent = `LECTURA AUTOMÁTICA: ${secondsRemaining} s`;
+    }, 1000);
+    countdownTimeout = window.setTimeout(() => {
+      clearCountdown();
+      if (countdown) countdown.textContent = 'LECTURA AUTOMÁTICA AGOTADA';
+      if (manualSelectionFallback) manualSelectionFallback.style.display = 'block';
+    }, 10000);
   };
 
   const stopCamera = () => {
+    clearCountdown();
     cameraStopRequested = true;
     cameraControls?.stop();
     cameraControls = null;
@@ -119,6 +128,7 @@ export function attachQRScannerEvents(container, store) {
     if (cameraPlaceholder) cameraPlaceholder.style.display = 'flex';
     if (laser) laser.style.display = 'none';
     if (closeCameraButton) closeCameraButton.style.display = 'none';
+    if (countdown) countdown.style.display = 'none';
     flashlightOn = false;
     cameraStarting = false;
   };
@@ -128,6 +138,7 @@ export function attachQRScannerEvents(container, store) {
     if (cameraPlaceholder) cameraPlaceholder.style.display = 'none';
     if (laser) laser.style.display = 'block';
     if (closeCameraButton) closeCameraButton.style.display = 'block';
+    if (countdown) countdown.style.display = 'block';
   };
 
   container.querySelector('#btn-scanner-cancel')?.addEventListener('click', () => {
@@ -138,7 +149,6 @@ export function attachQRScannerEvents(container, store) {
   closeCameraButton?.addEventListener('click', (event) => {
     event.stopPropagation();
     stopCamera();
-    setStatus('Cámara cerrada. Pulsa el visor para volver a abrirla.');
   });
 
   container.querySelector('#btn-toggle-flashlight')?.addEventListener('click', (e) => {
@@ -153,21 +163,14 @@ export function attachQRScannerEvents(container, store) {
     }
   });
 
-  const validateBarcode = (value = barcodeInput?.value) => {
+  const validateBarcode = (value = '') => {
     if (barcodeValidated) return;
 
     const scannedValue = String(value || '').trim().toUpperCase();
     const matchedContainer = store.state.stops.find(stop => stop.id.toUpperCase() === scannedValue);
 
     if (!matchedContainer) {
-      if (barcodeStatus) {
-        barcodeStatus.textContent = scannedValue
-          ? `Código detectado: ${scannedValue}. No coincide con ningún ID de contenedor.`
-          : 'No se recibió ningún código. Intenta acercar y enfocar la etiqueta.';
-        barcodeStatus.style.color = '#e11d48';
-      }
       store.showToast(scannedValue ? 'Código detectado, pero no corresponde a un contenedor' : 'No se pudo leer el código', 'info');
-      barcodeInput?.focus();
       return;
     }
 
@@ -176,15 +179,6 @@ export function attachQRScannerEvents(container, store) {
     store.selectContainer(matchedContainer.id);
     store.setScreen('report', 'slide-left');
   };
-
-  container.querySelector('#btn-validate-barcode')?.addEventListener('click', validateBarcode);
-  barcodeInput?.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      validateBarcode();
-    }
-  });
-  barcodeInput?.focus();
 
   const barcodeFormats = [
     BarcodeFormat.QR_CODE,
@@ -208,17 +202,14 @@ export function attachQRScannerEvents(container, store) {
     if (cameraStarting || cameraControls) return;
 
     if (!video || !navigator.mediaDevices?.getUserMedia) {
-      const isLocalFile = window.location.protocol === 'file:';
-      const message = isLocalFile
-        ? 'Abre la aplicación con npm run dev; la cámara no funciona abriendo index.html directamente.'
-        : 'El navegador bloquea la cámara en esta conexión. Usa http://localhost:5173 o HTTPS.';
-      setStatus(message, '#d97706');
       return;
     }
 
     cameraStarting = true;
     cameraStopRequested = false;
-    setStatus('Solicitando acceso a la cámara...');
+    if (manualSelectionFallback) manualSelectionFallback.style.display = 'none';
+    if (pendingContainersList) pendingContainersList.style.display = 'none';
+    if (showPendingContainersButton) showPendingContainersButton.style.display = 'inline-flex';
     try {
       const codeReader = new BrowserMultiFormatReader(hints);
       cameraControls = await codeReader.decodeFromVideoDevice(undefined, video, (result) => {
@@ -226,8 +217,6 @@ export function attachQRScannerEvents(container, store) {
           return;
         }
 
-        barcodeInput.value = result.getText();
-        setStatus(`Código leído: ${result.getText()}`);
         validateBarcode(result.getText());
       });
       if (cameraStopRequested) {
@@ -235,15 +224,9 @@ export function attachQRScannerEvents(container, store) {
         return;
       }
       showCameraActive();
-      setStatus('Cámara activa. Centra el código de barras en el visor.');
-    } catch (error) {
+      startCountdown();
+    } catch {
       stopCamera();
-      const errorMessage = error?.name === 'NotAllowedError'
-        ? 'Permiso de cámara denegado. Actívalo en los permisos del navegador y recarga la pantalla.'
-        : error?.name === 'NotFoundError'
-          ? 'No se encontró una cámara disponible en este dispositivo.'
-          : 'No se pudo abrir la cámara. Cierra otras aplicaciones que la estén usando o introduce el código manualmente.';
-      setStatus(errorMessage, '#d97706');
     }
   };
 
@@ -258,13 +241,19 @@ export function attachQRScannerEvents(container, store) {
     }
   });
 
-  container.querySelectorAll('.btn-quick-select-container').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = e.currentTarget.getAttribute('data-id');
-      if (id) {
-        store.selectContainer(id);
-        store.showToast(`Contenedor seleccionado: ${id}`);
-      }
+  showPendingContainersButton?.addEventListener('click', () => {
+    if (pendingContainersList) pendingContainersList.style.display = 'flex';
+    showPendingContainersButton.style.display = 'none';
+  });
+
+  container.querySelectorAll('.btn-pending-container').forEach(btn => {
+    btn.addEventListener('click', (event) => {
+      const id = event.currentTarget.getAttribute('data-id');
+      if (!id) return;
+      barcodeValidated = true;
+      stopCamera();
+      store.selectContainer(id);
+      store.setScreen('report', 'slide-left');
     });
   });
 
