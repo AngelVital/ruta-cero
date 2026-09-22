@@ -11,6 +11,18 @@ export function renderRouteMapScreen(state) {
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
 
   return `
+    <div class="screen-header-bar">
+      <div class="screen-header-title">
+        <span class="material-symbols-outlined" style="color: var(--color-primary);">alt_route</span>
+        <span>MAPA DE RUTA</span>
+      </div>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <span class="status-pill status-pill-optimal" style="font-size: 11px;">
+          ${state.route.completedCount}/${state.stops.length} HECHO
+        </span>
+      </div>
+    </div>
+
     <div class="route-google-map" aria-label="Ubicación de ${activeStop.id}">
       <iframe
         src="${mapsUrl}"
@@ -20,19 +32,13 @@ export function renderRouteMapScreen(state) {
       ></iframe>
     </div>
 
-    <div class="screen-header-bar">
-      <div class="screen-header-title">
-        <span class="material-symbols-outlined" style="color: var(--color-primary);">alt_route</span>
-        <span>${activeStop.id} • ${activeStop.code}</span>
-      </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 16px; background-color: #ffffff; border-bottom: 2px solid #0f172a;">
+      <div class="font-headline-sm" style="color: #0f172a; min-width: 0;">${activeStop.id} • ${activeStop.code}</div>
       <div style="display: flex; gap: 6px;">
         <a class="btn-tactical btn-tactical-sm btn-tactical-primary" href="${directionsUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
           <span class="material-symbols-outlined" style="font-size: 16px;">directions</span>
           <span>CÓMO LLEGAR</span>
         </a>
-        <span class="status-pill status-pill-optimal" style="font-size: 11px;">
-          ${state.route.completedCount}/${state.stops.length} HECHO
-        </span>
       </div>
     </div>
 

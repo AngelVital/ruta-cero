@@ -117,6 +117,12 @@ function renderMaterialWeightBars(selectedMaterials, materialWeights) {
   `;
 }
 
+function isContainerReportReady(fillLevel, selectedMaterials, materialWeights, photoEvidence) {
+  const requiredPhotos = ['initialExterior', 'initialInterior', 'finalExterior', 'finalInterior'];
+  return !validateContainerReport(fillLevel, selectedMaterials, materialWeights)
+    && requiredPhotos.every((photoKey) => photoEvidence[photoKey]);
+}
+
 export function renderContainerReportScreen(state) {
   const container = state.stops.find(s => s.id === state.activeContainerId) || state.stops[3];
 
@@ -138,6 +144,12 @@ export function renderContainerReportScreen(state) {
       materialWeights[matKey] = 0;
     }
   });
+  const reportReady = isContainerReportReady(
+    hasInitialFill ? initialFill : null,
+    selectedMaterials,
+    materialWeights,
+    photoEvidence
+  );
 
   return `
     <div class="screen-header-bar">
@@ -298,7 +310,7 @@ export function renderContainerReportScreen(state) {
 
       ${renderPhotoEvidenceSection('EVIDENCIA DESPUÉS DE LA RECOLECCIÓN', 'final', photoEvidence)}
 
-      <button type="button" class="btn-tactical btn-tactical-primary" id="btn-save-container-report">
+      <button type="button" class="btn-tactical btn-tactical-primary" id="btn-save-container-report" ${reportReady ? '' : 'disabled'} aria-disabled="${reportReady ? 'false' : 'true'}" style="${reportReady ? '' : 'opacity: 0.45; cursor: not-allowed;'}">
         <span class="material-symbols-outlined" style="font-size: 22px;">check_circle</span>
         <span>GUARDAR REPORTE Y CONTINUAR</span>
       </button>
@@ -321,6 +333,7 @@ export function attachContainerReportEvents(containerEl, store) {
   const photoEvidence = getPhotoEvidence(stop);
   const incidents = getIncidentData(stop);
   let incidentComments = stop && stop.incidentComments ? stop.incidentComments : '';
+  const requiredPhotos = ['initialExterior', 'initialInterior', 'finalExterior', 'finalInterior'];
 
   selectedMaterials.forEach((matKey) => {
     if (materialWeights[matKey] === undefined) {
@@ -338,6 +351,19 @@ export function attachContainerReportEvents(containerEl, store) {
       stop.collectedKg = currentKg;
       stop.materialWeights = { ...materialWeights };
     }
+  };
+
+  const saveButton = containerEl.querySelector('#btn-save-container-report');
+  const updateSaveButtonState = () => {
+    if (!saveButton) {
+      return;
+    }
+
+    const reportReady = isContainerReportReady(currentFill, selectedMaterials, materialWeights, photoEvidence);
+    saveButton.disabled = !reportReady;
+    saveButton.setAttribute('aria-disabled', reportReady ? 'false' : 'true');
+    saveButton.style.opacity = reportReady ? '' : '0.45';
+    saveButton.style.cursor = reportReady ? '' : 'not-allowed';
   };
 
   containerEl.querySelector('#btn-report-back')?.addEventListener('click', () => {
@@ -381,6 +407,7 @@ export function attachContainerReportEvents(containerEl, store) {
           weightInput.value = normalizedValue;
         }
         syncTotalWeight();
+        updateSaveButtonState();
       };
 
       attachStepperEvents(internalStepper, (newVal) => {
@@ -402,6 +429,7 @@ export function attachContainerReportEvents(containerEl, store) {
 
   bindMaterialWeightControls();
   syncTotalWeight();
+  updateSaveButtonState();
 
   materialButtons.forEach((btn) => {
     btn.addEventListener('click', (e) => {
@@ -437,6 +465,7 @@ export function attachContainerReportEvents(containerEl, store) {
       }
 
       syncTotalWeight();
+      updateSaveButtonState();
 
       if (materialWeightsPanel) {
         const materialRow = materialWeightsPanel.querySelector(`[data-material="${matKey}"]`);
@@ -549,6 +578,8 @@ export function attachContainerReportEvents(containerEl, store) {
         }
       }
     });
+
+    updateSaveButtonState();
   }
 
   presetButtons.forEach((btn) => {
@@ -584,6 +615,7 @@ export function attachContainerReportEvents(containerEl, store) {
         if (status) {
           status.textContent = 'EVIDENCIA CAPTURADA';
         }
+        updateSaveButtonState();
       }, (message) => store.showToast(message, 'info'));
     });
   });
@@ -595,7 +627,6 @@ export function attachContainerReportEvents(containerEl, store) {
       return;
     }
 
-    const requiredPhotos = ['initialExterior', 'initialInterior', 'finalExterior', 'finalInterior'];
     const missingPhotos = requiredPhotos.filter((photoKey) => !photoEvidence[photoKey]);
     if (missingPhotos.length > 0) {
       store.showToast('Captura las fotos exterior e interior del inicio y del final', 'info');

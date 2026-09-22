@@ -237,6 +237,12 @@ class TacticalStore {
         nextPending.status = 'active';
         this.state.activeContainerId = nextPending.id;
       }
+
+      const completedStopIndex = this.state.stops.findIndex(item => item.id === containerId);
+      if (completedStopIndex !== -1) {
+        const [completedStop] = this.state.stops.splice(completedStopIndex, 1);
+        this.state.stops.push(completedStop);
+      }
     }
     this.notify();
   }

@@ -162,6 +162,7 @@
 
 /* Screen Header Bar */
 .screen-header-bar {
+  min-height: 70px;
   padding: 14px 16px;
   background-color: #ffffff;
   border-bottom: 2px solid #0f172a;
