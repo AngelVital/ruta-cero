@@ -31,6 +31,22 @@ function getIncidentData(container) {
     : {};
 }
 
+export function validateContainerReport(fillLevel, selectedMaterials, materialWeights) {
+  if (fillLevel === null || fillLevel === undefined) {
+    return 'Selecciona un nivel de llenado del contenedor';
+  }
+
+  if (fillLevel > 40 && (selectedMaterials.length === 0
+    || selectedMaterials.some((matKey) => {
+      const weight = Number(materialWeights[matKey]);
+      return !Number.isFinite(weight) || weight <= 0;
+    }))) {
+    return 'Para niveles medio o lleno selecciona al menos un material y registra un peso mayor a 0 KG';
+  }
+
+  return null;
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -292,7 +308,7 @@ export function renderContainerReportScreen(state) {
 
 export function attachContainerReportEvents(containerEl, store) {
   const stop = store.state.stops.find(s => s.id === store.state.activeContainerId);
-  let currentFill = (stop && stop.fillLevel !== undefined) ? stop.fillLevel : 75;
+  let currentFill = (stop && stop.fillLevel !== undefined) ? stop.fillLevel : null;
   let currentKg = (stop && stop.collectedKg) ? stop.collectedKg : 480;
 
   let selectedMaterials = (stop && Array.isArray(stop.materials) && stop.materials.length > 0)
@@ -573,6 +589,12 @@ export function attachContainerReportEvents(containerEl, store) {
   });
 
   containerEl.querySelector('#btn-save-container-report')?.addEventListener('click', () => {
+    const validationError = validateContainerReport(currentFill, selectedMaterials, materialWeights);
+    if (validationError) {
+      store.showToast(validationError, 'info');
+      return;
+    }
+
     const requiredPhotos = ['initialExterior', 'initialInterior', 'finalExterior', 'finalInterior'];
     const missingPhotos = requiredPhotos.filter((photoKey) => !photoEvidence[photoKey]);
     if (missingPhotos.length > 0) {
