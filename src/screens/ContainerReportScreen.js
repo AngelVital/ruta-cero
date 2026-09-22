@@ -1,11 +1,10 @@
 /**
  * Pantalla 6: Reporte de Estado del Contenedor
- * Origen: Stitch Screen 02 (screen_2_b7d68936c6fa4cc8b691bcda0444b9cf)
- * Incluye barra de llenado dinámica y selección múltiple de materiales
  */
 
 import { renderCapacityMeter } from '../components/CapacityMeter.js';
 import { renderStepperControl, attachStepperEvents } from '../components/StepperControl.js';
+import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
 
 const materialOptions = [
   { key: 'plastico', label: 'PLÁSTICO', color: '#0284c7', icon: 'recycling' },
@@ -555,17 +554,19 @@ export function attachContainerReportEvents(containerEl, store) {
         return;
       }
 
-      photoEvidence[photoKey] = new Date().toISOString();
-      if (stop) {
-        stop.photoEvidence = { ...photoEvidence };
-      }
+      openPhotoCapture(() => {
+        photoEvidence[photoKey] = new Date().toISOString();
+        if (stop) {
+          stop.photoEvidence = { ...photoEvidence };
+        }
 
-      event.currentTarget.classList.add('active');
-      const status = event.currentTarget.querySelector('.photo-evidence-status');
-      if (status) {
-        status.textContent = 'CAPTURADA';
-      }
-      store.showToast(`${photoKey.includes('initial') ? 'Evidencia inicial' : 'Evidencia final'} capturada`, 'info');
+        event.currentTarget.classList.add('active');
+        const status = event.currentTarget.querySelector('.photo-evidence-status');
+        if (status) {
+          status.textContent = 'CAPTURADA';
+        }
+        store.showToast(`${photoKey.includes('initial') ? 'Evidencia inicial' : 'Evidencia final'} capturada`, 'info');
+      }, (message) => store.showToast(message, 'info'));
     });
   });
 

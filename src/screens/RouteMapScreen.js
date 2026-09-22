@@ -1,6 +1,5 @@
 /**
  * Pantalla 4: HUD Táctico - Mapa de Ruta Programada R-04
- * Origen: Stitch Screen 01 (screen_1_d1da991f510144e0bbe1f148912f324e)
  */
 
 export function renderRouteMapScreen(state) {

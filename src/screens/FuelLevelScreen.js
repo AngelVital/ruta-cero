@@ -1,6 +1,5 @@
 /**
  * Pantalla 3: Registro de Combustible - Inspección Pre-operativa
- * Origen: Stitch Screen 03 (screen_3_3409adde7ce84b67b25cffae8a486f25)
  */
 
 export function renderFuelLevelScreen(state) {

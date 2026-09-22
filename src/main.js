@@ -6,7 +6,6 @@
  */
 
 import { store } from './state/store.js';
-import { renderAppHeader } from './components/AppHeader.js';
 import { renderNavigationBar, attachNavigationBarEvents } from './components/NavigationBar.js';
 
 // Screens
@@ -88,8 +87,6 @@ function renderApp() {
   appEl.innerHTML = `
     <div class="hud-canvas">
       <div class="mobile-chassis" id="main-mobile-chassis">
-        ${renderAppHeader(state)}
-
         <main class="screen-viewport${screenTransition === 'slide-left' ? ' screen-transition-slide-left' : ''}" id="screen-viewport-root">
           ${screenHtml}
         </main>

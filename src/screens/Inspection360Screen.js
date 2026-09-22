@@ -1,6 +1,7 @@
+import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
+
 /**
  * Pantalla 2: Inspección 360° - Verificación de Unidad
- * Origen: Stitch Screen 04 (screen_4_7503383a2e6e4ad99b4bf92361af6948)
  */
 
 export function renderInspection360Screen(state) {
@@ -238,7 +239,10 @@ export function attachInspection360Events(container, store) {
 
   // Odometer photo evidence
   container.querySelector('#btn-odometer-photo')?.addEventListener('click', () => {
-    store.showToast('Foto del odómetro capturada y adjuntada como evidencia', 'info');
+    openPhotoCapture(
+      () => store.showToast('Foto del odómetro capturada como evidencia', 'info'),
+      (message) => store.showToast(message, 'info')
+    );
   });
 
   // Attach input listeners to any initially rendered comment textareas

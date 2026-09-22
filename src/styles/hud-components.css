@@ -27,36 +27,6 @@
   overflow: hidden;
 }
 
-/* Tactical Status Bar (Top) */
-.hud-status-bar {
-  height: 38px;
-  background-color: #0f172a;
-  color: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  font-family: var(--font-headline);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  border-bottom: 2px solid #1e293b;
-  z-index: 50;
-  flex-shrink: 0;
-}
-
-.hud-status-bar-indicators {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.telemetry-tag {
-  color: #00a86b;
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
 /* Main Content Screen Area */
 .screen-viewport {
   flex: 1;

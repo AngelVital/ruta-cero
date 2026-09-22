@@ -1,6 +1,5 @@
 /**
  * Pantalla 5: Escaneo de Código de Barras - Contenedor
- * Origen: Stitch Screen 07 (screen_7_aeeba493c04346d494f074a401d31d94)
  */
 
 import { BrowserMultiFormatReader } from '@zxing/browser';

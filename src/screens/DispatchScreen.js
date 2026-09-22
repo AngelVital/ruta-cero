@@ -1,11 +1,8 @@
 /**
  * Pantalla 1: Despacho • Inicio de Ruta
- * Origen: Stitch Screen 05/06 (screen_5_2d6a8f48e46b4969859ced77c06260fd)
  */
 
-/**
- * Suma horas a un string de tiempo en formato HH:MM
- */
+
 function addHoursToTime(timeStr, hoursToAdd) {
   const [hours, minutes] = timeStr.split(':').map(Number);
   const totalMinutes = hours * 60 + minutes + hoursToAdd * 60;

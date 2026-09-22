@@ -2,6 +2,7 @@
  * Segmented 4-Block Capacity Meter Component
  * Visualizes bin capacity levels (0-25%, 26-50%, 51-75%, 76-100%)
  * Includes dynamic progress fill for instant visual feedback
+ * 
  */
 
 export function renderCapacityMeter(percentage) {
