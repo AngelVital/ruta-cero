@@ -82,6 +82,29 @@
 }
 
 /* Bottom Tactical Navigation Bar */
+.floating-scan-action {
+  position: absolute;
+  left: 50%;
+  bottom: 76px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 142px;
+  min-height: 46px;
+  transform: translateX(-50%);
+  box-shadow: 4px 4px 0 #0f172a;
+}
+
+.floating-scan-action:hover {
+  transform: translateX(-50%);
+}
+
+.floating-scan-action:active {
+  transform: translate(-50%, 2px);
+}
+
 .hud-bottom-nav {
   min-height: 64px;
   background-color: #0f172a;

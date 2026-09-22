@@ -12,6 +12,12 @@ export function renderNavigationBar(state) {
   ];
 
   return `
+    ${state.currentScreen === 'map' ? `
+      <button type="button" class="btn-tactical btn-tactical-primary floating-scan-action" id="btn-quick-scan-active">
+        <span class="material-symbols-outlined" style="font-size: 20px;">barcode_reader</span>
+        <span>ESCANEAR</span>
+      </button>
+    ` : ''}
     <nav class="hud-bottom-nav">
       ${tabs.map(tab => {
         const isActive = state.currentScreen === tab.id;
@@ -32,6 +38,10 @@ export function renderNavigationBar(state) {
 }
 
 export function attachNavigationBarEvents(container, store) {
+  container.querySelector('#btn-quick-scan-active')?.addEventListener('click', () => {
+    store.setScreen('scanner');
+  });
+
   const buttons = container.querySelectorAll('.nav-tab-item');
   buttons.forEach(btn => {
     btn.addEventListener('click', (e) => {

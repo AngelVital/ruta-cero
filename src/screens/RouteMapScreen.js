@@ -110,14 +110,10 @@ export function renderRouteMapScreen(state) {
     <!-- Scheduled Waypoint List Header & Filters -->
     <div style="padding: 12px 16px 6px 16px; background-color: #ffffff; border-bottom: 2px solid #0f172a; display: flex; justify-content: space-between; align-items: center;">
       <h2 class="font-headline-sm" style="margin: 0;">PUNTOS PROGRAMADOS (${state.stops.length})</h2>
-      <button type="button" class="btn-tactical btn-tactical-sm btn-tactical-primary" id="btn-quick-scan-active">
-        <span class="material-symbols-outlined" style="font-size: 16px;">barcode_reader</span>
-        <span>ESCANEAR</span>
-      </button>
     </div>
 
     <!-- Stops Scrollable Cards -->
-    <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; background-color: #f1f5f9; flex: 1;">
+    <div style="padding: 12px 16px 70px; display: flex; flex-direction: column; gap: 10px; background-color: #f1f5f9; flex: 1;">
       ${state.stops.map((stop, index) => {
         const isCompleted = stop.status === 'completed';
         const isActive = !isCompleted && stop.id === state.activeContainerId;
@@ -164,10 +160,6 @@ export function renderRouteMapScreen(state) {
 }
 
 export function attachRouteMapEvents(container, store) {
-  container.querySelector('#btn-quick-scan-active')?.addEventListener('click', () => {
-    store.setScreen('scanner');
-  });
-
   container.querySelectorAll('.stop-item-card').forEach(card => {
     card.addEventListener('click', (e) => {
       e.stopPropagation();
