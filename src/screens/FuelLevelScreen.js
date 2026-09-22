@@ -91,7 +91,7 @@ export function attachFuelLevelEvents(container, store) {
   });
 
   container.querySelector('#btn-save-fuel')?.addEventListener('click', () => {
-    store.showToast('Registro de combustible guardado en el servidor de flota.');
+    store.showToast('Registro de combustible guardado en el servidor de flota.', 'success', 1500);
     store.setScreen('dispatch');
   });
 }

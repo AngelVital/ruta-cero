@@ -11,6 +11,12 @@ function addHoursToTime(timeStr, hoursToAdd) {
   return `${String(resultHours).padStart(2, '0')}:${String(resultMinutes).padStart(2, '0')}`;
 }
 
+function renderAssignmentOptions(options, selectedId) {
+  return options.map(option => `
+    <option value="${option.id}" ${option.id === selectedId ? 'selected' : ''}>${option.label}</option>
+  `).join('');
+}
+
 export function renderDispatchScreen(state) {
 
   const now = new Date();
@@ -93,67 +99,46 @@ export function renderDispatchScreen(state) {
           <h2 class="font-headline-sm" style="color: #0f172a;">DATOS DE ASIGNACIÓN TÁCTICA</h2>
         </div>
 
-        <!-- Field 1: Unidad -->
         <div>
           <label class="font-label-sm" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
             <span>1. NO. DE UNIDAD (CAMIÓN)</span>
           </label>
-          <div style="position: relative;">
-            <select class="input-tactical" id="select-unit" style="padding-left: 38px; font-weight: 700;">
-              <option value="U-14" selected>U-14</option>
-              <option value="U-08">U-08</option>
-              <option value="U-03">U-03</option>
-            </select>
-            <span class="material-symbols-outlined" style="position: absolute; left: 10px; top: 12px; font-size: 20px; color: #0f172a;">rv_hookup</span>
-          </div>
+          <select class="input-tactical" id="select-unit" style="font-weight: 700;">
+            ${renderAssignmentOptions(state.dispatchOptions.units, state.assignment.unitId)}
+          </select>
         </div>
 
-        <!-- Field 2: Chofer Titular -->
         <div>
           <label class="font-label-sm" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
             <span>2. OPERADOR / CHOFER TITULAR</span>
           </label>
-          <div style="position: relative;">
-            <select class="input-tactical" id="select-driver" style="padding-left: 38px; font-weight: 700;">
-              <option value="carlos">Carlos Mendoza</option>
-              <option value="fernando">Fernando Garza</option>
-              <option value="martin">Martín Valenzuela</option>
-            </select>
-            <span class="material-symbols-outlined" style="position: absolute; left: 10px; top: 12px; font-size: 20px; color: #0f172a;">badge</span>
-          </div>
+          <select class="input-tactical" id="select-driver" style="font-weight: 700;">
+            ${renderAssignmentOptions(state.dispatchOptions.drivers, state.assignment.driverId)}
+          </select>
         </div>
 
-        <!-- Field 3: Auxiliar -->
         <div>
           <label class="font-label-sm" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
             <span>3. AUXILIAR</span>
           </label>
-          <div style="position: relative;">
-            <select class="input-tactical" id="select-assistant" style="padding-left: 38px; font-weight: 700;">
-              <option value="carlos">Carlos Mendoza</option>
-              <option value="fernando">Fernando Garza</option>
-              <option value="martin">Martín Valenzuela</option>
-            </select>
-            <span class="material-symbols-outlined" style="position: absolute; left: 10px; top: 12px; font-size: 20px; color: #0f172a;">badge</span>
-          </div>
+          <select class="input-tactical" id="select-assistant" style="font-weight: 700;">
+            ${renderAssignmentOptions(state.dispatchOptions.assistants, state.assignment.assistantId)}
+          </select>
         </div>
 
-        <!-- Field 3: Ruta Programada Card -->
+        <!-- Ruta programada -->
         <div>
           <label class="font-label-sm" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span>3. RUTA ASIGNADA</span>
-            <span style="background-color: #359ade; color: #ffffff; padding: 2px 6px; font-size: 11px;">R-04 NORTE</span>
+            <span>RUTA ASIGNADA</span>
+            <span style="background-color: #359ade; color: #ffffff; padding: 2px 6px; font-size: 11px;">RUTA 01</span>
           </label>
           <div style="border: 2px solid #0f172a; padding: 12px; background-color: #eff4ff; display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <div class="font-headline-sm" style="color: #0f172a;">R-04: CENTRO HISTÓRICO</div>
+              <div class="font-headline-sm" style="color: #0f172a;">RUTA 01</div>
               <div class="font-label-sm" style="color: #64748b; margin-top: 2px;">
-                ${state.stops.length} PUNTOS DE RECOLECCIÓN PROGRAMADOS
+                ${state.route.totalStops} PARADAS A REALIZAR
               </div>
             </div>
-            <button type="button" class="btn-tactical btn-tactical-sm" id="btn-view-map-preview">
-              VER MAPA
-            </button>
           </div>
         </div>
 
@@ -186,6 +171,18 @@ export function renderDispatchScreen(state) {
 }
 
 export function attachDispatchScreenEvents(container, store) {
+  container.querySelector('#select-unit')?.addEventListener('change', (event) => {
+    store.setDispatchAssignment('unitId', event.currentTarget.value);
+  });
+
+  container.querySelector('#select-driver')?.addEventListener('change', (event) => {
+    store.setDispatchAssignment('driverId', event.currentTarget.value);
+  });
+
+  container.querySelector('#select-assistant')?.addEventListener('change', (event) => {
+    store.setDispatchAssignment('assistantId', event.currentTarget.value);
+  });
+
   container.querySelector('#btn-goto-fuel')?.addEventListener('click', () => {
     store.setScreen('fuel');
   });
@@ -194,12 +191,18 @@ export function attachDispatchScreenEvents(container, store) {
     store.setScreen('inspection');
   });
 
-  container.querySelector('#btn-view-map-preview')?.addEventListener('click', () => {
-    store.setScreen('map');
-  });
-
   container.querySelector('#btn-start-route')?.addEventListener('click', () => {
-    store.showToast('¡Ruta R-04 iniciada! Telemetría y monitoreo GPS activos.');
+    if (!store.state.fuelLevel.preset) {
+      store.showToast('Registra el nivel de combustible antes de iniciar la ruta.', 'info');
+      return;
+    }
+
+    if (!store.state.inspection360.completed) {
+      store.showToast('Completa la inspección 360° antes de iniciar la ruta.', 'info');
+      return;
+    }
+
+    store.showToast('¡Ruta iniciada! Dirígete al primer punto de recolección y escanea el código QR.', 'success');
     store.setScreen('map');
   });
 }

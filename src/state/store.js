@@ -22,8 +22,26 @@ class TacticalStore {
         shift: 'Matutino • 06:00 - 14:00',
         depot: 'Base Norte Pantaco'
       },
+      dispatchOptions: {
+        units: [
+          { id: 'U-01', label: 'U-01' }
+        ],
+        drivers: [
+          { id: 'C-001', label: 'Carlos Mendoza' },
+          { id: 'C-002', label: 'Alejandro Torres' }
+        ],
+        assistants: [
+          { id: 'A-001', label: 'Ana López' },
+          { id: 'A-002', label: 'Jorge Ramírez' }
+        ]
+      },
+      assignment: {
+        unitId: null,
+        driverId: null,
+        assistantId: null
+      },
       route: {
-        id: 'R-04',
+        id: 'R-01',
         name: 'Centro Histórico - Sector Norte',
         totalStops: 8,
         completedCount: 0,
@@ -182,6 +200,13 @@ class TacticalStore {
     }
   }
 
+  setDispatchAssignment(field, value) {
+    if (Object.prototype.hasOwnProperty.call(this.state.assignment, field)) {
+      this.state.assignment[field] = value;
+      this.notify();
+    }
+  }
+
   completeContainerReport(containerId, reportData) {
     const stop = this.state.stops.find(s => s.id === containerId);
     if (stop) {
@@ -216,7 +241,7 @@ class TacticalStore {
     this.notify();
   }
 
-  showToast(message, type = 'success') {
+  showToast(message, type = 'success', duration = 3500) {
     this.state.toast = { message, type };
     this.notify();
     setTimeout(() => {
@@ -224,7 +249,7 @@ class TacticalStore {
         this.state.toast = null;
         this.notify();
       }
-    }, 3500);
+    }, duration);
   }
 }
 

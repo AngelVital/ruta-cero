@@ -421,7 +421,7 @@ export function attachInspection360Events(container, store) {
     });
 
     store.state.inspection360.completed = true;
-    store.showToast('Inspección 360° completada con éxito. Unidad lista para despacho.');
+    store.showToast('Inspección 360° completada con éxito. Unidad lista para despacho.', 'success', 1500);
     store.setScreen('dispatch');
   });
 }
