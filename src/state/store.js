@@ -111,11 +111,10 @@ class TacticalStore {
         completed: false
       },
       inspectionComments: {},
-      fuelLog: {
+      fuelLevel: {
         preset: null,
         liters: 0,
-        odometer: 148920,
-        fuelStation: 'PEMEX Estación 0442 Norte'
+        odometer: 148920
       },
       toast: null
     };
@@ -159,20 +158,22 @@ class TacticalStore {
 
   updateOdometer(val) {
     this.state.unit.odometer = Math.max(0, parseInt(val, 10) || 0);
-    if (this.state.fuelLog) {
-      this.state.fuelLog.odometer = this.state.unit.odometer;
+    if (this.state.fuelLevel) {
+      this.state.fuelLevel.odometer = this.state.unit.odometer;
     }
   }
 
   updateFuelLiters(delta) {
-    this.state.fuelLog.liters = Math.max(0, +(this.state.fuelLog.liters + delta).toFixed(1));
+    this.state.fuelLevel.liters = Math.max(0, +(this.state.fuelLevel.liters + delta).toFixed(1));
     this.notify();
   }
 
-  setFuelPreset(preset, liters) {
-    this.state.fuelLog.preset = preset;
-    this.state.fuelLog.liters = liters;
-    this.notify();
+  setFuelPreset(preset, liters, shouldNotify = true) {
+    this.state.fuelLevel.preset = preset;
+    this.state.fuelLevel.liters = liters;
+    if (shouldNotify) {
+      this.notify();
+    }
   }
 
   completeContainerReport(containerId, reportData) {

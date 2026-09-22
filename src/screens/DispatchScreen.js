@@ -38,20 +38,20 @@ export function renderDispatchScreen(state) {
         <div class="card-tactical" id="btn-goto-fuel" style="cursor: pointer; padding: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 4px;">
-              <span class="material-symbols-outlined" style="font-size: 18px; color: ${state.fuelLog.preset ? 'var(--color-primary)' : '#94a3b8'};">local_gas_station</span>
+              <span class="material-symbols-outlined" style="font-size: 18px; color: ${state.fuelLevel.preset ? 'var(--color-primary)' : '#94a3b8'};">local_gas_station</span>
               <span class="font-label-sm" style="color: #64748b;">COMBUSTIBLE</span>
             </div>
             <span class="font-label-sm" style="color: var(--color-primary); font-weight: 800;">VER &gt;</span>
           </div>
           <div style="margin-top: 8px;">
-            ${state.fuelLog.preset ? `
+            ${state.fuelLevel.preset ? `
               <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <span class="font-headline-sm">${state.fuelLog.liters} L</span>
-                <span class="font-label-sm" style="color: #64748b;">${Math.round(state.fuelLog.liters / 250 * 100)}%</span>
+                <span class="font-headline-sm">${state.fuelLevel.liters} L</span>
+                <span class="font-label-sm" style="color: #64748b;">${Math.round(state.fuelLevel.liters / 250 * 100)}%</span>
               </div>
               <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; height: 8px; margin-top: 6px;">
                 ${[0, 25, 50, 75].map(threshold => {
-                  const pct = state.fuelLog.liters / 250 * 100;
+                  const pct = state.fuelLevel.liters / 250 * 100;
                   const filled = pct >= threshold + 1;
                   return `<div style="background-color: ${filled ? '#00a86b' : '#cbd5e1'}; border: 1px solid #0f172a;"></div>`;
                 }).join('')}

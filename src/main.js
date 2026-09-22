@@ -12,7 +12,7 @@ import { renderNavigationBar, attachNavigationBarEvents } from './components/Nav
 // Screens
 import { renderDispatchScreen, attachDispatchScreenEvents } from './screens/DispatchScreen.js';
 import { renderInspection360Screen, attachInspection360Events } from './screens/Inspection360Screen.js';
-import { renderFuelLogScreen, attachFuelLogEvents } from './screens/FuelLogScreen.js';
+import { renderFuelLevelScreen, attachFuelLevelEvents } from './screens/FuelLevelScreen.js';
 import { renderRouteMapScreen, attachRouteMapEvents } from './screens/RouteMapScreen.js';
 import { renderQRScannerScreen, attachQRScannerEvents } from './screens/QRScannerScreen.js';
 import { renderContainerReportScreen, attachContainerReportEvents } from './screens/ContainerReportScreen.js';
@@ -54,8 +54,8 @@ function renderApp() {
       attachEvents = attachInspection360Events;
       break;
     case 'fuel':
-      screenHtml = renderFuelLogScreen(state);
-      attachEvents = attachFuelLogEvents;
+      screenHtml = renderFuelLevelScreen(state);
+      attachEvents = attachFuelLevelEvents;
       break;
     case 'map':
       screenHtml = renderRouteMapScreen(state);
