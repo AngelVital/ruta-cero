@@ -6,7 +6,7 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 
 export function renderQRScannerScreen(state) {
-  const selectableContainers = state.stops.filter(stop => stop.status !== 'completed');
+  const selectableContainers = state.stops.filter(stop => stop.status === 'active');
 
   return `
     <div class="screen-header-bar">
@@ -177,14 +177,14 @@ export function attachQRScannerEvents(container, store) {
       return;
     }
 
-    if (matchedContainer.status === 'completed') {
-      const shouldRepeatReport = window.confirm(
-        `El contenedor ${matchedContainer.id} ya fue registrado. ¿Deseas hacer el reporte de nuevo?`
+    if (matchedContainer.status !== 'active' || matchedContainer.id !== store.state.activeContainerId) {
+      store.showToast(
+        matchedContainer.status === 'completed'
+          ? `El contenedor ${matchedContainer.id} ya está registrado`
+          : `El código no corresponde al contenedor activo (${store.state.activeContainerId})`,
+        'info'
       );
-      if (!shouldRepeatReport) {
-        store.showToast(`El contenedor ${matchedContainer.id} ya está registrado`, 'info');
-        return;
-      }
+      return;
     }
 
     store.selectContainer(matchedContainer.id);
@@ -262,6 +262,11 @@ export function attachQRScannerEvents(container, store) {
     btn.addEventListener('click', (event) => {
       const id = event.currentTarget.getAttribute('data-id');
       if (!id) return;
+      const selectedContainer = store.state.stops.find(stop => stop.id === id);
+      if (selectedContainer?.status !== 'active') {
+        store.showToast('Solo puedes reportar el contenedor activo', 'info');
+        return;
+      }
       barcodeValidated = true;
       stopCamera();
       store.selectContainer(id);

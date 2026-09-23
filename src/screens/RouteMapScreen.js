@@ -137,7 +137,7 @@ export function renderRouteMapScreen(state) {
     <div style="padding: 12px 16px 70px; display: flex; flex-direction: column; gap: 10px; background-color: #f1f5f9; flex: 1;">
       ${state.stops.map((stop, index) => {
         const isCompleted = stop.status === 'completed';
-        const isActive = !isCompleted && stop.id === state.activeContainerId;
+        const isActive = stop.status === 'active';
         
         let statusBadge = `<span class="status-pill" style="background-color: #94a3b8; color: #ffffff; font-size: 11px;">PENDIENTE</span>`;
         if (isCompleted) {
@@ -162,14 +162,14 @@ export function renderRouteMapScreen(state) {
 
             <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px solid #e2e8f0; margin-top: 4px;">
             <p class="font-body-sm" style="color: #475569; font-size: 13px; margin-top: 2px;">${stop.address}</p>
-              ${isCompleted ? `
+              ${isActive ? `
                 <button
                   type="button"
                   class="btn-tactical btn-tactical-sm btn-report-stop"
                   data-container-id="${stop.id}"
                   style="padding: 0 10px; height: 36px; font-size: 12px;"
                 >
-                  VER REPORTE
+                  ABRIR REPORTE
                 </button>
               ` : ''}
             </div>
@@ -198,7 +198,8 @@ export function attachRouteMapEvents(container, store) {
     card.addEventListener('click', (e) => {
       e.stopPropagation();
       const cid = card.getAttribute('data-container-id');
-      if (cid) {
+      const selectedContainer = store.state.stops.find(stop => stop.id === cid);
+      if (selectedContainer?.status === 'active') {
         store.selectContainer(cid);
         document.getElementById('screen-viewport-root')?.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -209,7 +210,8 @@ export function attachRouteMapEvents(container, store) {
     button.addEventListener('click', (e) => {
       e.stopPropagation();
       const cid = button.getAttribute('data-container-id');
-      if (cid) {
+      const selectedContainer = store.state.stops.find(stop => stop.id === cid);
+      if (selectedContainer?.status === 'active') {
         store.selectContainer(cid);
         store.setScreen('report');
       }
