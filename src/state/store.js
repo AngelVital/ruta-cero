@@ -9,9 +9,9 @@ class TacticalStore {
       currentScreen: 'dispatch',
       screenTransition: null,
       unit: {
-        id: 'U-14',
+        id: 'U-01',
         model: 'Freightliner M2 Econovo',
-        plates: 'CDMX-982-Z',
+        plates: 'LPZ-2099',
         compactorCapacity: '12 Toneladas',
         odometer: 148920,
         status: 'OPERATIVO'
@@ -148,8 +148,8 @@ class TacticalStore {
     };
   }
 
-  notify() {
-    this.listeners.forEach(l => l(this.state));
+  notify(changeType = 'state') {
+    this.listeners.forEach(l => l(this.state, changeType));
   }
 
   setScreen(screenName, transition = 'slide-left') {
@@ -200,10 +200,12 @@ class TacticalStore {
     }
   }
 
-  setDispatchAssignment(field, value) {
+  setDispatchAssignment(field, value, shouldNotify = true) {
     if (Object.prototype.hasOwnProperty.call(this.state.assignment, field)) {
       this.state.assignment[field] = value;
-      this.notify();
+      if (shouldNotify) {
+        this.notify();
+      }
     }
   }
 
@@ -247,13 +249,13 @@ class TacticalStore {
     this.notify();
   }
 
-  showToast(message, type = 'success', duration = 3500) {
+  showToast(message, type = 'success', duration = 3000) {
     this.state.toast = { message, type };
-    this.notify();
+    this.notify('toast');
     setTimeout(() => {
       if (this.state.toast && this.state.toast.message === message) {
         this.state.toast = null;
-        this.notify();
+        this.notify('toast');
       }
     }, duration);
   }

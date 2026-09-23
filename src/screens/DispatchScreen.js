@@ -172,15 +172,15 @@ export function renderDispatchScreen(state) {
 
 export function attachDispatchScreenEvents(container, store) {
   container.querySelector('#select-unit')?.addEventListener('change', (event) => {
-    store.setDispatchAssignment('unitId', event.currentTarget.value);
+    store.setDispatchAssignment('unitId', event.currentTarget.value, false);
   });
 
   container.querySelector('#select-driver')?.addEventListener('change', (event) => {
-    store.setDispatchAssignment('driverId', event.currentTarget.value);
+    store.setDispatchAssignment('driverId', event.currentTarget.value, false);
   });
 
   container.querySelector('#select-assistant')?.addEventListener('change', (event) => {
-    store.setDispatchAssignment('assistantId', event.currentTarget.value);
+    store.setDispatchAssignment('assistantId', event.currentTarget.value, false);
   });
 
   container.querySelector('#btn-goto-fuel')?.addEventListener('click', () => {

@@ -18,6 +18,22 @@ import { renderContainerReportScreen, attachContainerReportEvents } from './scre
 
 const appEl = document.getElementById('app');
 
+function renderToast(state) {
+  const toastRoot = document.getElementById('toast-root');
+  if (!toastRoot) {
+    return;
+  }
+
+  toastRoot.innerHTML = state.toast ? `
+    <div class="hud-toast">
+      <span class="material-symbols-outlined" style="color: #00a86b;">
+        ${state.toast.type === 'info' ? 'info' : 'check_circle'}
+      </span>
+      <span>${state.toast.message}</span>
+    </div>
+  ` : '';
+}
+
 // Track the last rendered screen to detect navigation vs. in-screen re-renders
 let previousScreen = null;
 
@@ -73,16 +89,6 @@ function renderApp() {
       attachEvents = attachDispatchScreenEvents;
   }
 
-  // Toast HTML
-  const toastHtml = state.toast ? `
-    <div class="hud-toast">
-      <span class="material-symbols-outlined" style="color: #00a86b;">
-        ${state.toast.type === 'info' ? 'info' : 'check_circle'}
-      </span>
-      <span>${state.toast.message}</span>
-    </div>
-  ` : '';
-
   // Master Shell Layout
   appEl.innerHTML = `
     <div class="hud-canvas">
@@ -92,10 +98,12 @@ function renderApp() {
         </main>
 
         ${renderNavigationBar(state)}
-        ${toastHtml}
+        <div id="toast-root"></div>
       </div>
     </div>
   `;
+
+  renderToast(state);
 
   // Attach Navigation events
   attachNavigationBarEvents(appEl, store);
@@ -116,6 +124,11 @@ function renderApp() {
 renderApp();
 
 // Subscribe to store updates for reactive re-render
-store.subscribe(() => {
+store.subscribe((state, changeType) => {
+  if (changeType === 'toast') {
+    renderToast(state);
+    return;
+  }
+
   renderApp();
 });
