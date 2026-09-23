@@ -202,6 +202,7 @@ export function attachDispatchScreenEvents(container, store) {
       return;
     }
 
+    store.startRoute();
     store.showToast('¡Ruta iniciada! Dirígete al primer punto de recolección y escanea el código QR.', 'success');
     store.setScreen('map');
   });

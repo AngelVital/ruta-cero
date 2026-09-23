@@ -2,6 +2,20 @@
  * Pantalla 4: HUD Táctico - Mapa de Ruta Programada R-04
  */
 
+function formatElapsedRouteTime(startTimestamp) {
+  if (!startTimestamp) {
+    return '0 MIN';
+  }
+
+  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - startTimestamp) / 60000));
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  const remainingMinutes = elapsedMinutes % 60;
+
+  return elapsedHours > 0
+    ? `${elapsedHours} H ${String(remainingMinutes).padStart(2, '0')} MIN`
+    : `${elapsedMinutes} MIN`;
+}
+
 export function renderRouteMapScreen(state) {
   const activeStop = state.stops.find(s => s.id === state.activeContainerId)
     || state.stops.find(s => s.status === 'active')
@@ -9,6 +23,7 @@ export function renderRouteMapScreen(state) {
   const destination = `${activeStop.latitude},${activeStop.longitude}`;
   const mapsUrl = `https://www.google.com/maps?q=${destination}&output=embed`;
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+  const routeProgress = `${state.route.completedCount}/${state.route.totalStops}`;
 
   return `
     <div class="screen-header-bar">
@@ -49,12 +64,12 @@ export function renderRouteMapScreen(state) {
         <strong class="font-headline-sm" style="color: #38bdf8; font-size: 15px;">${activeStop.id}</strong>
       </div>
       <div style="border-left: 1px solid #1e293b; border-right: 1px solid #1e293b;">
-        <span class="font-label-sm" style="color: #64748b; font-size: 11px; display: block;">VELOCIDAD</span>
-        <strong class="font-headline-sm" style="color: #4ade80; font-size: 15px;">28 KM/H</strong>
+        <span class="font-label-sm" style="color: #64748b; font-size: 11px; display: block;">PUNTOS REGISTRADOS</span>
+        <strong class="font-headline-sm" style="color: #4ade80; font-size: 15px;">${routeProgress}</strong>
       </div>
       <div>
-        <span class="font-label-sm" style="color: #64748b; font-size: 11px; display: block;">TIEMPO APROX.</span>
-        <strong class="font-headline-sm" style="color: #fbbf24; font-size: 15px;">4 MIN</strong>
+        <span class="font-label-sm" style="color: #64748b; font-size: 11px; display: block;">TIEMPO EN RUTA</span>
+        <strong id="route-time-in-route" class="font-headline-sm" style="color: #fbbf24; font-size: 15px;">${formatElapsedRouteTime(state.route.startTimestamp)}</strong>
       </div>
     </div>
 
@@ -166,6 +181,19 @@ export function renderRouteMapScreen(state) {
 }
 
 export function attachRouteMapEvents(container, store) {
+  const timeInRoute = container.querySelector('#route-time-in-route');
+  let timerId;
+  if (timeInRoute && store.state.route.startTimestamp) {
+    const updateElapsedTime = () => {
+      if (!timeInRoute.isConnected) {
+        clearInterval(timerId);
+        return;
+      }
+      timeInRoute.textContent = formatElapsedRouteTime(store.state.route.startTimestamp);
+    };
+    timerId = setInterval(updateElapsedTime, 60000);
+  }
+
   container.querySelectorAll('.stop-item-card').forEach(card => {
     card.addEventListener('click', (e) => {
       e.stopPropagation();

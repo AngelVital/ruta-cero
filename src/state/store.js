@@ -47,7 +47,8 @@ class TacticalStore {
         completedCount: 0,
         currentStopIndex: 0,
         status: 'PENDIENTE',
-        startTime: '--:-- AM'
+        startTime: '--:-- AM',
+        startTimestamp: null
       },
       stops: [
         {
@@ -207,6 +208,16 @@ class TacticalStore {
         this.notify();
       }
     }
+  }
+
+  startRoute() {
+    const startTimestamp = Date.now();
+    this.state.route.startTimestamp = startTimestamp;
+    this.state.route.startTime = new Date(startTimestamp).toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   }
 
   completeContainerReport(containerId, reportData) {
