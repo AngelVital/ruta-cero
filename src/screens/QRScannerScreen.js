@@ -166,6 +166,9 @@ export function attachQRScannerEvents(container, store) {
   const validateBarcode = (value = '') => {
     if (barcodeValidated) return;
 
+    barcodeValidated = true;
+    stopCamera();
+
     const scannedValue = String(value || '').trim().toUpperCase();
     const matchedContainer = store.state.stops.find(stop => stop.id.toUpperCase() === scannedValue);
 
@@ -174,8 +177,16 @@ export function attachQRScannerEvents(container, store) {
       return;
     }
 
-    barcodeValidated = true;
-    stopCamera();
+    if (matchedContainer.status === 'completed') {
+      const shouldRepeatReport = window.confirm(
+        `El contenedor ${matchedContainer.id} ya fue registrado. ¿Deseas hacer el reporte de nuevo?`
+      );
+      if (!shouldRepeatReport) {
+        store.showToast(`El contenedor ${matchedContainer.id} ya está registrado`, 'info');
+        return;
+      }
+    }
+
     store.selectContainer(matchedContainer.id);
     store.setScreen('report', 'slide-left');
   };
@@ -207,6 +218,7 @@ export function attachQRScannerEvents(container, store) {
 
     cameraStarting = true;
     cameraStopRequested = false;
+    barcodeValidated = false;
     if (manualSelectionFallback) manualSelectionFallback.style.display = 'none';
     if (pendingContainersList) pendingContainersList.style.display = 'none';
     if (showPendingContainersButton) showPendingContainersButton.style.display = 'inline-flex';
