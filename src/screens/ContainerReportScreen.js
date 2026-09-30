@@ -620,7 +620,8 @@ export function attachContainerReportEvents(containerEl, store) {
     });
   });
 
-  containerEl.querySelector('#btn-save-container-report')?.addEventListener('click', () => {
+  containerEl.querySelector('#btn-save-container-report')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget;
     const validationError = validateContainerReport(currentFill, selectedMaterials, materialWeights);
     if (validationError) {
       store.showToast(validationError, 'info');
@@ -645,9 +646,8 @@ export function attachContainerReportEvents(containerEl, store) {
       stop.incidentComments = incidentComments;
     }
 
-    store.showToast(`¡Contenedor ${store.state.activeContainerId} registrado con éxito!`);
-
-    store.completeContainerReport(store.state.activeContainerId, {
+    const containerId = store.state.activeContainerId;
+    const reportData = {
       fillLevel: currentFill,
       collectedKg: finalKg,
       materials: [...selectedMaterials],
@@ -655,8 +655,27 @@ export function attachContainerReportEvents(containerEl, store) {
       photoEvidence: { ...photoEvidence },
       incidents: { ...incidents },
       incidentComments
-    });
+    };
 
-    store.setScreen('map');
+    button.disabled = true;
+    button.setAttribute('aria-disabled', 'true');
+    button.querySelector('span:last-child').textContent = 'GUARDANDO...';
+
+    try {
+      const { insertContainerReport } = await import('../services/supabase.js');
+      const persisted = await insertContainerReport(store.state.route.id, containerId, reportData);
+      store.completeContainerReport(containerId, reportData);
+      store.showToast(persisted
+        ? `¡Reporte de ${containerId} guardado en Supabase!`
+        : `¡Reporte de ${containerId} registrado en modo local!`, persisted ? 'success' : 'info');
+      store.setScreen('map');
+    } catch (error) {
+      console.error('No se pudo guardar el reporte en Supabase:', error);
+      store.showToast('No se pudo guardar en Supabase. Revisa la conexión, las credenciales y la política RLS.', 'info', 6000);
+      if (button.isConnected) {
+        button.querySelector('span:last-child').textContent = 'GUARDAR REPORTE Y CONTINUAR';
+        updateSaveButtonState();
+      }
+    }
   });
 }

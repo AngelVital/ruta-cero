@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ruta Cero</string>
+    <string name="title_activity_main">Ruta Cero</string>
+    <string name="package_name">com.coordinacion.rutacero</string>
+    <string name="custom_url_scheme">com.coordinacion.rutacero</string>
+</resources>

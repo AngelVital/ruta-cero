@@ -46,6 +46,15 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
 
 > Para usar la cámara, abre la aplicación en `http://localhost:5173` en el mismo equipo. En un teléfono u otro equipo de la red, usa HTTPS; los navegadores bloquean la cámara en conexiones HTTP normales por IP y al abrir `index.html` directamente.
 
+## Supabase para pruebas
+
+1. Crea un proyecto en el plan gratuito de Supabase.
+2. En el SQL Editor del proyecto, ejecuta el contenido de `supabase/schema.sql`.
+3. Copia `.env.example` como `.env.local` y completa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` con los valores del proyecto.
+4. Reinicia Vite con `npm run dev` y guarda un reporte desde la pantalla de contenedores. Los registros aparecen en `public.container_reports`.
+
+La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. El esquema permite inserciones anónimas sin lectura para facilitar pruebas y no debe usarse así en producción. Las fotos se registran actualmente como marcas de tiempo de evidencia, no como archivos de imagen. Sin variables configuradas, la aplicación sigue funcionando en modo local.
+
 ## Comandos disponibles
 
 ```bash
