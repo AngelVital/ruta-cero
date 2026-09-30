@@ -6,6 +6,8 @@
  */
 
 import { store } from './state/store.js';
+import { renderAdminDashboard, attachAdminDashboardEvents } from './screens/AdminDashboard.js';
+import { renderEntryScreen } from './screens/EntryScreen.js';
 
 // Screens
 import { renderDispatchScreen, attachDispatchScreenEvents } from './screens/DispatchScreen.js';
@@ -37,6 +39,18 @@ function renderToast(state) {
 let previousScreen = null;
 
 function renderApp() {
+  const mode = new URLSearchParams(window.location.search).get('mode');
+  if (mode === 'admin') {
+    appEl.innerHTML = `<div id="admin-root">${renderAdminDashboard()}</div>`;
+    attachAdminDashboardEvents(document.getElementById('admin-root'));
+    return;
+  }
+
+  if (mode !== 'field') {
+    appEl.innerHTML = `<div id="entry-root">${renderEntryScreen()}</div>`;
+    return;
+  }
+
   const state = store.state;
   const oldViewport = document.getElementById('screen-viewport-root');
   const screenChanged = previousScreen !== null && previousScreen !== state.currentScreen;
