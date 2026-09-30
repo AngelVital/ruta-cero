@@ -134,7 +134,7 @@ export function renderRouteMapScreen(state) {
     </div>
 
     <!-- Stops Scrollable Cards -->
-    <div style="padding: 12px 16px 70px; display: flex; flex-direction: column; gap: 10px; background-color: #f1f5f9; flex: 1;">
+    <div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 10px; background-color: #f1f5f9; flex: 1;">
       ${state.stops.map((stop, index) => {
         const isCompleted = stop.status === 'completed';
         const isActive = stop.status === 'active';
@@ -165,11 +165,11 @@ export function renderRouteMapScreen(state) {
               ${isActive ? `
                 <button
                   type="button"
-                  class="btn-tactical btn-tactical-sm btn-report-stop"
+                  class="btn-tactical btn-tactical-sm btn-scan-stop"
                   data-container-id="${stop.id}"
                   style="padding: 0 10px; height: 36px; font-size: 12px;"
                 >
-                  ABRIR REPORTE
+                  ESCANEAR QR
                 </button>
               ` : ''}
             </div>
@@ -206,14 +206,14 @@ export function attachRouteMapEvents(container, store) {
     });
   });
 
-  container.querySelectorAll('.btn-report-stop').forEach(button => {
+  container.querySelectorAll('.btn-scan-stop').forEach(button => {
     button.addEventListener('click', (e) => {
       e.stopPropagation();
       const cid = button.getAttribute('data-container-id');
       const selectedContainer = store.state.stops.find(stop => stop.id === cid);
       if (selectedContainer?.status === 'active') {
         store.selectContainer(cid);
-        store.setScreen('report');
+        store.setScreen('scanner');
       }
     });
   });

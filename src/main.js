@@ -6,7 +6,6 @@
  */
 
 import { store } from './state/store.js';
-import { renderNavigationBar, attachNavigationBarEvents } from './components/NavigationBar.js';
 
 // Screens
 import { renderDispatchScreen, attachDispatchScreenEvents } from './screens/DispatchScreen.js';
@@ -97,16 +96,12 @@ function renderApp() {
           ${screenHtml}
         </main>
 
-        ${renderNavigationBar(state)}
         <div id="toast-root"></div>
       </div>
     </div>
   `;
 
   renderToast(state);
-
-  // Attach Navigation events
-  attachNavigationBarEvents(appEl, store);
 
   // Attach Screen-specific events
   const viewport = document.getElementById('screen-viewport-root');
