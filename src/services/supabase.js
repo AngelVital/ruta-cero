@@ -54,6 +54,60 @@ export async function fetchAdminContainerReports() {
   return data;
 }
 
+export async function fetchRouteConfigurations() {
+  const { data, error } = await requireSupabase()
+    .from('route_configurations')
+    .select('id, zone, point_ids, is_selected, stops_done, last_update, status, status_label, sync_label')
+    .order('id');
+
+  if (error) throw error;
+  return data.map((route) => ({
+    id: route.id,
+    zone: route.zone,
+    pointIds: route.point_ids || [],
+    stopsDone: route.stops_done || 0,
+    stopsTotal: (route.point_ids || []).length,
+    lastUpdate: route.last_update || '--:--',
+    status: route.status || 'scheduled',
+    statusLabel: route.status_label || 'Programada',
+    syncLabel: route.sync_label || 'Sin iniciar',
+    isSelected: route.is_selected
+  }));
+}
+
+export async function saveRouteConfigurations(routes, selectedRouteId) {
+  const { error } = await requireSupabase().rpc('replace_route_configurations', {
+    p_routes: routes.map((route) => ({
+      id: route.id,
+      zone: route.zone,
+      point_ids: route.pointIds,
+      stops_done: route.stopsDone || 0,
+      last_update: route.lastUpdate || '--:--',
+      status: route.status || 'scheduled',
+      status_label: route.statusLabel || 'Programada',
+      sync_label: route.syncLabel || 'Sin iniciar'
+    })),
+    p_selected_route_id: selectedRouteId
+  });
+
+  if (error) throw error;
+}
+
+export function subscribeToRouteConfigurations(onChange) {
+  if (!supabase) return () => {};
+
+  const channel = supabase
+    .channel('route-configurations')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'route_configurations'
+    }, onChange)
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}
+
 export async function insertContainerReport(routeId, containerId, report) {
   if (!supabase) {
     return false;

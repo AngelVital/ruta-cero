@@ -83,3 +83,130 @@ create policy "Admins can read container reports"
       where user_id = auth.uid()
     )
   );
+
+create table if not exists public.route_configurations (
+  id text primary key,
+  zone text not null,
+  point_ids text[] not null default '{}',
+  is_selected boolean not null default false,
+  stops_done integer not null default 0,
+  last_update text not null default '--:--',
+  status text not null default 'scheduled',
+  status_label text not null default 'Programada',
+  sync_label text not null default 'Sin iniciar',
+  updated_at timestamptz not null default now(),
+  constraint route_configurations_points_not_empty check (cardinality(point_ids) > 0)
+);
+
+alter table public.route_configurations enable row level security;
+grant select on public.route_configurations to anon, authenticated;
+
+drop policy if exists "Field users can read route configurations"
+  on public.route_configurations;
+
+create policy "Field users can read route configurations"
+  on public.route_configurations
+  for select
+  to anon, authenticated
+  using (true);
+
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+    and not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public'
+        and tablename = 'route_configurations'
+    ) then
+    alter publication supabase_realtime add table public.route_configurations;
+  end if;
+end $$;
+
+create or replace function public.replace_route_configurations(
+  p_routes jsonb,
+  p_selected_route_id text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (
+    select 1 from public.admin_users where user_id = auth.uid()
+  ) then
+    raise exception 'Solo un administrador puede modificar las rutas.';
+  end if;
+
+  if jsonb_typeof(p_routes) is distinct from 'array' then
+    raise exception 'La configuración de rutas debe ser una lista.';
+  end if;
+
+  if jsonb_array_length(p_routes) = 0 then
+    raise exception 'Debe existir al menos una ruta.';
+  end if;
+
+  if not exists (
+    select 1
+    from jsonb_array_elements(p_routes) route
+    where route->>'id' = p_selected_route_id
+  ) then
+    raise exception 'Debe existir una ruta seleccionada dentro de la configuración.';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_array_elements(p_routes) route
+    where coalesce(route->>'id', '') = ''
+      or coalesce(route->>'zone', '') = ''
+      or case
+        when jsonb_typeof(route->'point_ids') = 'array' then
+          jsonb_array_length(route->'point_ids') = 0
+          or exists (
+            select 1
+            from jsonb_array_elements_text(route->'point_ids') point_id
+            where point_id not in ('CONT-01', 'CONT-02', 'CONT-03', 'CONT-04', 'CONT-05', 'CONT-06', 'CONT-07', 'CONT-08')
+          )
+        else true
+      end
+  ) then
+    raise exception 'Cada ruta necesita nombre y al menos un punto.';
+  end if;
+
+  delete from public.route_configurations
+  where id not in (
+    select route->>'id' from jsonb_array_elements(p_routes) route
+  );
+
+  insert into public.route_configurations (
+    id, zone, point_ids, is_selected, stops_done, last_update,
+    status, status_label, sync_label, updated_at
+  )
+  select
+    route->>'id',
+    route->>'zone',
+    array(select jsonb_array_elements_text(route->'point_ids')),
+    route->>'id' = p_selected_route_id,
+    coalesce((route->>'stops_done')::integer, 0),
+    coalesce(route->>'last_update', '--:--'),
+    coalesce(route->>'status', 'scheduled'),
+    coalesce(route->>'status_label', 'Programada'),
+    coalesce(route->>'sync_label', 'Sin iniciar'),
+    now()
+  from jsonb_array_elements(p_routes) route
+  on conflict (id) do update set
+    zone = excluded.zone,
+    point_ids = excluded.point_ids,
+    is_selected = excluded.is_selected,
+    stops_done = excluded.stops_done,
+    last_update = excluded.last_update,
+    status = excluded.status,
+    status_label = excluded.status_label,
+    sync_label = excluded.sync_label,
+    updated_at = now();
+end;
+$$;
+
+revoke all on function public.replace_route_configurations(jsonb, text) from public, anon;
+grant execute on function public.replace_route_configurations(jsonb, text) to authenticated;

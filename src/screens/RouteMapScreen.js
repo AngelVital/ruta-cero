@@ -16,6 +16,46 @@ function formatElapsedRouteTime(startTimestamp) {
     : `${elapsedMinutes} MIN`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function renderRouteMapSvg(stops) {
+  if (stops.length === 0) return '';
+
+  const latitudes = stops.map((stop) => stop.latitude);
+  const longitudes = stops.map((stop) => stop.longitude);
+  const latitudeRange = Math.max(...latitudes) - Math.min(...latitudes) || 1;
+  const longitudeRange = Math.max(...longitudes) - Math.min(...longitudes) || 1;
+  const points = stops.map((stop) => ({
+    ...stop,
+    x: 40 + ((stop.longitude - Math.min(...longitudes)) / longitudeRange) * 310,
+    y: 35 + ((Math.max(...latitudes) - stop.latitude) / latitudeRange) * 190
+  }));
+  const linePoints = points.map((point) => `${point.x},${point.y}`).join(' ');
+
+  return `
+    <svg style="position: absolute; inset: 0; width: 100%; height: 100%;" viewBox="0 0 390 260" aria-label="Recorrido de la ruta">
+      ${points.length > 1 ? `<polyline points="${linePoints}" fill="none" stroke="#00a86b" stroke-width="4" stroke-dasharray="6,4" />` : ''}
+      ${points.map((point) => {
+        const isCompleted = point.status === 'completed';
+        const isActive = point.status === 'active';
+        const fill = isCompleted ? '#00a86b' : isActive ? '#38bdf8' : '#475569';
+        return `
+          ${isActive ? `<circle cx="${point.x}" cy="${point.y}" r="15" fill="none" stroke="#38bdf8" stroke-width="2"><animate attributeName="r" values="12;20;12" dur="2s" repeatCount="indefinite" /><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" /></circle>` : ''}
+          <circle cx="${point.x}" cy="${point.y}" r="${isActive ? 10 : 8}" fill="${fill}" stroke="#ffffff" stroke-width="2" />
+          <text x="${point.x}" y="${point.y + (isActive ? -17 : 23)}" fill="${isActive ? '#38bdf8' : '#cbd5e1'}" font-size="11" font-family="Barlow Condensed" font-weight="bold" text-anchor="middle">${escapeHtml(point.id)}${isActive ? ' (ACTIVO)' : ''}</text>
+        `;
+      }).join('')}
+    </svg>
+  `;
+}
+
 export function renderRouteMapScreen(state) {
   const activeStop = state.stops.find(s => s.id === state.activeContainerId)
     || state.stops.find(s => s.status === 'active')
@@ -29,7 +69,7 @@ export function renderRouteMapScreen(state) {
     <div class="screen-header-bar">
       <div class="screen-header-title">
         <span class="material-symbols-outlined" style="color: var(--color-primary);">alt_route</span>
-        <span>MAPA DE RUTA</span>
+        <span>MAPA DE RUTA · ${escapeHtml(state.route.id)} ${escapeHtml(state.route.name)}</span>
       </div>
       <div style="display: flex; gap: 6px; align-items: center;">
         <span class="status-pill status-pill-optimal" style="font-size: 11px;">
@@ -78,40 +118,7 @@ export function renderRouteMapScreen(state) {
       <!-- Grid Background -->
       <div style="position: absolute; inset: 0; background-image: linear-gradient(to right, rgba(0, 168, 107, 0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 168, 107, 0.12) 1px, transparent 1px); background-size: 28px 28px;"></div>
       
-      <!-- Vector Route Path SVG -->
-      <svg style="position: absolute; inset: 0; width: 100%; height: 100%;" viewBox="0 0 390 260">
-        <!-- Connecting Route Polyline -->
-        <polyline 
-          points="40,210 110,180 185,130 260,110 330,70" 
-          fill="none" 
-          stroke="#00a86b" 
-          stroke-width="4" 
-          stroke-dasharray="6,4"
-        />
-        <!-- Stop 1 (Completed) -->
-        <circle cx="40" cy="210" r="10" fill="#00a86b" stroke="#ffffff" stroke-width="2" />
-        <text x="40" y="235" fill="#94a3b8" font-size="11" font-family="Barlow Condensed" font-weight="bold" text-anchor="middle">CONT-01</text>
-        
-        <!-- Stop 2 (Completed) -->
-        <circle cx="110" cy="180" r="10" fill="#00a86b" stroke="#ffffff" stroke-width="2" />
-        <text x="110" y="205" fill="#94a3b8" font-size="11" font-family="Barlow Condensed" font-weight="bold" text-anchor="middle">CONT-02</text>
-        
-        <!-- Stop 3 (Active Target) -->
-        <circle cx="185" cy="130" r="16" fill="none" stroke="#38bdf8" stroke-width="2">
-          <animate attributeName="r" values="12;20;12" dur="2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="185" cy="130" r="10" fill="#38bdf8" stroke="#ffffff" stroke-width="2" />
-        <text x="185" y="112" fill="#38bdf8" font-size="12" font-family="Barlow Condensed" font-weight="bold" text-anchor="middle">CONT-03 (ACTIVO)</text>
-        
-        <!-- Stop 4 (Pending) -->
-        <circle cx="260" cy="110" r="8" fill="#475569" stroke="#ffffff" stroke-width="2" />
-        <text x="260" y="94" fill="#94a3b8" font-size="11" font-family="Barlow Condensed" font-weight="bold" text-anchor="middle">CONT-04</text>
-        
-        <!-- Stop 5 (Pending) -->
-        <circle cx="330" cy="70" r="8" fill="#475569" stroke="#ffffff" stroke-width="2" />
-        <text x="330" y="54" fill="#94a3b8" font-size="11" font-family="Barlow Condensed" font-weight="bold" text-anchor="middle">CONT-05</text>
-      </svg>
+      ${renderRouteMapSvg(state.stops)}
 
       <!-- Tactical Map Overlay Controls -->
       <div style="position: absolute; right: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 6px;">

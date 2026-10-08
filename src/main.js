@@ -6,6 +6,12 @@
  */
 
 import { store } from './state/store.js';
+import {
+  getSelectedRoute,
+  routesStorageKey,
+  saveConfiguredRoutes,
+  selectedRouteStorageKey
+} from './services/routeConfiguration.js';
 import { renderAdminDashboard, attachAdminDashboardEvents } from './screens/AdminDashboard.js';
 import { renderEntryScreen } from './screens/EntryScreen.js';
 
@@ -18,6 +24,39 @@ import { renderQRScannerScreen, attachQRScannerEvents } from './screens/QRScanne
 import { renderContainerReportScreen, attachContainerReportEvents } from './screens/ContainerReportScreen.js';
 
 const appEl = document.getElementById('app');
+
+const isFieldMode = new URLSearchParams(window.location.search).get('mode') === 'field';
+
+async function refreshFieldRouteConfiguration() {
+  try {
+    const { fetchRouteConfigurations } = await import('./services/supabase.js');
+    const routes = await fetchRouteConfigurations();
+    if (routes.length === 0) return;
+
+    const selectedRouteId = routes.find((route) => route.isSelected)?.id || routes[0].id;
+    saveConfiguredRoutes(routes, selectedRouteId);
+    store.applyConfiguredRoute(routes.find((route) => route.id === selectedRouteId));
+  } catch {
+    // The local route cache remains available while Supabase is offline or unconfigured.
+  }
+}
+
+if (isFieldMode) {
+  window.addEventListener('storage', (event) => {
+    if (event.key === routesStorageKey || event.key === selectedRouteStorageKey || event.key === null) {
+      store.applyConfiguredRoute(getSelectedRoute());
+    }
+  });
+  window.addEventListener('focus', refreshFieldRouteConfiguration);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshFieldRouteConfiguration();
+  });
+
+  import('./services/supabase.js').then(({ subscribeToRouteConfigurations }) => {
+    subscribeToRouteConfigurations(refreshFieldRouteConfiguration);
+  }).catch(() => {});
+  refreshFieldRouteConfiguration();
+}
 
 function renderToast(state) {
   const toastRoot = document.getElementById('toast-root');

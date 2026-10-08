@@ -1,4 +1,11 @@
 import { getFillLevelLabel, normalizeFillLevel } from '../components/CapacityMeter.js';
+import {
+  createRouteId,
+  getConfiguredRoutes,
+  getSelectedRouteId,
+  saveConfiguredRoutes,
+  selectConfiguredRoute
+} from '../services/routeConfiguration.js';
 
 const getSupabaseService = () => import('../services/supabase.js');
 const getSupabaseSession = async () => (await getSupabaseService()).getSupabaseSession();
@@ -6,6 +13,8 @@ const signInAdmin = async (...args) => (await getSupabaseService()).signInAdmin(
 const signOutAdmin = async (...args) => (await getSupabaseService()).signOutAdmin(...args);
 const isCurrentUserAdmin = async (...args) => (await getSupabaseService()).isCurrentUserAdmin(...args);
 const fetchAdminContainerReports = async (...args) => (await getSupabaseService()).fetchAdminContainerReports(...args);
+const fetchRouteConfigurations = async (...args) => (await getSupabaseService()).fetchRouteConfigurations(...args);
+const saveRouteConfigurationsRemote = async (...args) => (await getSupabaseService()).saveRouteConfigurations(...args);
 
 const collectionPoints = [
   { id: 'CONT-01', name: 'Ayuntamiento', lastCollectedOn: '2026-09-30' },
@@ -18,54 +27,21 @@ const collectionPoints = [
   { id: 'CONT-08', name: 'El Centenario', lastCollectedOn: '2026-09-15' }
 ];
 
-const demoRoutes = [
-  {
-    id: 'R-01',
-    zone: 'Centro Histórico',
-    pointIds: ['CONT-01', 'CONT-03', 'CONT-04'],
-    stopsDone: 2,
-    stopsTotal: 3,
-    lastUpdate: '09:42',
-    status: 'active',
-    statusLabel: 'En ruta',
-    syncLabel: '1 evento pendiente'
-  },
-  {
-    id: 'R-02',
-    zone: 'Sector Norte',
-    pointIds: ['CONT-02', 'CONT-07'],
-    stopsDone: 0,
-    stopsTotal: 2,
-    lastUpdate: '--:--',
-    status: 'scheduled',
-    statusLabel: 'Programada',
-    syncLabel: 'Sin iniciar'
-  },
-  {
-    id: 'R-03',
-    zone: 'Sector Sur',
-    pointIds: ['CONT-05', 'CONT-06', 'CONT-08'],
-    stopsDone: 0,
-    stopsTotal: 3,
-    lastUpdate: '--:--',
-    status: 'scheduled',
-    statusLabel: 'Programada',
-    syncLabel: 'Sin iniciar'
-  }
-];
+let demoRoutes = getConfiguredRoutes();
 
 const icon = (name, extraClass = '') => `<span class="material-symbols-outlined ${extraClass}" aria-hidden="true">${name}</span>`;
 
-function renderRouteRow(route) {
+function renderRouteRow(route, selectedRouteId) {
   const progress = route.stopsTotal ? Math.round((route.stopsDone / route.stopsTotal) * 100) : 0;
   const syncClass = route.syncLabel === '1 evento pendiente' ? 'sync-pending' : 'sync-ok';
   const points = route.pointIds.map((pointId) => `<span class="admin-point-chip">${pointId}</span>`).join('');
+  const isSelected = route.id === selectedRouteId;
 
   return `
     <tr data-route-status="${route.status}">
       <td>
         <span class="admin-route-id">${route.id}</span>
-        <span class="admin-route-zone">${route.zone}</span>
+        <span class="admin-route-zone">${escapeHtml(route.zone)}</span>
       </td>
       <td>
         <div class="admin-route-points">${points}</div>
@@ -80,6 +56,11 @@ function renderRouteRow(route) {
       <td><span class="admin-status status-${route.status}"><i></i>${route.statusLabel}</span></td>
       <td><span class="admin-cell-primary">${route.lastUpdate}</span><span class="admin-cell-secondary">${route.lastUpdate === '--:--' ? 'Sin iniciar' : 'hace 3 min'}</span></td>
       <td><span class="admin-sync ${syncClass}"><i></i>${route.syncLabel}</span></td>
+      <td class="admin-route-actions">
+        <button type="button" class="admin-route-action ${isSelected ? 'is-selected' : ''}" data-route-action="select" data-route-id="${route.id}" ${isSelected ? 'aria-pressed="true"' : 'aria-pressed="false"'}>${isSelected ? 'En campo' : 'Usar en campo'}</button>
+        <button type="button" class="admin-icon-button" data-route-action="edit" data-route-id="${route.id}" aria-label="Editar ${escapeHtml(route.id)}" title="Editar ruta">${icon('edit')}</button>
+        <button type="button" class="admin-icon-button admin-icon-button-danger" data-route-action="delete" data-route-id="${route.id}" aria-label="Eliminar ${escapeHtml(route.id)}" title="Eliminar ruta" ${demoRoutes.length === 1 ? 'disabled' : ''}>${icon('delete')}</button>
+      </td>
     </tr>
   `;
 }
@@ -110,8 +91,34 @@ function getDaysSinceCollection(dateString) {
   return Math.max(0, Math.floor((today - lastCollection) / 86400000));
 }
 
-function renderRouteTable() {
-  return demoRoutes.map(renderRouteRow).join('');
+function renderRouteTable(routes = demoRoutes, selectedRouteId = getSelectedRouteId()) {
+  return routes.map((route) => renderRouteRow(route, selectedRouteId)).join('');
+}
+
+function renderRouteEditorDialog() {
+  return `
+    <dialog class="admin-route-dialog" id="admin-route-dialog" aria-labelledby="admin-route-dialog-title">
+      <form id="admin-route-form" class="admin-route-form">
+        <header class="admin-route-dialog-header">
+          <div><div class="admin-section-kicker">CONFIGURACIÓN DE RECORRIDO</div><h2 id="admin-route-dialog-title">Nueva ruta</h2></div>
+          <button class="admin-icon-button" type="button" id="admin-route-dialog-close" aria-label="Cerrar">${icon('close')}</button>
+        </header>
+        <input type="hidden" name="routeId">
+        <label class="admin-route-field">Nombre o zona de la ruta<input name="zone" type="text" maxlength="60" required placeholder="Ej. Centro Histórico"></label>
+        <fieldset class="admin-route-point-list">
+          <legend>Puntos incluidos</legend>
+          ${collectionPoints.map((point) => `
+            <label><input type="checkbox" name="routePoint" value="${point.id}"><span>${point.id}</span><span>${escapeHtml(point.name)}</span></label>
+          `).join('')}
+        </fieldset>
+        <p class="admin-route-form-error" id="admin-route-form-error" role="alert"></p>
+        <footer class="admin-route-dialog-actions">
+          <button class="admin-button" type="button" id="admin-route-cancel">Cancelar</button>
+          <button class="admin-button admin-button-dark" type="submit">Guardar ruta</button>
+        </footer>
+      </form>
+    </dialog>
+  `;
 }
 
 export function renderCollectionPointTable(reports = []) {
@@ -294,7 +301,10 @@ function renderReportDialog(report) {
   `;
 }
 
-function renderAdminOperations(user, reports, reportError = '') {
+function renderAdminOperations(user, reports, reportError = '', routeError = '') {
+  demoRoutes = getConfiguredRoutes();
+  const selectedRouteId = getSelectedRouteId();
+  const selectedRoute = demoRoutes.find((route) => route.id === selectedRouteId);
   const today = new Intl.DateTimeFormat('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   }).format(new Date());
@@ -311,7 +321,7 @@ function renderAdminOperations(user, reports, reportError = '') {
         <div class="admin-nav-label">OPERACIÓN</div>
         <nav class="admin-nav" aria-label="Navegación administrativa">
           <a class="admin-nav-link is-active" href="#overview" aria-current="page">${icon('space_dashboard')}<span>Resumen</span></a>
-          <a class="admin-nav-link" href="#routes">${icon('alt_route')}<span>Rutas</span><span class="admin-nav-count">3</span></a>
+          <a class="admin-nav-link" href="#routes">${icon('alt_route')}<span>Rutas</span><span class="admin-nav-count" id="admin-route-nav-count">${demoRoutes.length}</span></a>
           <a class="admin-nav-link" href="#alerts">${icon('notifications_active')}<span>Incidencias</span><span class="admin-nav-count nav-count-alert">1</span></a>
           <a class="admin-nav-link" href="#points">${icon('location_on')}<span>Puntos</span><span class="admin-nav-count">8</span></a>
         </nav>
@@ -348,7 +358,7 @@ function renderAdminOperations(user, reports, reportError = '') {
           </section>
 
           <div class="admin-demo-notice" role="status">
-            ${icon('info')}<span>Los reportes y el estado de visita de los puntos se cargan desde Supabase. Los indicadores y las rutas siguen siendo datos de demostración.</span>
+            ${icon('info')}<span>Los reportes y las rutas se comparten desde Supabase entre administración y campo.</span>
           </div>
 
           <section class="admin-section admin-reports-section" id="reports">
@@ -386,8 +396,8 @@ function renderAdminOperations(user, reports, reportError = '') {
             </article>
             <article class="admin-kpi kpi-delay">
               <div class="admin-kpi-top"><span>RUTA EN CURSO</span>${icon('alt_route')}</div>
-              <div class="admin-kpi-value" id="admin-active-route-id">R-01</div>
-              <div class="admin-kpi-foot"><span class="kpi-neutral-dot"></span> <span id="admin-active-route-progress">2 de 3 puntos atendidos</span></div>
+              <div class="admin-kpi-value" id="admin-active-route-id">${escapeHtml(selectedRouteId || 'Sin ruta')}</div>
+              <div class="admin-kpi-foot"><span class="kpi-neutral-dot"></span> <span id="admin-active-route-progress">${selectedRoute ? `${selectedRoute.stopsDone} de ${selectedRoute.pointIds.length} puntos atendidos` : 'Selecciona una ruta para campo'}</span></div>
             </article>
             <article class="admin-kpi kpi-sync">
               <div class="admin-kpi-top"><span>PENDIENTES DE SINCRONIZAR</span>${icon('cloud_upload')}</div>
@@ -398,21 +408,23 @@ function renderAdminOperations(user, reports, reportError = '') {
 
           <section class="admin-section admin-routes-section" id="routes">
             <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">PUNTOS DEFINIDOS POR RECORRIDO</div><h2>Rutas configuradas <span class="admin-heading-count">3</span></h2></div>
-              <a class="admin-text-link" href="#routes">Ver todas las rutas ${icon('arrow_forward')}</a>
+              <div><div class="admin-section-kicker">PUNTOS DEFINIDOS POR RECORRIDO</div><h2>Rutas configuradas <span class="admin-heading-count" id="admin-routes-count">${demoRoutes.length}</span></h2></div>
+              <button type="button" class="admin-button admin-button-dark" id="admin-create-route">${icon('add')}<span>Nueva ruta</span></button>
             </div>
             <div class="admin-table-toolbar">
               <label class="admin-search">${icon('search')}<span class="sr-only">Buscar rutas</span><input type="search" id="route-search" placeholder="Buscar ruta, zona o punto"></label>
               <label class="admin-filter-select"><span class="sr-only">Filtrar rutas por estado</span><select id="route-status-filter"><option value="all">Todos los estados</option><option value="active">En curso</option><option value="scheduled">Programadas</option></select>${icon('expand_more')}</label>
             </div>
+            <p class="admin-route-message${routeError ? ' is-error' : ''}" id="admin-route-message" role="status" aria-live="polite">${escapeHtml(routeError)}</p>
             <div class="admin-table-scroll">
               <table class="admin-route-table">
-                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th></tr></thead>
-                <tbody id="admin-route-rows">${renderRouteTable()}</tbody>
+                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
+                <tbody id="admin-route-rows">${renderRouteTable(demoRoutes, selectedRouteId)}</tbody>
               </table>
               <div class="admin-empty-state" id="admin-route-empty" hidden>${icon('search_off')}<span>No hay rutas que coincidan con esos filtros.</span></div>
             </div>
-            <div class="admin-table-footer"><span id="admin-route-count">3 rutas configuradas</span><span>Una unidad · una ruta en curso</span></div>
+            <div class="admin-table-footer"><span id="admin-route-count">${demoRoutes.length} rutas configuradas</span><span id="admin-selected-route-label">${selectedRoute ? `Ruta de campo: ${escapeHtml(selectedRoute.id)} · ${escapeHtml(selectedRoute.zone)}` : 'Sin ruta seleccionada para campo'}</span></div>
+            ${renderRouteEditorDialog()}
           </section>
 
           <div class="admin-bottom-grid">
@@ -468,18 +480,147 @@ function attachAdminDashboardContentEvents(container, initialReports) {
   const routeCount = container.querySelector('#admin-route-count');
   const activeRouteId = container.querySelector('#admin-active-route-id');
   const activeRouteProgress = container.querySelector('#admin-active-route-progress');
-  const unitRoute = container.querySelector('#admin-unit-route');
+  const routeDialog = container.querySelector('#admin-route-dialog');
+  const routeForm = container.querySelector('#admin-route-form');
+  const routeFormError = container.querySelector('#admin-route-form-error');
+  const routeMessage = container.querySelector('#admin-route-message');
 
   const updateRoutes = () => {
+    demoRoutes = getConfiguredRoutes();
     const filteredRoutes = filterRoutes(search?.value || '', statusFilter?.value || 'all');
-    rows.innerHTML = filteredRoutes.map(renderRouteRow).join('');
+    rows.innerHTML = renderRouteTable(filteredRoutes, getSelectedRouteId());
     rows.hidden = filteredRoutes.length === 0;
     emptyState.hidden = filteredRoutes.length > 0;
-    routeCount.textContent = `${filteredRoutes.length} de ${demoRoutes.length} rutas configuradas`;
+    routeCount.textContent = `${demoRoutes.length} rutas configuradas`;
+    container.querySelector('#admin-routes-count').textContent = String(demoRoutes.length);
+    container.querySelector('#admin-route-nav-count').textContent = String(demoRoutes.length);
+    const selectedRoute = demoRoutes.find((route) => route.id === getSelectedRouteId());
+    activeRouteId.textContent = selectedRoute?.id || 'Sin ruta';
+    activeRouteProgress.textContent = selectedRoute
+      ? `${selectedRoute.stopsDone} de ${selectedRoute.pointIds.length} puntos atendidos`
+      : 'Selecciona una ruta para campo';
+    container.querySelector('#admin-selected-route-label').textContent = selectedRoute
+      ? `Ruta de campo: ${selectedRoute.id} · ${selectedRoute.zone}`
+      : 'Sin ruta seleccionada para campo';
   };
 
   search?.addEventListener('input', updateRoutes);
   statusFilter?.addEventListener('change', updateRoutes);
+
+  const openRouteEditor = (route = null) => {
+    routeForm.reset();
+    routeForm.elements.routeId.value = route?.id || '';
+    routeForm.elements.zone.value = route?.zone || '';
+    routeForm.querySelectorAll('input[name="routePoint"]').forEach((checkbox) => {
+      checkbox.checked = Boolean(route?.pointIds.includes(checkbox.value));
+    });
+    container.querySelector('#admin-route-dialog-title').textContent = route ? `Editar ${route.id}` : 'Nueva ruta';
+    routeFormError.textContent = '';
+    routeDialog.showModal();
+  };
+
+  container.querySelector('#admin-create-route')?.addEventListener('click', () => openRouteEditor());
+  container.querySelector('#admin-route-dialog-close')?.addEventListener('click', () => routeDialog.close());
+  container.querySelector('#admin-route-cancel')?.addEventListener('click', () => routeDialog.close());
+  routeDialog?.addEventListener('click', (event) => {
+    if (event.target === routeDialog) routeDialog.close();
+  });
+
+  routeForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(routeForm);
+    const pointIds = formData.getAll('routePoint');
+    if (pointIds.length === 0) {
+      routeFormError.textContent = 'Selecciona al menos un punto para la ruta.';
+      return;
+    }
+
+    const routeId = String(formData.get('routeId') || createRouteId(demoRoutes));
+    const currentRoute = demoRoutes.find((route) => route.id === routeId);
+    const zone = String(formData.get('zone')).trim();
+    const nextRoutes = currentRoute
+      ? demoRoutes.map((route) => route.id === routeId
+        ? { ...route, zone, pointIds, stopsTotal: pointIds.length }
+        : route)
+      : [...demoRoutes, {
+        id: routeId,
+        zone,
+        pointIds,
+        stopsDone: 0,
+        stopsTotal: pointIds.length,
+        lastUpdate: '--:--',
+        status: 'scheduled',
+        statusLabel: 'Programada',
+        syncLabel: 'Sin iniciar'
+      }];
+
+    const submitButton = routeForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    routeFormError.textContent = '';
+    try {
+      await saveRouteConfigurationsRemote(nextRoutes, getSelectedRouteId());
+      saveConfiguredRoutes(nextRoutes, getSelectedRouteId());
+      demoRoutes = nextRoutes;
+      routeDialog.close();
+      updateRoutes();
+      routeMessage.textContent = 'Ruta guardada y sincronizada con campo.';
+      routeMessage.classList.remove('is-error');
+    } catch (error) {
+      routeFormError.textContent = `No se pudo sincronizar la ruta: ${error.message}`;
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+
+  rows?.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-route-action]');
+    if (!button) return;
+
+    const route = demoRoutes.find((item) => item.id === button.dataset.routeId);
+    if (!route) return;
+
+    if (button.dataset.routeAction === 'edit') {
+      openRouteEditor(route);
+      return;
+    }
+
+    if (button.dataset.routeAction === 'select') {
+      button.disabled = true;
+      try {
+        await saveRouteConfigurationsRemote(demoRoutes, route.id);
+        selectConfiguredRoute(route.id);
+        saveConfiguredRoutes(demoRoutes, route.id);
+        updateRoutes();
+        routeMessage.textContent = `${route.id} aparecerá en la interfaz de campo.`;
+        routeMessage.classList.remove('is-error');
+      } catch (error) {
+        routeMessage.textContent = `No se pudo sincronizar la selección: ${error.message}`;
+        routeMessage.classList.add('is-error');
+        button.disabled = false;
+      }
+      return;
+    }
+
+    if (button.dataset.routeAction === 'delete') {
+      if (demoRoutes.length <= 1) return;
+      if (!window.confirm(`¿Eliminar la ruta ${route.id} (${route.zone})?`)) return;
+      const nextRoutes = demoRoutes.filter((item) => item.id !== route.id);
+      const nextSelectedId = getSelectedRouteId() === route.id ? nextRoutes[0].id : getSelectedRouteId();
+      button.disabled = true;
+      try {
+        await saveRouteConfigurationsRemote(nextRoutes, nextSelectedId);
+        saveConfiguredRoutes(nextRoutes, nextSelectedId);
+        demoRoutes = nextRoutes;
+        updateRoutes();
+        routeMessage.textContent = `${route.id} fue eliminada.`;
+        routeMessage.classList.remove('is-error');
+      } catch (error) {
+        routeMessage.textContent = `No se pudo eliminar la ruta: ${error.message}`;
+        routeMessage.classList.add('is-error');
+        button.disabled = false;
+      }
+    }
+  });
 
   const reportRows = container.querySelector('#admin-report-rows');
   const reportDialog = container.querySelector('#admin-report-dialog');
@@ -541,9 +682,16 @@ function attachAdminDashboardContentEvents(container, initialReports) {
 
     try {
       reports = await fetchAdminContainerReports();
+      const remoteRoutes = await fetchRouteConfigurations();
+      if (remoteRoutes.length > 0) {
+        const selectedRouteId = remoteRoutes.find((route) => route.isSelected)?.id || remoteRoutes[0].id;
+        demoRoutes = remoteRoutes;
+        saveConfiguredRoutes(remoteRoutes, selectedRouteId);
+      }
       container.querySelector('#admin-report-rows').innerHTML = renderReportRows(reports);
       container.querySelector('#admin-report-count').textContent = String(reports.length);
       container.querySelector('#admin-points-rows').innerHTML = renderCollectionPointTable(reports);
+      updateRoutes();
       if (message) message.textContent = `Actualizado: ${formatReportDate(new Date().toISOString())}`;
     } catch (error) {
       if (message) message.textContent = error.message;
@@ -614,13 +762,25 @@ async function mountAdminDashboard(container) {
 
     let reports = [];
     let reportError = '';
+    let routeError = '';
     try {
       reports = await fetchAdminContainerReports();
     } catch (error) {
       reportError = error.message;
     }
 
-    container.innerHTML = renderAdminOperations(session.user, reports, reportError);
+    try {
+      const remoteRoutes = await fetchRouteConfigurations();
+      if (remoteRoutes.length > 0) {
+        const selectedRouteId = remoteRoutes.find((route) => route.isSelected)?.id || remoteRoutes[0].id;
+        demoRoutes = remoteRoutes;
+        saveConfiguredRoutes(remoteRoutes, selectedRouteId);
+      }
+    } catch (error) {
+      routeError = `No se pudieron cargar las rutas compartidas: ${error.message}`;
+    }
+
+    container.innerHTML = renderAdminOperations(session.user, reports, reportError, routeError);
     attachAdminDashboardContentEvents(container, reports);
   } catch (error) {
     showAdminLogin(container, error.message, true);

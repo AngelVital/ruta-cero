@@ -2,6 +2,7 @@
  * Store reactivo central para Ruta Cero
  * Coordina las 6 pantallas tácticas y datos compartidos de la operación
  */
+import { getSelectedRoute, selectConfiguredRoute } from '../services/routeConfiguration.js';
 
 class TacticalStore {
   constructor() {
@@ -139,6 +140,8 @@ class TacticalStore {
       toast: null
     };
 
+    this.allStops = [...this.state.stops];
+    this.applyConfiguredRoute(getSelectedRoute(), false);
     this.listeners = [];
   }
 
@@ -212,6 +215,56 @@ class TacticalStore {
     }
   }
 
+  applyConfiguredRoute(route, shouldNotify = true) {
+    if (!route) {
+      this.state.stops = [];
+      this.state.activeContainerId = null;
+      this.state.route = {
+        ...this.state.route,
+        id: '',
+        name: '',
+        totalStops: 0,
+        completedCount: 0,
+        currentStopIndex: 0,
+        startTimestamp: null,
+        startTime: '--:-- AM'
+      };
+      if (shouldNotify) this.notify();
+      return;
+    }
+
+    const routeStops = route.pointIds
+      .map((pointId) => this.allStops.find((stop) => stop.id === pointId))
+      .filter(Boolean);
+    routeStops.forEach((stop) => {
+      if (stop.status !== 'completed') stop.status = 'pending';
+    });
+    const firstPendingStop = routeStops.find((stop) => stop.status !== 'completed');
+    if (firstPendingStop) firstPendingStop.status = 'active';
+
+    this.state.stops = routeStops;
+    this.state.activeContainerId = firstPendingStop?.id || routeStops[0]?.id || null;
+    this.state.route = {
+      ...this.state.route,
+      id: route.id,
+      name: route.zone,
+      totalStops: routeStops.length,
+      completedCount: routeStops.filter((stop) => stop.status === 'completed').length,
+      currentStopIndex: 0,
+      status: 'PENDIENTE',
+      startTimestamp: null,
+      startTime: '--:-- AM'
+    };
+    if (shouldNotify) this.notify();
+  }
+
+  selectRoute(routeId) {
+    if (!selectConfiguredRoute(routeId)) return false;
+    const route = getSelectedRoute();
+    this.applyConfiguredRoute(route);
+    return true;
+  }
+
   startRoute() {
     const startTimestamp = Date.now();
     this.state.route.startTimestamp = startTimestamp;
@@ -253,11 +306,6 @@ class TacticalStore {
         this.state.activeContainerId = nextPending.id;
       }
 
-      const completedStopIndex = this.state.stops.findIndex(item => item.id === containerId);
-      if (completedStopIndex !== -1) {
-        const [completedStop] = this.state.stops.splice(completedStopIndex, 1);
-        this.state.stops.push(completedStop);
-      }
     }
     this.notify();
   }

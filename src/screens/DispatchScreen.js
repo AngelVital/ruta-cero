@@ -1,7 +1,16 @@
 /**
  * Pantalla 1: Despacho • Inicio de Ruta
  */
+import { getConfiguredRoutes } from '../services/routeConfiguration.js';
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 function addHoursToTime(timeStr, hoursToAdd) {
   const [hours, minutes] = timeStr.split(':').map(Number);
@@ -22,6 +31,7 @@ export function renderDispatchScreen(state) {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
   const arrivalTimeStr = addHoursToTime(timeStr, 4);
+  const routes = getConfiguredRoutes();
 
   return `
     <div class="screen-header-bar">
@@ -128,17 +138,12 @@ export function renderDispatchScreen(state) {
 
         <!-- Ruta programada -->
         <div>
-          <label class="font-label-sm" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span>RUTA ASIGNADA</span>
-            <span style="background-color: #359ade; color: #ffffff; padding: 2px 6px; font-size: 11px;">RUTA 01</span>
-          </label>
-          <div style="border: 2px solid #0f172a; padding: 12px; background-color: #eff4ff; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <div class="font-headline-sm" style="color: #0f172a;">RUTA 01</div>
-              <div class="font-label-sm" style="color: #64748b; margin-top: 2px;">
-                ${state.route.totalStops} PARADAS A REALIZAR
-              </div>
-            </div>
+          <label class="font-label-sm" for="select-route" style="display: block; margin-bottom: 4px;">RUTA ASIGNADA</label>
+          <select class="input-tactical" id="select-route" style="font-weight: 700;" ${routes.length ? '' : 'disabled'}>
+            ${routes.map((route) => `<option value="${route.id}" ${route.id === state.route.id ? 'selected' : ''}>${route.id} · ${escapeHtml(route.zone)}</option>`).join('')}
+          </select>
+          <div class="font-label-sm" id="selected-route-stop-count" style="color: #64748b; margin-top: 5px;">
+            ${state.route.totalStops} PARADAS A REALIZAR
           </div>
         </div>
 
@@ -181,6 +186,10 @@ export function attachDispatchScreenEvents(container, store) {
 
   container.querySelector('#select-assistant')?.addEventListener('change', (event) => {
     store.setDispatchAssignment('assistantId', event.currentTarget.value, false);
+  });
+
+  container.querySelector('#select-route')?.addEventListener('change', (event) => {
+    store.selectRoute(event.currentTarget.value);
   });
 
   container.querySelector('#btn-goto-fuel')?.addEventListener('click', () => {

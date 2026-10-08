@@ -8,7 +8,7 @@ HUD táctico para la operación de rutas de recolección inteligente de residuos
 - **Build y servidor local:** Vite 6.
 - **Entrada:** `index.html` carga `src/main.js`.
 - **Renderizado:** `main.js` funciona como shell y router modular. Selecciona la pantalla activa, monta sus eventos y re-renderiza cuando cambia el estado.
-- **Estado:** `src/state/store.js` contiene un store reactivo en memoria con los datos de la unidad, operador, ruta, paradas, combustible, inspección y notificaciones.
+- **Estado:** `src/state/store.js` contiene un store reactivo en memoria para la operación actual. La configuración de rutas se comparte mediante `public.route_configurations` en Supabase y se mantiene en caché local.
 - **UI:**
   - `src/components/`: encabezado, navegación, simulador de dispositivo, medidores y controles.
   - `src/screens/`: vistas operativas y sus manejadores de interacción.
@@ -28,7 +28,7 @@ La navegación permite cambiar entre estas vistas:
 
 Las acciones actualizan el store central y provocan el re-render de la interfaz. Al completar un reporte, la parada se marca como completada y se activa automáticamente la siguiente parada pendiente.
 
-> El estado se conserva únicamente en memoria del navegador. Al recargar la página, la demostración vuelve a sus datos iniciales.
+> El avance operativo de la sesión se conserva en memoria. Las rutas creadas, sus puntos y la ruta asignada al campo se guardan en Supabase.
 
 ## Requisitos
 
@@ -61,6 +61,8 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
   ```
 
 6. Reinicia Vite con `npm run dev`. Abre `http://localhost:5173/?mode=admin` e inicia sesión con esa cuenta. El panel carga los últimos 200 reportes de `public.container_reports`.
+
+En **Rutas configuradas**, crea o edita rutas, selecciona los contenedores incluidos y pulsa **Usar en campo**. El recorrido seleccionado se muestra en despacho y en el mapa de campo; los cambios se distribuyen a los dispositivos conectados mediante Supabase Realtime. La tabla `public.route_configurations` y la función RPC que la actualiza se crean al ejecutar `supabase/schema.sql`.
 
 La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Los reportes solo se pueden leer con una sesión cuya cuenta esté registrada en `admin_users`; la inserción de reportes anónimos sigue habilitada para pruebas. Las fotos se registran actualmente como datos de evidencia, no como archivos de imagen. Sin variables configuradas, la aplicación sigue funcionando en modo local.
 

@@ -2038,6 +2038,175 @@ tr[data-route-status="completed"] .admin-progress-track span {
   white-space: pre-wrap;
 }
 
+.admin-route-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.admin-route-action {
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid #cbd6ce;
+  background: #ffffff;
+  color: #276149;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-route-action.is-selected {
+  border-color: #b6d7c3;
+  background: #eaf4ee;
+  color: #226846;
+  cursor: default;
+}
+
+.admin-icon-button-danger {
+  color: #a34839;
+}
+
+.admin-icon-button:disabled,
+.admin-route-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-route-message {
+  min-height: 18px;
+  margin: 0 18px 8px;
+  color: #347153;
+  font-size: 11px;
+}
+
+.admin-route-message.is-error,
+.admin-route-form-error {
+  color: #a34839;
+}
+
+.admin-route-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(520px, calc(100vw - 28px));
+  max-width: none;
+  max-height: min(86vh, 760px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #d2ddd5;
+  background: #ffffff;
+  color: var(--admin-ink);
+  box-shadow: 0 24px 72px rgba(19, 44, 31, 0.24);
+}
+
+.admin-route-dialog::backdrop {
+  background: rgba(18, 37, 29, 0.56);
+  backdrop-filter: blur(2px);
+}
+
+.admin-route-form {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.admin-route-dialog-header,
+.admin-route-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-route-dialog-header {
+  margin: -20px -20px 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-route-dialog-header h2 {
+  color: #1a2d24;
+  font-family: var(--font-headline);
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.admin-route-field {
+  display: grid;
+  gap: 6px;
+  color: #405248;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-route-field input {
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid #cbd6ce;
+  background: #ffffff;
+  color: #263c30;
+  font: inherit;
+  font-weight: 500;
+}
+
+.admin-route-point-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #d8e1da;
+}
+
+.admin-route-point-list legend {
+  padding: 0 5px;
+  color: #405248;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-route-point-list label {
+  display: grid;
+  grid-template-columns: 18px 62px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 6px;
+  border: 1px solid #e4ebe5;
+  color: #526158;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.admin-route-point-list input {
+  width: 16px;
+  height: 16px;
+  accent-color: #17845d;
+}
+
+.admin-route-point-list label span:nth-of-type(1) {
+  color: #16724f;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.admin-route-point-list label span:nth-of-type(2) {
+  overflow-wrap: anywhere;
+}
+
+.admin-route-form-error {
+  min-height: 16px;
+  margin: -8px 0 0;
+  font-size: 11px;
+}
+
+.admin-route-dialog-actions {
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--admin-line);
+}
+
 @media (max-width: 680px) {
   .admin-auth-panel {
     padding: 22px;
@@ -2068,5 +2237,21 @@ tr[data-route-status="completed"] .admin-progress-track span {
   .admin-report-evidence-section,
   .admin-report-comments-section {
     grid-column: auto;
+  }
+
+  .admin-route-dialog-header {
+    padding: 14px 16px;
+  }
+
+  .admin-route-form {
+    padding: 16px;
+  }
+
+  .admin-route-dialog-header {
+    margin: -16px -16px 0;
+  }
+
+  .admin-route-point-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
