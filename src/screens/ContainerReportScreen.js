@@ -2,7 +2,7 @@
  * Pantalla 6: Reporte de Estado del Contenedor
  */
 
-import { renderCapacityMeter } from '../components/CapacityMeter.js';
+import { normalizeFillLevel, renderCapacityMeter } from '../components/CapacityMeter.js';
 import { renderStepperControl, attachStepperEvents } from '../components/StepperControl.js';
 import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
 
@@ -32,11 +32,11 @@ function getIncidentData(container) {
 }
 
 export function validateContainerReport(fillLevel, selectedMaterials, materialWeights) {
-  if (fillLevel === null || fillLevel === undefined) {
+  if (!['low', 'medium', 'full'].includes(fillLevel)) {
     return 'Selecciona un nivel de llenado del contenedor';
   }
 
-  if (fillLevel > 40 && (selectedMaterials.length === 0
+  if (fillLevel !== 'low' && (selectedMaterials.length === 0
     || selectedMaterials.some((matKey) => {
       const weight = Number(materialWeights[matKey]);
       return !Number.isFinite(weight) || weight <= 0;
@@ -126,8 +126,8 @@ function isContainerReportReady(fillLevel, selectedMaterials, materialWeights, p
 export function renderContainerReportScreen(state) {
   const container = state.stops.find(s => s.id === state.activeContainerId) || state.stops[3];
 
-  const hasInitialFill = container.fillLevel !== undefined;
-  let initialFill = container.fillLevel ?? 0;
+  const initialFill = normalizeFillLevel(container.fillLevel);
+  const hasInitialFill = initialFill !== null;
   let initialKg = container.collectedKg || 0;
 
   // Selected materials (supports multiple)
@@ -182,20 +182,19 @@ export function renderContainerReportScreen(state) {
             type="button" 
             class="card-tactical btn-capacity-preset" 
             data-level="low"
-            data-pct="20"
-            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${hasInitialFill && initialFill <= 40 ? '#00a86b' : '#0f172a'}; background: ${hasInitialFill && initialFill <= 40 ? '#ecfdf5' : '#ffffff'}; box-shadow: ${hasInitialFill && initialFill <= 40 ? '3px 3px 0px #00a86b' : 'var(--shadow-resting)'};"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${initialFill === 'low' ? '#00a86b' : '#0f172a'}; background: ${initialFill === 'low' ? '#ecfdf5' : '#ffffff'}; box-shadow: ${initialFill === 'low' ? '3px 3px 0px #00a86b' : 'var(--shadow-resting)'};"
           >
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 32px; height: 32px; background-color: #d1fae5; border: 2px solid #0f172a; display: flex; align-items: center; justify-content: center;">
                 <span class="material-symbols-outlined" style="color: #00a86b; font-size: 20px;">battery_2_bar</span>
               </div>
               <div style="text-align: left;">
-                <strong class="font-headline-sm" style="color: #00a86b; font-size: 16px;">BAJO (&lt; 20%)</strong>
+                <strong class="font-headline-sm" style="color: #00a86b; font-size: 16px;">BAJO</strong>
                 <div class="font-body-sm" style="color: #64748b; font-size: 12px;">No se requiere recolección</div>
               </div>
             </div>
-            <span class="material-symbols-outlined capacity-check-icon" style="color: ${hasInitialFill && initialFill <= 40 ? '#00a86b' : '#cbd5e1'}; font-size: 22px;">
-              ${hasInitialFill && initialFill <= 40 ? 'check_circle' : 'radio_button_unchecked'}
+            <span class="material-symbols-outlined capacity-check-icon" style="color: ${initialFill === 'low' ? '#00a86b' : '#cbd5e1'}; font-size: 22px;">
+              ${initialFill === 'low' ? 'check_circle' : 'radio_button_unchecked'}
             </span>
           </button>
 
@@ -203,41 +202,39 @@ export function renderContainerReportScreen(state) {
             type="button" 
             class="card-tactical btn-capacity-preset" 
             data-level="medium"
-            data-pct="55"
-            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? '#d97706' : '#0f172a'}; background: ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? '#fffbeb' : '#ffffff'}; box-shadow: ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? '3px 3px 0px #d97706' : 'var(--shadow-resting)'};"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${initialFill === 'medium' ? '#d97706' : '#0f172a'}; background: ${initialFill === 'medium' ? '#fffbeb' : '#ffffff'}; box-shadow: ${initialFill === 'medium' ? '3px 3px 0px #d97706' : 'var(--shadow-resting)'};"
           >
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 32px; height: 32px; background-color: #fef3c7; border: 2px solid #0f172a; display: flex; align-items: center; justify-content: center;">
                 <span class="material-symbols-outlined" style="color: #d97706; font-size: 20px;">warning</span>
               </div>
               <div style="text-align: left;">
-                <strong class="font-headline-sm" style="color: #d97706; font-size: 16px;">MEDIO (20% - 75%)</strong>
+                <strong class="font-headline-sm" style="color: #d97706; font-size: 16px;">MEDIO</strong>
                 <div class="font-body-sm" style="color: #64748b; font-size: 12px;">Recolección recomendada</div>
               </div>
             </div>
-            <span class="material-symbols-outlined capacity-check-icon" style="color: ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? '#d97706' : '#cbd5e1'}; font-size: 22px;">
-              ${hasInitialFill && initialFill > 40 && initialFill <= 75 ? 'check_circle' : 'radio_button_unchecked'}
+            <span class="material-symbols-outlined capacity-check-icon" style="color: ${initialFill === 'medium' ? '#d97706' : '#cbd5e1'}; font-size: 22px;">
+              ${initialFill === 'medium' ? 'check_circle' : 'radio_button_unchecked'}
             </span>
           </button>
 
           <button 
             type="button" 
             class="card-tactical btn-capacity-preset" 
-            data-level="critical"
-            data-pct="90"
-            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${hasInitialFill && initialFill > 75 ? '#e11d48' : '#0f172a'}; background: ${hasInitialFill && initialFill > 75 ? '#fef2f2' : '#ffffff'}; box-shadow: ${hasInitialFill && initialFill > 75 ? '3px 3px 0px #e11d48' : 'var(--shadow-resting)'};"
+            data-level="full"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; border: 2px solid ${initialFill === 'full' ? '#e11d48' : '#0f172a'}; background: ${initialFill === 'full' ? '#fef2f2' : '#ffffff'}; box-shadow: ${initialFill === 'full' ? '3px 3px 0px #e11d48' : 'var(--shadow-resting)'};"
           >
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 32px; height: 32px; background-color: #fee2e2; border: 2px solid #0f172a; display: flex; align-items: center; justify-content: center;">
                 <span class="material-symbols-outlined" style="color: #e11d48; font-size: 20px;">priority_high</span>
               </div>
               <div style="text-align: left;">
-                <strong class="font-headline-sm" style="color: #e11d48; font-size: 16px;">LLENO (&gt; 75%) • CRÍTICO</strong>
+                <strong class="font-headline-sm" style="color: #e11d48; font-size: 16px;">LLENO</strong>
                 <div class="font-body-sm" style="color: #64748b; font-size: 12px;">Recolección urgente</div>
               </div>
             </div>
-            <span class="material-symbols-outlined capacity-check-icon" style="color: ${hasInitialFill && initialFill > 75 ? '#e11d48' : '#cbd5e1'}; font-size: 22px;">
-              ${hasInitialFill && initialFill > 75 ? 'check_circle' : 'radio_button_unchecked'}
+            <span class="material-symbols-outlined capacity-check-icon" style="color: ${initialFill === 'full' ? '#e11d48' : '#cbd5e1'}; font-size: 22px;">
+              ${initialFill === 'full' ? 'check_circle' : 'radio_button_unchecked'}
             </span>
           </button>
         </div>
@@ -320,7 +317,7 @@ export function renderContainerReportScreen(state) {
 
 export function attachContainerReportEvents(containerEl, store) {
   const stop = store.state.stops.find(s => s.id === store.state.activeContainerId);
-  let currentFill = (stop && stop.fillLevel !== undefined) ? stop.fillLevel : null;
+  let currentFill = normalizeFillLevel(stop?.fillLevel);
   let currentKg = (stop && stop.collectedKg) ? stop.collectedKg : 480;
 
   let selectedMaterials = (stop && Array.isArray(stop.materials) && stop.materials.length > 0)
@@ -527,14 +524,14 @@ export function attachContainerReportEvents(containerEl, store) {
   const presetButtons = containerEl.querySelectorAll('.btn-capacity-preset');
   const meterMount = containerEl.querySelector('#capacity-meter-mount');
 
-  function updateCapacitySelection(level, pct) {
-    currentFill = pct;
+  function updateCapacitySelection(level) {
+    currentFill = level;
     if (stop) {
-      stop.fillLevel = pct;
+      stop.fillLevel = level;
     }
 
     if (meterMount) {
-      meterMount.innerHTML = renderCapacityMeter(pct);
+      meterMount.innerHTML = renderCapacityMeter(level);
     }
 
     presetButtons.forEach((btn) => {
@@ -559,7 +556,7 @@ export function attachContainerReportEvents(containerEl, store) {
             icon.textContent = 'check_circle';
             icon.style.color = '#d97706';
           }
-        } else if (level === 'critical') {
+        } else if (level === 'full') {
           btn.style.borderColor = '#e11d48';
           btn.style.backgroundColor = '#fef2f2';
           btn.style.boxShadow = '3px 3px 0px #e11d48';
@@ -585,8 +582,7 @@ export function attachContainerReportEvents(containerEl, store) {
   presetButtons.forEach((btn) => {
     btn.addEventListener('click', (e) => {
       const level = e.currentTarget.getAttribute('data-level');
-      const pct = parseInt(e.currentTarget.getAttribute('data-pct'), 10);
-      updateCapacitySelection(level, pct);
+      updateCapacitySelection(level);
     });
   });
 

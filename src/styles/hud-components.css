@@ -107,7 +107,7 @@
   gap: 8px;
 }
 
-/* Segmented Capacity Meter (4 Blocks) */
+/* Segmented Capacity Meter (3 Levels) */
 .capacity-meter-wrap {
   display: flex;
   flex-direction: column;
@@ -116,7 +116,7 @@
 
 .capacity-blocks {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   height: 28px;
   background-color: #e2e8f0;

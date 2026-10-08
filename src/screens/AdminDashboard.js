@@ -1,3 +1,12 @@
+import { getFillLevelLabel, normalizeFillLevel } from '../components/CapacityMeter.js';
+
+const getSupabaseService = () => import('../services/supabase.js');
+const getSupabaseSession = async () => (await getSupabaseService()).getSupabaseSession();
+const signInAdmin = async (...args) => (await getSupabaseService()).signInAdmin(...args);
+const signOutAdmin = async (...args) => (await getSupabaseService()).signOutAdmin(...args);
+const isCurrentUserAdmin = async (...args) => (await getSupabaseService()).isCurrentUserAdmin(...args);
+const fetchAdminContainerReports = async (...args) => (await getSupabaseService()).fetchAdminContainerReports(...args);
+
 const collectionPoints = [
   { id: 'CONT-01', name: 'Ayuntamiento', routeId: 'R-01', lastCollectedOn: '2026-09-30', status: 'completed' },
   { id: 'CONT-02', name: 'CREE', routeId: 'R-02', lastCollectedOn: '2026-09-23', status: 'pending' },
@@ -129,10 +138,174 @@ function syncRoutePoints() {
   });
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function renderAdminLogin(message = '', showSignOut = false) {
+  return `
+    <main class="admin-auth-screen">
+      <section class="admin-auth-panel" aria-labelledby="admin-auth-title">
+        <div class="admin-auth-brand">
+          <span class="admin-brand-mark">${icon('recycling')}</span>
+          <span><strong>RUTA CERO</strong><small>CONTROL OPERATIVO</small></span>
+        </div>
+        <div class="admin-section-kicker">ACCESO RESTRINGIDO</div>
+        <h1 id="admin-auth-title">Administración</h1>
+        <p class="admin-auth-description">Inicia sesión con la cuenta autorizada para consultar los reportes.</p>
+        <form id="admin-login-form" class="admin-auth-form">
+          <label for="admin-email">Correo electrónico</label>
+          <input id="admin-email" name="email" type="email" autocomplete="username" required>
+          <label for="admin-password">Contraseña</label>
+          <input id="admin-password" name="password" type="password" autocomplete="current-password" required>
+          <button class="admin-button admin-button-dark" id="admin-login-submit" type="submit">Iniciar sesión</button>
+        </form>
+        <p class="admin-auth-message" id="admin-auth-message" role="status" aria-live="polite">${escapeHtml(message)}</p>
+        ${showSignOut ? '<button class="admin-auth-signout" id="admin-auth-signout" type="button">Cerrar sesión actual</button>' : ''}
+        <a class="admin-auth-back" href="/?mode=field">Volver a operaciones de campo</a>
+      </section>
+    </main>
+  `;
+}
+
 export function renderAdminDashboard() {
+  return renderAdminLogin();
+}
+
+function formatReportDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Fecha no disponible';
+
+  return new Intl.DateTimeFormat('es-MX', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  }).format(date);
+}
+
+const incidentLabels = {
+  damaged: 'Contenedor dañado',
+  graffiti: 'Grafiti / vandalismo',
+  outsideWaste: 'Residuos fuera del contenedor',
+  mixedWaste: 'Residuos mezclados'
+};
+
+function formatIncidentLabel(value) {
+  return incidentLabels[value] || formatReportLabel(value);
+}
+
+function renderReportRows(reports) {
+  if (!reports.length) {
+    return '<tr><td colspan="8">Todavía no hay reportes registrados.</td></tr>';
+  }
+
+  return reports.map((report, index) => {
+    const materials = Array.isArray(report.materials) ? report.materials.join(', ') : '';
+    const fillLevel = normalizeFillLevel(report.fill_level);
+    const incidents = report.incidents && typeof report.incidents === 'object'
+      ? Object.entries(report.incidents).filter(([, active]) => Boolean(active)).map(([name]) => formatIncidentLabel(name))
+      : [];
+
+    return `
+      <tr>
+        <td><time datetime="${escapeHtml(report.created_at)}">${escapeHtml(formatReportDate(report.created_at))}</time></td>
+        <td><span class="admin-route-id">${escapeHtml(report.container_id)}</span></td>
+        <td>${escapeHtml(report.route_id)}</td>
+        <td><span class="admin-fill-level fill-${fillLevel || 'unknown'}">${escapeHtml(getFillLevelLabel(fillLevel))}</span></td>
+        <td>${escapeHtml(report.collected_kg)} kg</td>
+        <td>${escapeHtml(materials || 'Sin material')}</td>
+        <td>${escapeHtml(incidents.join(', ') || 'Ninguna')}</td>
+        <td><button class="admin-report-open" type="button" data-report-index="${index}">${icon('visibility')}<span>Ver detalles</span></button></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function formatReportLabel(value) {
+  return String(value)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/^./, (first) => first.toLocaleUpperCase('es-MX'));
+}
+
+function formatReportWeight(value) {
+  const weight = Number(value);
+  return Number.isFinite(weight)
+    ? `${new Intl.NumberFormat('es-MX', { maximumFractionDigits: 2 }).format(weight)} kg`
+    : 'Peso no especificado';
+}
+
+function renderReportDialog(report) {
+  const fillLevel = normalizeFillLevel(report.fill_level);
+  const materials = Array.isArray(report.materials) ? report.materials : [];
+  const materialWeights = report.material_weights && typeof report.material_weights === 'object'
+    ? report.material_weights
+    : {};
+  const materialItems = materials.length
+    ? materials.map((material) => `
+        <li><span>${escapeHtml(formatReportLabel(material))}</span><strong>${escapeHtml(formatReportWeight(materialWeights[material]))}</strong></li>
+      `).join('')
+    : '<li class="admin-report-empty-item">Sin materiales registrados</li>';
+  const incidents = report.incidents && typeof report.incidents === 'object'
+    ? Object.entries(report.incidents).filter(([, active]) => Boolean(active)).map(([name]) => formatIncidentLabel(name))
+    : [];
+  const incidentItems = incidents.length
+    ? incidents.map((name) => `<li>${escapeHtml(name)}</li>`).join('')
+    : '<li class="admin-report-empty-item">Sin incidencias</li>';
+  const evidence = report.photo_evidence && typeof report.photo_evidence === 'object'
+    ? report.photo_evidence
+    : {};
+  const evidenceLabels = {
+    initialExterior: 'Exterior inicial',
+    initialInterior: 'Interior inicial',
+    finalExterior: 'Exterior final',
+    finalInterior: 'Interior final'
+  };
+  const evidenceItems = Object.keys(evidence).length
+    ? Object.entries(evidence).map(([key, value]) => `
+        <li><span class="admin-evidence-check">${icon('check')}</span><span>${escapeHtml(evidenceLabels[key] || formatReportLabel(key))}</span><time>${escapeHtml(formatReportDate(value))}</time></li>
+      `).join('')
+    : '<li class="admin-report-empty-item">Sin evidencia registrada</li>';
+
+  return `
+    <div class="admin-report-dialog-meta">
+      <span>${icon('inventory_2')} ${escapeHtml(report.container_id)}</span>
+      <span>${icon('alt_route')} ${escapeHtml(report.route_id)}</span>
+      <time>${escapeHtml(formatReportDate(report.created_at))}</time>
+    </div>
+    <div class="admin-report-dialog-metrics">
+      <div class="admin-report-fill-metric"><span>Nivel del contenedor</span><strong class="admin-fill-level fill-${fillLevel || 'unknown'}">${escapeHtml(getFillLevelLabel(fillLevel))}</strong></div>
+      <div><span>Material recolectado</span><strong>${escapeHtml(formatReportWeight(report.collected_kg))}</strong></div>
+    </div>
+    <div class="admin-report-dialog-sections">
+      <section class="admin-report-dialog-section">
+        <h3>${icon('recycling')} Materiales</h3>
+        <ul class="admin-report-material-list">${materialItems}</ul>
+      </section>
+      <section class="admin-report-dialog-section">
+        <h3>${icon('report_problem')} Incidencias</h3>
+        <ul class="admin-report-incident-list">${incidentItems}</ul>
+      </section>
+      <section class="admin-report-dialog-section admin-report-evidence-section">
+        <h3>${icon('photo_camera')} Evidencia registrada</h3>
+        <ul class="admin-report-evidence-list">${evidenceItems}</ul>
+      </section>
+      <section class="admin-report-dialog-section admin-report-comments-section">
+        <h3>${icon('chat')} Comentarios</h3>
+        <p>${escapeHtml(report.incident_comments || 'Sin comentarios')}</p>
+      </section>
+    </div>
+  `;
+}
+
+function renderAdminOperations(user, reports, reportError = '') {
   const today = new Intl.DateTimeFormat('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   }).format(new Date());
+  const email = escapeHtml(user.email || 'Administrador');
 
   return `
     <div class="admin-shell">
@@ -151,7 +324,7 @@ export function renderAdminDashboard() {
         </nav>
 
         <div class="admin-sidebar-foot">
-          <div class="admin-network-state"><span class="network-indicator"></span><span><strong>Modo demostración</strong><small>Datos de muestra locales</small></span></div>
+          <div class="admin-network-state"><span class="network-indicator"></span><span><strong>Supabase conectado</strong><small>Acceso administrativo</small></span></div>
           <a class="admin-field-link" href="/?mode=field">${icon('open_in_new')}<span>Abrir vista de campo</span></a>
         </div>
       </aside>
@@ -160,11 +333,11 @@ export function renderAdminDashboard() {
         <header class="admin-topbar">
           <div class="admin-breadcrumb">Ruta Cero <span>/</span> Administración</div>
           <div class="admin-topbar-actions">
-            <span class="admin-demo-pill"><i></i> DEMO · SIN DATOS EN VIVO</span>
-            <button type="button" class="admin-icon-button" aria-label="Notificaciones">${icon('notifications')}</button>
-            <div class="admin-profile" aria-label="Perfil de Laura Cárdenas">
-              <span class="admin-avatar">LC</span><span class="admin-profile-name">Laura Cárdenas</span>
+            <span class="admin-demo-pill"><i></i> REPORTES EN VIVO</span>
+            <div class="admin-profile" aria-label="Sesión de ${email}">
+              <span class="admin-avatar">${escapeHtml((user.email || 'AD').slice(0, 2).toUpperCase())}</span><span class="admin-profile-name">${email}</span>
             </div>
+            <button type="button" class="admin-button" id="admin-signout">Cerrar sesión</button>
           </div>
         </header>
 
@@ -182,8 +355,30 @@ export function renderAdminDashboard() {
           </section>
 
           <div class="admin-demo-notice" role="status">
-            ${icon('info')}<span>Esta vista usa datos de demostración. Aún no está conectada a un servidor.</span>
+            ${icon('info')}<span>Los reportes se cargan desde Supabase. Los indicadores, rutas y puntos de esta vista siguen siendo datos de demostración.</span>
           </div>
+
+          <section class="admin-section admin-reports-section" id="reports">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN SUPABASE</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${reports.length}</span></h2></div>
+              <button type="button" class="admin-button" id="admin-refresh-reports">${icon('refresh')}<span>Actualizar</span></button>
+            </div>
+            ${reportError ? `<p class="admin-report-error" id="admin-report-message" role="alert">${escapeHtml(reportError)}</p>` : '<p class="admin-report-message" id="admin-report-message" role="status" aria-live="polite"></p>'}
+            <div class="admin-points-table-wrap admin-reports-table-wrap">
+              <table class="admin-points-table admin-reports-table">
+                <thead><tr><th scope="col">FECHA</th><th scope="col">CONTENEDOR</th><th scope="col">RUTA</th><th scope="col">LLENADO</th><th scope="col">RECOLECTADO</th><th scope="col">MATERIALES</th><th scope="col">INCIDENCIAS</th><th scope="col">DETALLE</th></tr></thead>
+                <tbody id="admin-report-rows">${renderReportRows(reports)}</tbody>
+              </table>
+            </div>
+          </section>
+
+          <dialog class="admin-report-dialog" id="admin-report-dialog" aria-labelledby="admin-report-dialog-title">
+            <header class="admin-report-dialog-header">
+              <div><div class="admin-section-kicker">REGISTRO DE RECOLECCIÓN</div><h2 id="admin-report-dialog-title">Detalle del reporte</h2></div>
+              <button class="admin-report-dialog-close" type="button" aria-label="Cerrar detalles">${icon('close')}</button>
+            </header>
+            <div class="admin-report-dialog-content" id="admin-report-dialog-content"></div>
+          </dialog>
 
           <section class="admin-kpi-grid" aria-label="Indicadores de operación">
             <article class="admin-kpi kpi-routes">
@@ -255,7 +450,7 @@ export function renderAdminDashboard() {
             </section>
           </div>
 
-          <footer class="admin-footer"><span>RUTA CERO <span>·</span> PANEL ADMINISTRATIVO</span><span>Prototipo frontend · sin conexión a backend</span></footer>
+          <footer class="admin-footer"><span>RUTA CERO <span>·</span> PANEL ADMINISTRATIVO</span><span>Reportes conectados a Supabase</span></footer>
         </main>
       </div>
     </div>
@@ -271,7 +466,8 @@ function filterRoutes(searchValue, statusValue) {
   });
 }
 
-export function attachAdminDashboardEvents(container) {
+function attachAdminDashboardContentEvents(container, initialReports) {
+  let reports = initialReports;
   const search = container.querySelector('#route-search');
   const statusFilter = container.querySelector('#route-status-filter');
   const rows = container.querySelector('#admin-route-rows');
@@ -291,6 +487,24 @@ export function attachAdminDashboardEvents(container) {
 
   search?.addEventListener('input', updateRoutes);
   statusFilter?.addEventListener('change', updateRoutes);
+
+  const reportRows = container.querySelector('#admin-report-rows');
+  const reportDialog = container.querySelector('#admin-report-dialog');
+  reportRows?.addEventListener('click', (event) => {
+    const button = event.target.closest('.admin-report-open');
+    if (!button) return;
+
+    const report = reports[Number(button.dataset.reportIndex)];
+    if (!report || !reportDialog) return;
+
+    container.querySelector('#admin-report-dialog-content').innerHTML = renderReportDialog(report);
+    reportDialog.showModal();
+  });
+
+  container.querySelector('.admin-report-dialog-close')?.addEventListener('click', () => reportDialog?.close());
+  reportDialog?.addEventListener('click', (event) => {
+    if (event.target === reportDialog) reportDialog.close();
+  });
 
   container.querySelectorAll('.admin-point-route').forEach((select) => {
     select.addEventListener('change', (event) => {
@@ -333,4 +547,110 @@ export function attachAdminDashboardEvents(container) {
     downloadLink.click();
     URL.revokeObjectURL(url);
   });
+
+  container.querySelector('#admin-signout')?.addEventListener('click', async () => {
+    try {
+      await signOutAdmin();
+      showAdminLogin(container, 'Sesión cerrada.');
+    } catch (error) {
+      const message = container.querySelector('#admin-report-message');
+      if (message) message.textContent = error.message;
+    }
+  });
+
+  container.querySelector('#admin-refresh-reports')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    const message = container.querySelector('#admin-report-message');
+    button.disabled = true;
+    if (message) message.textContent = 'Actualizando reportes…';
+
+    try {
+      reports = await fetchAdminContainerReports();
+      container.querySelector('#admin-report-rows').innerHTML = renderReportRows(reports);
+      container.querySelector('#admin-report-count').textContent = String(reports.length);
+      if (message) message.textContent = `Actualizado: ${formatReportDate(new Date().toISOString())}`;
+    } catch (error) {
+      if (message) message.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+
+function showAdminLogin(container, message = '', showSignOut = false) {
+  container.innerHTML = renderAdminLogin(message, showSignOut);
+  attachAdminLoginEvents(container, showSignOut);
+}
+
+function attachAdminLoginEvents(container, showSignOut = false) {
+  const form = container.querySelector('#admin-login-form');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const email = form.elements.email.value.trim();
+    const password = form.elements.password.value;
+    const button = container.querySelector('#admin-login-submit');
+    const message = container.querySelector('#admin-auth-message');
+    button.disabled = true;
+    message.textContent = 'Verificando acceso…';
+
+    try {
+      await signInAdmin(email, password);
+      await mountAdminDashboard(container);
+    } catch (error) {
+      message.textContent = error.message;
+      button.disabled = false;
+    }
+  });
+
+  if (showSignOut) {
+    container.querySelector('#admin-auth-signout')?.addEventListener('click', async () => {
+      try {
+        await signOutAdmin();
+        showAdminLogin(container, 'Sesión cerrada.');
+      } catch (error) {
+        const message = container.querySelector('#admin-auth-message');
+        if (message) message.textContent = error.message;
+      }
+    });
+  }
+}
+
+async function mountAdminDashboard(container) {
+  let session;
+  try {
+    session = await getSupabaseSession();
+  } catch (error) {
+    showAdminLogin(container, error.message);
+    return;
+  }
+
+  if (!session) {
+    showAdminLogin(container);
+    return;
+  }
+
+  try {
+    const isAdmin = await isCurrentUserAdmin();
+    if (!isAdmin) {
+      showAdminLogin(container, 'Esta cuenta no tiene permisos de administrador.', true);
+      return;
+    }
+
+    let reports = [];
+    let reportError = '';
+    try {
+      reports = await fetchAdminContainerReports();
+    } catch (error) {
+      reportError = error.message;
+    }
+
+    container.innerHTML = renderAdminOperations(session.user, reports, reportError);
+    attachAdminDashboardContentEvents(container, reports);
+  } catch (error) {
+    showAdminLogin(container, error.message, true);
+  }
+}
+
+export function attachAdminDashboardEvents(container) {
+  mountAdminDashboard(container);
 }

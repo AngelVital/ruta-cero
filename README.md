@@ -51,9 +51,18 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
 1. Crea un proyecto en el plan gratuito de Supabase.
 2. En el SQL Editor del proyecto, ejecuta el contenido de `supabase/schema.sql`.
 3. Copia `.env.example` como `.env.local` y completa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` con los valores del proyecto.
-4. Reinicia Vite con `npm run dev` y guarda un reporte desde la pantalla de contenedores. Los registros aparecen en `public.container_reports`.
+4. En **Authentication → Users**, crea una cuenta para el administrador y confirma el correo si el proyecto lo requiere.
+5. En el SQL Editor, registra esa cuenta como administradora. Reemplaza el correo por el de la cuenta:
 
-La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. El esquema permite inserciones anónimas sin lectura para facilitar pruebas y no debe usarse así en producción. Las fotos se registran actualmente como marcas de tiempo de evidencia, no como archivos de imagen. Sin variables configuradas, la aplicación sigue funcionando en modo local.
+  ```sql
+  insert into public.admin_users (user_id)
+  select id from auth.users where email = 'admin@tu-dominio.com'
+  on conflict (user_id) do nothing;
+  ```
+
+6. Reinicia Vite con `npm run dev`. Abre `http://localhost:5173/?mode=admin` e inicia sesión con esa cuenta. El panel carga los últimos 200 reportes de `public.container_reports`.
+
+La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Los reportes solo se pueden leer con una sesión cuya cuenta esté registrada en `admin_users`; la inserción de reportes anónimos sigue habilitada para pruebas. Las fotos se registran actualmente como datos de evidencia, no como archivos de imagen. Sin variables configuradas, la aplicación sigue funcionando en modo local.
 
 ## Comandos disponibles
 
