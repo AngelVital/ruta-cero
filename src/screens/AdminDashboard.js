@@ -472,6 +472,31 @@ function filterRoutes(searchValue, statusValue) {
   });
 }
 
+export function applyReportProgress(routes, reports) {
+  return routes.map((route) => {
+    const routeReports = reports.filter((report) => (
+      report.route_id === route.id && route.pointIds.includes(report.container_id)
+    ));
+    const visitedPoints = new Set(routeReports.map((report) => report.container_id));
+    const stopsDone = Math.min(route.pointIds.length, visitedPoints.size);
+    const latestReport = routeReports.reduce((latest, report) => (
+      !latest || report.created_at > latest.created_at ? report : latest
+    ), null);
+    const routeComplete = stopsDone === route.pointIds.length;
+
+    return {
+      ...route,
+      stopsDone,
+      stopsTotal: route.pointIds.length,
+      lastUpdate: latestReport
+        ? new Date(latestReport.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })
+        : route.lastUpdate,
+      status: routeComplete ? 'completed' : stopsDone > 0 ? 'active' : route.status,
+      statusLabel: routeComplete ? 'Completada' : stopsDone > 0 ? 'En ruta' : route.statusLabel
+    };
+  });
+}
+
 function attachAdminDashboardContentEvents(container, initialReports) {
   let reports = initialReports;
   const search = container.querySelector('#route-search');
@@ -798,7 +823,9 @@ async function mountAdminDashboard(container) {
         demoRoutes = remoteRoutes;
         saveConfiguredRoutes(remoteRoutes, selectedRouteId);
       } else {
+        demoRoutes = applyReportProgress(demoRoutes, reports);
         await saveRouteConfigurationsRemote(demoRoutes, getSelectedRouteId());
+        saveConfiguredRoutes(demoRoutes, getSelectedRouteId());
       }
     } catch (error) {
       routeError = `No se pudieron cargar las rutas compartidas: ${error.message}`;

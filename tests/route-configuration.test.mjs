@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createRouteId, getConfiguredRoutes, getSelectedRoute, saveConfiguredRoutes } from '../src/services/routeConfiguration.js';
 import { renderDispatchScreen } from '../src/screens/DispatchScreen.js';
 import { renderRouteMapScreen } from '../src/screens/RouteMapScreen.js';
+import { applyReportProgress } from '../src/screens/AdminDashboard.js';
 import { store } from '../src/state/store.js';
 
 function createMemoryStorage() {
@@ -71,4 +72,37 @@ test('la ruta seleccionada y sus puntos aparecen en despacho y mapa', () => {
 
 test('el identificador nuevo avanza desde el número más alto existente', () => {
   assert.equal(createRouteId([{ id: 'R-03' }, { id: 'R-12' }]), 'R-13');
+});
+
+test('los reportes previos actualizan el avance por puntos únicos de cada ruta', () => {
+  const [route] = applyReportProgress([{
+    id: 'R-01',
+    zone: 'Centro Histórico',
+    pointIds: ['CONT-01', 'CONT-02'],
+    stopsDone: 0,
+    stopsTotal: 2,
+    lastUpdate: '--:--',
+    status: 'scheduled',
+    statusLabel: 'Programada',
+    syncLabel: 'Sin iniciar'
+  }], [{
+    route_id: 'R-01',
+    container_id: 'CONT-01',
+    created_at: '2026-10-08T10:00:00.000Z'
+  }, {
+    route_id: 'R-01',
+    container_id: 'CONT-01',
+    created_at: '2026-10-08T11:00:00.000Z'
+  }, {
+    route_id: 'R-02',
+    container_id: 'CONT-02',
+    created_at: '2026-10-08T12:00:00.000Z'
+  }]);
+
+  assert.equal(route.stopsDone, 1);
+  assert.equal(route.status, 'active');
+  assert.equal(route.statusLabel, 'En ruta');
+  assert.equal(route.lastUpdate, new Date('2026-10-08T11:00:00.000Z').toLocaleTimeString('es-MX', {
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }));
 });

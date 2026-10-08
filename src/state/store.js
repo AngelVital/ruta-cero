@@ -49,7 +49,11 @@ class TacticalStore {
         currentStopIndex: 0,
         status: 'PENDIENTE',
         startTime: '--:-- AM',
-        startTimestamp: null
+        startTimestamp: null,
+        returning: false,
+        dashboardPhoto: null,
+        dashboardPhotoPath: null,
+        completedAt: null
       },
       stops: [
         {
@@ -141,6 +145,15 @@ class TacticalStore {
     };
 
     this.allStops = [...this.state.stops];
+    this.returnStation = {
+      id: 'ESTACION-01',
+      code: 'ESTACIÓN DE REGRESO',
+      address: 'Boulevard Pino Payas',
+      latitude: 24.106111,
+      longitude: -110.344054,
+      status: 'pending',
+      type: 'return-station'
+    };
     this.applyConfiguredRoute(getSelectedRoute(), false);
     this.listeners = [];
   }
@@ -227,34 +240,58 @@ class TacticalStore {
         completedCount: 0,
         currentStopIndex: 0,
         startTimestamp: null,
-        startTime: '--:-- AM'
+        startTime: '--:-- AM',
+        returning: false,
+        dashboardPhoto: null,
+        dashboardPhotoPath: null,
+        completedAt: null
       };
       if (shouldNotify) this.notify();
       return;
     }
 
     const isSameRoute = this.state.route.id === route.id;
+    const completedCount = Math.max(
+      route.stopsDone || 0,
+      this.state.stops.filter((stop) => stop.type !== 'return-station' && stop.status === 'completed').length
+    );
     const routeStops = route.pointIds
       .map((pointId) => this.allStops.find((stop) => stop.id === pointId))
       .filter(Boolean);
+    if (completedCount >= routeStops.length && routeStops.length > 0 && route.status !== 'completed') {
+      routeStops.forEach((stop) => { stop.status = 'completed'; });
+    }
     routeStops.forEach((stop) => {
       if (stop.status !== 'completed') stop.status = 'pending';
     });
     const firstPendingStop = routeStops.find((stop) => stop.status !== 'completed');
+    const returning = route.status !== 'completed'
+      && (completedCount >= routeStops.length || (isSameRoute && this.state.route.returning));
     if (firstPendingStop) firstPendingStop.status = 'active';
 
+    if (returning) {
+      this.returnStation = { ...this.returnStation, status: route.status === 'completed' ? 'completed' : 'active' };
+      routeStops.push(this.returnStation);
+    }
+
     this.state.stops = routeStops;
-    this.state.activeContainerId = firstPendingStop?.id || routeStops[0]?.id || null;
+    this.state.activeContainerId = returning
+      ? this.returnStation.id
+      : firstPendingStop?.id || routeStops[0]?.id || null;
     this.state.route = {
       ...this.state.route,
       id: route.id,
       name: route.zone,
-      totalStops: routeStops.length,
-      completedCount: routeStops.filter((stop) => stop.status === 'completed').length,
+      totalStops: route.pointIds.length,
+      completedCount: Math.min(route.pointIds.length, completedCount),
       currentStopIndex: 0,
-      status: route.status === 'active' ? 'EN RUTA' : 'PENDIENTE',
+      status: route.status === 'completed' ? 'COMPLETADA' : route.status === 'active' ? 'EN RUTA' : 'PENDIENTE',
       startTimestamp: isSameRoute ? this.state.route.startTimestamp : null,
-      startTime: isSameRoute ? this.state.route.startTime : '--:-- AM'
+      startTime: isSameRoute ? this.state.route.startTime : '--:-- AM',
+      returning,
+      dashboardPhoto: isSameRoute ? this.state.route.dashboardPhoto : null,
+      dashboardPhotoPath: route.dashboardPhotoPath || null,
+      completedAt: route.completedAt || null
     };
     if (shouldNotify) this.notify();
   }
@@ -307,10 +344,34 @@ class TacticalStore {
       if (nextPending) {
         nextPending.status = 'active';
         this.state.activeContainerId = nextPending.id;
+      } else if (!this.state.route.returning && this.state.route.completedCount >= this.state.route.totalStops) {
+        this.returnStation = { ...this.returnStation, status: 'active' };
+        this.state.stops.push(this.returnStation);
+        this.state.activeContainerId = this.returnStation.id;
+        this.state.route.returning = true;
       }
 
     }
     this.notify();
+  }
+
+  setDashboardPhoto(photoDataUrl) {
+    this.state.route.dashboardPhoto = photoDataUrl;
+    this.notify();
+  }
+
+  completeRoute(dashboardPhotoPath) {
+    if (!this.state.route.returning || !this.state.route.dashboardPhoto) return false;
+    this.returnStation = { ...this.returnStation, status: 'completed' };
+    this.state.stops = this.state.stops.map((stop) => (
+      stop.type === 'return-station' ? this.returnStation : stop
+    ));
+    this.state.route.status = 'COMPLETADA';
+    this.state.route.returning = false;
+    this.state.route.dashboardPhotoPath = dashboardPhotoPath || null;
+    this.state.route.completedAt = new Date().toISOString();
+    this.notify();
+    return true;
   }
 
   showToast(message, type = 'success', duration = 3000) {

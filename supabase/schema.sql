@@ -221,7 +221,6 @@ begin
   update public.route_configurations
   set status = 'active',
       status_label = 'En ruta',
-      stops_done = 0,
       last_update = to_char(now() at time zone 'America/Mazatlan', 'HH24:MI'),
       updated_at = now()
   where id = p_route_id
@@ -235,3 +234,76 @@ $$;
 
 revoke all on function public.start_route_configuration(text) from public;
 grant execute on function public.start_route_configuration(text) to anon, authenticated;
+
+create or replace function public.update_route_progress_from_report()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  completed_points integer;
+begin
+  select count(distinct report.container_id)::integer
+  into completed_points
+  from public.container_reports report
+  join public.route_configurations route on route.id = new.route_id
+  where report.route_id = route.id
+    and report.container_id = any(route.point_ids);
+
+  update public.route_configurations route
+  set stops_done = least(cardinality(route.point_ids), completed_points),
+      last_update = to_char(new.created_at at time zone 'America/Mazatlan', 'HH24:MI'),
+      status = case
+        when completed_points >= cardinality(route.point_ids)
+          then 'completed'
+        when completed_points > 0 then 'active'
+        else route.status
+      end,
+      status_label = case
+        when completed_points >= cardinality(route.point_ids)
+          then 'Completada'
+        when completed_points > 0 then 'En ruta'
+        else route.status_label
+      end,
+      updated_at = now()
+  where route.id = new.route_id;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.update_route_progress_from_report() from public, anon, authenticated;
+
+drop trigger if exists container_report_updates_route_progress
+  on public.container_reports;
+
+create trigger container_report_updates_route_progress
+  after insert on public.container_reports
+  for each row
+  execute function public.update_route_progress_from_report();
+
+with route_progress as (
+  select
+    route.id,
+    least(cardinality(route.point_ids), count(distinct report.container_id)::integer) as stops_done
+  from public.route_configurations route
+  left join public.container_reports report
+    on report.route_id = route.id
+    and report.container_id = any(route.point_ids)
+  group by route.id, route.point_ids
+)
+update public.route_configurations route
+set stops_done = progress.stops_done,
+    status = case
+      when progress.stops_done >= cardinality(route.point_ids) then 'completed'
+      when progress.stops_done > 0 then 'active'
+      else route.status
+    end,
+    status_label = case
+      when progress.stops_done >= cardinality(route.point_ids) then 'Completada'
+      when progress.stops_done > 0 then 'En ruta'
+      else route.status_label
+    end
+from route_progress progress
+where route.id = progress.id;
