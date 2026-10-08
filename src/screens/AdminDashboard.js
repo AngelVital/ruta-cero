@@ -8,14 +8,14 @@ const isCurrentUserAdmin = async (...args) => (await getSupabaseService()).isCur
 const fetchAdminContainerReports = async (...args) => (await getSupabaseService()).fetchAdminContainerReports(...args);
 
 const collectionPoints = [
-  { id: 'CONT-01', name: 'Ayuntamiento', routeId: 'R-01', lastCollectedOn: '2026-09-30', status: 'completed' },
-  { id: 'CONT-02', name: 'CREE', routeId: 'R-02', lastCollectedOn: '2026-09-23', status: 'pending' },
-  { id: 'CONT-03', name: 'Parque Morelos', routeId: 'R-01', lastCollectedOn: '2026-09-30', status: 'completed' },
-  { id: 'CONT-04', name: 'Malecón', routeId: 'R-01', lastCollectedOn: '2026-09-21', status: 'active' },
-  { id: 'CONT-05', name: 'UABCS', routeId: 'R-03', lastCollectedOn: '2026-09-25', status: 'pending' },
-  { id: 'CONT-06', name: 'Camino Real', routeId: 'R-03', lastCollectedOn: '2026-09-18', status: 'pending' },
-  { id: 'CONT-07', name: 'SEP', routeId: 'R-02', lastCollectedOn: '2026-09-26', status: 'pending' },
-  { id: 'CONT-08', name: 'El Centenario', routeId: 'R-03', lastCollectedOn: '2026-09-15', status: 'pending' }
+  { id: 'CONT-01', name: 'Ayuntamiento', lastCollectedOn: '2026-09-30' },
+  { id: 'CONT-02', name: 'CREE', lastCollectedOn: '2026-09-23' },
+  { id: 'CONT-03', name: 'Parque Morelos', lastCollectedOn: '2026-09-30' },
+  { id: 'CONT-04', name: 'Malecón', lastCollectedOn: '2026-09-21' },
+  { id: 'CONT-05', name: 'UABCS', lastCollectedOn: '2026-09-25' },
+  { id: 'CONT-06', name: 'Camino Real', lastCollectedOn: '2026-09-18' },
+  { id: 'CONT-07', name: 'SEP', lastCollectedOn: '2026-09-26' },
+  { id: 'CONT-08', name: 'El Centenario', lastCollectedOn: '2026-09-15' }
 ];
 
 const demoRoutes = [
@@ -84,26 +84,23 @@ function renderRouteRow(route) {
   `;
 }
 
-function renderCollectionPoint(point) {
-  const daysSinceCollection = getDaysSinceCollection(point.lastCollectedOn);
+function renderCollectionPoint(point, report) {
+  const lastCollectedOn = report?.created_at?.slice(0, 10) || point.lastCollectedOn;
+  const daysSinceCollection = getDaysSinceCollection(lastCollectedOn);
   const ageClass = daysSinceCollection >= 7 ? 'age-overdue' : daysSinceCollection >= 4 ? 'age-due-soon' : 'age-recent';
-  const [year, month, day] = point.lastCollectedOn.split('-').map(Number);
+  const [year, month, day] = lastCollectedOn.split('-').map(Number);
   const formattedDate = new Intl.DateTimeFormat('es-MX', {
     day: '2-digit', month: 'short', year: 'numeric'
   }).format(new Date(year, month - 1, day));
+  const visitStatus = report
+    ? '<span class="admin-status status-completed"><i></i>VISITADO</span>'
+    : '<span class="admin-status status-scheduled"><i></i>SIN REPORTE</span>';
 
   return `
     <tr>
-      <td><span class="admin-route-id">${point.id}</span><span class="admin-cell-primary">${point.name}</span></td>
-      <td><time datetime="${point.lastCollectedOn}">${formattedDate}</time></td>
+      <td><span class="admin-route-id">${point.id}</span><span class="admin-cell-primary">${point.name}</span>${visitStatus}</td>
+      <td><time datetime="${lastCollectedOn}">${formattedDate}</time></td>
       <td><span class="admin-days-badge ${ageClass}">${daysSinceCollection === 0 ? 'Hoy' : `${daysSinceCollection} ${daysSinceCollection === 1 ? 'día' : 'días'}`}</span></td>
-      <td>
-        <label class="admin-point-route-select"><span class="sr-only">Asignar ruta para ${point.id}</span>
-          <select class="admin-point-route" data-point-id="${point.id}">
-            ${demoRoutes.map((route) => `<option value="${route.id}" ${point.routeId === route.id ? 'selected' : ''}>${route.id} · ${route.zone}</option>`).join('')}
-          </select>${icon('expand_more')}
-        </label>
-      </td>
     </tr>
   `;
 }
@@ -120,22 +117,21 @@ function renderRouteTable() {
   return demoRoutes.map(renderRouteRow).join('');
 }
 
-function renderCollectionPointTable() {
-  return [...collectionPoints]
-    .sort((first, second) => getDaysSinceCollection(second.lastCollectedOn) - getDaysSinceCollection(first.lastCollectedOn))
-    .map(renderCollectionPoint)
-    .join('');
-}
+export function renderCollectionPointTable(reports = []) {
+  const latestReports = new Map();
+  reports.forEach((report) => {
+    if (!report.container_id || !report.created_at) return;
 
-function syncRoutePoints() {
-  demoRoutes.forEach((route) => {
-    const assignedPoints = collectionPoints.filter((point) => point.routeId === route.id);
-    route.pointIds = assignedPoints.map((point) => point.id);
-    route.stopsTotal = assignedPoints.length;
-    route.stopsDone = route.status === 'active'
-      ? assignedPoints.filter((point) => point.status === 'completed').length
-      : 0;
+    const currentReport = latestReports.get(report.container_id);
+    if (!currentReport || report.created_at > currentReport.created_at) {
+      latestReports.set(report.container_id, report);
+    }
   });
+
+  return collectionPoints
+    .map((point) => ({ point, report: latestReports.get(point.id) }))
+    .map(({ point, report }) => renderCollectionPoint(point, report))
+    .join('');
 }
 
 function escapeHtml(value) {
@@ -355,7 +351,7 @@ function renderAdminOperations(user, reports, reportError = '') {
           </section>
 
           <div class="admin-demo-notice" role="status">
-            ${icon('info')}<span>Los reportes se cargan desde Supabase. Los indicadores, rutas y puntos de esta vista siguen siendo datos de demostración.</span>
+            ${icon('info')}<span>Los reportes y el estado de visita de los puntos se cargan desde Supabase. Los indicadores y las rutas siguen siendo datos de demostración.</span>
           </div>
 
           <section class="admin-section admin-reports-section" id="reports">
@@ -442,11 +438,11 @@ function renderAdminOperations(user, reports, reportError = '') {
               </div>
               <div class="admin-points-table-wrap">
                 <table class="admin-points-table">
-                  <thead><tr><th scope="col">PUNTO DE RECOLECCIÓN</th><th scope="col">ÚLTIMA RECOLECCIÓN</th><th scope="col">TIEMPO TRANSCURRIDO</th><th scope="col">RUTA ASIGNADA</th></tr></thead>
-                  <tbody id="admin-points-rows">${renderCollectionPointTable()}</tbody>
+                  <thead><tr><th scope="col">PUNTO DE RECOLECCIÓN</th><th scope="col">ÚLTIMA VISITA</th><th scope="col">TIEMPO TRANSCURRIDO</th></tr></thead>
+                  <tbody id="admin-points-rows">${renderCollectionPointTable(reports)}</tbody>
                 </table>
               </div>
-              <div class="admin-points-foot"><span><i class="point-legend-overdue"></i>7 días o más</span><span><i class="point-legend-due"></i>4–6 días</span><span><i class="point-legend-recent"></i>0–3 días</span><strong>Orden: más días sin recolección</strong></div>
+              <div class="admin-points-foot"><span><i class="point-legend-overdue"></i>7 días o más</span><span><i class="point-legend-due"></i>4–6 días</span><span><i class="point-legend-recent"></i>0–3 días</span><strong>Orden: CONT-01 al CONT-08</strong></div>
             </section>
           </div>
 
@@ -506,24 +502,6 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     if (event.target === reportDialog) reportDialog.close();
   });
 
-  container.querySelectorAll('.admin-point-route').forEach((select) => {
-    select.addEventListener('change', (event) => {
-      const point = collectionPoints.find((item) => item.id === event.currentTarget.dataset.pointId);
-      if (!point) return;
-
-      point.routeId = event.currentTarget.value;
-      syncRoutePoints();
-      updateRoutes();
-
-      const activeRoute = demoRoutes.find((route) => route.status === 'active');
-      if (activeRoute) {
-        activeRouteId.textContent = activeRoute.id;
-        activeRouteProgress.textContent = `${activeRoute.stopsDone} de ${activeRoute.stopsTotal} puntos atendidos`;
-        unitRoute.textContent = `Asignada a ${activeRoute.id}`;
-      }
-    });
-  });
-
   container.querySelectorAll('.admin-nav-link').forEach((link) => {
     link.addEventListener('click', () => {
       container.querySelector('.admin-nav-link.is-active')?.classList.remove('is-active');
@@ -568,6 +546,7 @@ function attachAdminDashboardContentEvents(container, initialReports) {
       reports = await fetchAdminContainerReports();
       container.querySelector('#admin-report-rows').innerHTML = renderReportRows(reports);
       container.querySelector('#admin-report-count').textContent = String(reports.length);
+      container.querySelector('#admin-points-rows').innerHTML = renderCollectionPointTable(reports);
       if (message) message.textContent = `Actualizado: ${formatReportDate(new Date().toISOString())}`;
     } catch (error) {
       if (message) message.textContent = error.message;
