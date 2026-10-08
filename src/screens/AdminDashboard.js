@@ -92,13 +92,10 @@ function renderCollectionPoint(point, report) {
   const formattedDate = new Intl.DateTimeFormat('es-MX', {
     day: '2-digit', month: 'short', year: 'numeric'
   }).format(new Date(year, month - 1, day));
-  const visitStatus = report
-    ? '<span class="admin-status status-completed"><i></i>VISITADO</span>'
-    : '<span class="admin-status status-scheduled"><i></i>SIN REPORTE</span>';
 
   return `
     <tr>
-      <td><span class="admin-route-id">${point.id}</span><span class="admin-cell-primary">${point.name}</span>${visitStatus}</td>
+      <td><span class="admin-route-id">${point.id}</span><span class="admin-cell-primary">${point.name}</span></td>
       <td><time datetime="${lastCollectedOn}">${formattedDate}</time></td>
       <td><span class="admin-days-badge ${ageClass}">${daysSinceCollection === 0 ? 'Hoy' : `${daysSinceCollection} ${daysSinceCollection === 1 ? 'día' : 'días'}`}</span></td>
     </tr>

@@ -45,11 +45,11 @@ test('la tabla administrativa conserva la fecha y ordena por identificador sin m
     created_at: '2026-10-08T14:30:00.000Z'
   }]);
 
-  assert.match(table, /<span class="admin-route-id">CONT-01<\/span><span class="admin-cell-primary">Ayuntamiento<\/span><span class="admin-status status-completed"><i><\/i>VISITADO<\/span>/);
+  assert.match(table, /<span class="admin-route-id">CONT-01<\/span><span class="admin-cell-primary">Ayuntamiento<\/span>/);
   assert.match(table, /datetime="2026-10-08"/);
-  assert.match(table, /<span class="admin-status status-scheduled"><i><\/i>SIN REPORTE<\/span>/);
   assert.ok(table.indexOf('CONT-01') < table.indexOf('CONT-02'));
   assert.ok(table.indexOf('CONT-07') < table.indexOf('CONT-08'));
   assert.match(table, /admin-days-badge/);
+  assert.doesNotMatch(table, /VISITADO|SIN REPORTE/);
   assert.doesNotMatch(table, /admin-point-route|RUTA ASIGNADA/);
 });
