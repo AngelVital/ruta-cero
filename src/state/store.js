@@ -159,14 +159,16 @@ class TacticalStore {
     this.notify();
   }
 
-  selectContainer(id) {
+  selectContainer(id, shouldNotify = true) {
     this.state.activeContainerId = id;
     this.state.stops.forEach((stop) => {
       if (stop.status !== 'completed') {
         stop.status = stop.id === id ? 'active' : 'pending';
       }
     });
-    this.notify();
+    if (shouldNotify) {
+      this.notify();
+    }
   }
 
   updateInspectionItem(key, value) {

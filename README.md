@@ -64,6 +64,12 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
 
 La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Los reportes solo se pueden leer con una sesión cuya cuenta esté registrada en `admin_users`; la inserción de reportes anónimos sigue habilitada para pruebas. Las fotos se registran actualmente como datos de evidencia, no como archivos de imagen. Sin variables configuradas, la aplicación sigue funcionando en modo local.
 
+## Despliegue en Vercel
+
+En el proyecto de Vercel, abre **Settings → Environment Variables** y define `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` con los valores de **Project URL** y la clave publishable/anon del proyecto correcto de Supabase. Añádelas para cada entorno que uses (Production, Preview o Development) y vuelve a desplegar: Vite incorpora estas variables durante la compilación. No uses la clave `service_role` en el frontend.
+
+Antes de guardar reportes, ejecuta `supabase/schema.sql` en el SQL Editor de ese mismo proyecto de Supabase. Si el guardado falla, el aviso de la aplicación muestra el código o mensaje devuelto por Supabase para distinguir errores de tabla, permisos y conexión.
+
 ## Comandos disponibles
 
 ```bash

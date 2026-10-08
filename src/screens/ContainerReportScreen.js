@@ -123,6 +123,19 @@ function isContainerReportReady(fillLevel, selectedMaterials, materialWeights, p
     && requiredPhotos.every((photoKey) => photoEvidence[photoKey]);
 }
 
+function getReportSaveErrorMessage(error) {
+  if (error?.code === '42501') {
+    return 'Supabase rechazó la inserción por permisos o RLS. Revisa la política INSERT de container_reports.';
+  }
+
+  if (error?.code === '42P01' || error?.code === 'PGRST205') {
+    return 'No se encuentra la tabla container_reports. Ejecuta supabase/schema.sql en tu proyecto de Supabase.';
+  }
+
+  const code = error?.code ? ` (${error.code})` : '';
+  return `Error de Supabase${code}: ${error?.message || 'No se pudo completar la solicitud.'}`;
+}
+
 export function renderContainerReportScreen(state) {
   const container = state.stops.find(s => s.id === state.activeContainerId) || state.stops[3];
 
@@ -667,7 +680,7 @@ export function attachContainerReportEvents(containerEl, store) {
       store.setScreen('map');
     } catch (error) {
       console.error('No se pudo guardar el reporte en Supabase:', error);
-      store.showToast('No se pudo guardar en Supabase. Revisa la conexión, las credenciales y la política RLS.', 'info', 6000);
+      store.showToast(getReportSaveErrorMessage(error), 'info', 8000);
       if (button.isConnected) {
         button.querySelector('span:last-child').textContent = 'GUARDAR REPORTE Y CONTINUAR';
         updateSaveButtonState();

@@ -187,7 +187,7 @@ export function attachQRScannerEvents(container, store) {
       return;
     }
 
-    store.selectContainer(matchedContainer.id);
+    store.selectContainer(matchedContainer.id, false);
     store.setScreen('report', 'slide-left');
   };
 
@@ -269,7 +269,7 @@ export function attachQRScannerEvents(container, store) {
       }
       barcodeValidated = true;
       stopCamera();
-      store.selectContainer(id);
+      store.selectContainer(id, false);
       store.setScreen('report', 'slide-left');
     });
   });
