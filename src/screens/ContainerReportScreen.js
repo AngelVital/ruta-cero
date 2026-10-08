@@ -124,6 +124,10 @@ function isContainerReportReady(fillLevel, selectedMaterials, materialWeights, p
 }
 
 function getReportSaveErrorMessage(error) {
+  if (error?.code === '22P02' && /"(low|medium|full)"/.test(error.message || '')) {
+    return 'La columna fill_level de Supabase sigue siendo INTEGER. Ejecuta supabase/schema.sql en el SQL Editor de ese proyecto.';
+  }
+
   if (error?.code === '42501') {
     return 'Supabase rechazó la inserción por permisos o RLS. Revisa la política INSERT de container_reports.';
   }
