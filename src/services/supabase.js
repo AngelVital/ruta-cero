@@ -93,6 +93,14 @@ export async function saveRouteConfigurations(routes, selectedRouteId) {
   if (error) throw error;
 }
 
+export async function markRouteStarted(routeId) {
+  const { error } = await requireSupabase().rpc('start_route_configuration', {
+    p_route_id: routeId
+  });
+
+  if (error) throw error;
+}
+
 export function subscribeToRouteConfigurations(onChange) {
   if (!supabase) return () => {};
 

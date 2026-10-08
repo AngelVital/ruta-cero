@@ -15,6 +15,7 @@ const isCurrentUserAdmin = async (...args) => (await getSupabaseService()).isCur
 const fetchAdminContainerReports = async (...args) => (await getSupabaseService()).fetchAdminContainerReports(...args);
 const fetchRouteConfigurations = async (...args) => (await getSupabaseService()).fetchRouteConfigurations(...args);
 const saveRouteConfigurationsRemote = async (...args) => (await getSupabaseService()).saveRouteConfigurations(...args);
+const subscribeToRouteConfigurations = async (...args) => (await getSupabaseService()).subscribeToRouteConfigurations(...args);
 
 const collectionPoints = [
   { id: 'CONT-01', name: 'Ayuntamiento', lastCollectedOn: '2026-09-30' },
@@ -504,6 +505,27 @@ function attachAdminDashboardContentEvents(container, initialReports) {
       : 'Sin ruta seleccionada para campo';
   };
 
+  const refreshRoutesFromRemote = async () => {
+    try {
+      const remoteRoutes = await fetchRouteConfigurations();
+      if (remoteRoutes.length === 0) return;
+
+      const selectedRouteId = remoteRoutes.find((route) => route.isSelected)?.id || remoteRoutes[0].id;
+      demoRoutes = remoteRoutes;
+      saveConfiguredRoutes(remoteRoutes, selectedRouteId);
+      updateRoutes();
+    } catch (error) {
+      routeMessage.textContent = `No se pudo actualizar el estado de ruta: ${error.message}`;
+      routeMessage.classList.add('is-error');
+    }
+  };
+
+  subscribeToRouteConfigurations(refreshRoutesFromRemote).catch((error) => {
+    routeMessage.textContent = `No se pudo activar la actualización en vivo: ${error.message}`;
+    routeMessage.classList.add('is-error');
+  });
+  window.addEventListener('focus', refreshRoutesFromRemote);
+
   search?.addEventListener('input', updateRoutes);
   statusFilter?.addEventListener('change', updateRoutes);
 
@@ -775,6 +797,8 @@ async function mountAdminDashboard(container) {
         const selectedRouteId = remoteRoutes.find((route) => route.isSelected)?.id || remoteRoutes[0].id;
         demoRoutes = remoteRoutes;
         saveConfiguredRoutes(remoteRoutes, selectedRouteId);
+      } else {
+        await saveRouteConfigurationsRemote(demoRoutes, getSelectedRouteId());
       }
     } catch (error) {
       routeError = `No se pudieron cargar las rutas compartidas: ${error.message}`;

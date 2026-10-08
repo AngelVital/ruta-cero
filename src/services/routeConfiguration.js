@@ -6,12 +6,12 @@ const defaultRoutes = [
     id: 'R-01',
     zone: 'Centro Histórico',
     pointIds: ['CONT-01', 'CONT-03', 'CONT-04'],
-    stopsDone: 2,
+    stopsDone: 0,
     stopsTotal: 3,
-    lastUpdate: '09:42',
-    status: 'active',
-    statusLabel: 'En ruta',
-    syncLabel: '1 evento pendiente'
+    lastUpdate: '--:--',
+    status: 'scheduled',
+    statusLabel: 'Programada',
+    syncLabel: 'Sin iniciar'
   },
   {
     id: 'R-02',

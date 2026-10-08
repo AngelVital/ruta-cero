@@ -210,3 +210,28 @@ $$;
 
 revoke all on function public.replace_route_configurations(jsonb, text) from public, anon;
 grant execute on function public.replace_route_configurations(jsonb, text) to authenticated;
+
+create or replace function public.start_route_configuration(p_route_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.route_configurations
+  set status = 'active',
+      status_label = 'En ruta',
+      stops_done = 0,
+      last_update = to_char(now() at time zone 'America/Mazatlan', 'HH24:MI'),
+      updated_at = now()
+  where id = p_route_id
+    and is_selected;
+
+  if not found then
+    raise exception 'La ruta no existe o no está asignada al campo.';
+  end if;
+end;
+$$;
+
+revoke all on function public.start_route_configuration(text) from public;
+grant execute on function public.start_route_configuration(text) to anon, authenticated;

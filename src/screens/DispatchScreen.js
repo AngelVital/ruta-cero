@@ -200,7 +200,7 @@ export function attachDispatchScreenEvents(container, store) {
     store.setScreen('inspection');
   });
 
-  container.querySelector('#btn-start-route')?.addEventListener('click', () => {
+  container.querySelector('#btn-start-route')?.addEventListener('click', async (event) => {
     if (!store.state.fuelLevel.preset) {
       store.showToast('Registra el nivel de combustible antes de iniciar la ruta.', 'info');
       return;
@@ -211,8 +211,16 @@ export function attachDispatchScreenEvents(container, store) {
       return;
     }
 
-    store.startRoute();
-    store.showToast('¡Ruta iniciada! Dirígete al primer punto de recolección y escanea el código QR.', 'success');
+    const routeId = store.startRoute();
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const { markRouteStarted } = await import('../services/supabase.js');
+      await markRouteStarted(routeId);
+      store.showToast(`¡${routeId} iniciada y sincronizada! Dirígete al primer punto y escanea el código QR.`, 'success');
+    } catch (error) {
+      store.showToast(`Ruta iniciada en este dispositivo, pero no se sincronizó: ${error.message}`, 'info', 8000);
+    }
     store.setScreen('map');
   });
 }

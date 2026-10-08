@@ -233,6 +233,7 @@ class TacticalStore {
       return;
     }
 
+    const isSameRoute = this.state.route.id === route.id;
     const routeStops = route.pointIds
       .map((pointId) => this.allStops.find((stop) => stop.id === pointId))
       .filter(Boolean);
@@ -251,9 +252,9 @@ class TacticalStore {
       totalStops: routeStops.length,
       completedCount: routeStops.filter((stop) => stop.status === 'completed').length,
       currentStopIndex: 0,
-      status: 'PENDIENTE',
-      startTimestamp: null,
-      startTime: '--:-- AM'
+      status: route.status === 'active' ? 'EN RUTA' : 'PENDIENTE',
+      startTimestamp: isSameRoute ? this.state.route.startTimestamp : null,
+      startTime: isSameRoute ? this.state.route.startTime : '--:-- AM'
     };
     if (shouldNotify) this.notify();
   }
@@ -268,11 +269,13 @@ class TacticalStore {
   startRoute() {
     const startTimestamp = Date.now();
     this.state.route.startTimestamp = startTimestamp;
+    this.state.route.status = 'EN RUTA';
     this.state.route.startTime = new Date(startTimestamp).toLocaleTimeString('es-MX', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
     });
+    return this.state.route.id;
   }
 
   completeContainerReport(containerId, reportData) {

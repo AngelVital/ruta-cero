@@ -50,6 +50,12 @@ test('la ruta seleccionada y sus puntos aparecen en despacho y mapa', () => {
     assert.match(routeMap, /CONT-08/);
     assert.doesNotMatch(routeMap, /CONT-01/);
 
+    assert.equal(store.startRoute(), route.id);
+    assert.equal(store.state.route.status, 'EN RUTA');
+    const startedAt = store.state.route.startTimestamp;
+    store.applyConfiguredRoute({ ...route, status: 'active' });
+    assert.equal(store.state.route.startTimestamp, startedAt);
+
     store.completeContainerReport('CONT-06', { fillLevel: 'low', collectedKg: 0 });
     assert.deepEqual(store.state.stops.map((stop) => stop.id), route.pointIds);
     assert.equal(store.state.stops[1].status, 'active');
