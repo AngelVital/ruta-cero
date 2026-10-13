@@ -20,6 +20,7 @@ import { renderDispatchScreen, attachDispatchScreenEvents } from './screens/Disp
 import { renderInspection360Screen, attachInspection360Events } from './screens/Inspection360Screen.js';
 import { renderFuelLevelScreen, attachFuelLevelEvents } from './screens/FuelLevelScreen.js';
 import { renderRouteMapScreen, attachRouteMapEvents } from './screens/RouteMapScreen.js';
+import { renderRouteCompletionScreen, attachRouteCompletionEvents } from './screens/RouteCompletionScreen.js';
 import { renderQRScannerScreen, attachQRScannerEvents } from './screens/QRScannerScreen.js';
 import { renderContainerReportScreen, attachContainerReportEvents } from './screens/ContainerReportScreen.js';
 
@@ -127,6 +128,10 @@ function renderApp() {
     case 'map':
       screenHtml = renderRouteMapScreen(state);
       attachEvents = attachRouteMapEvents;
+      break;
+    case 'route-completion':
+      screenHtml = renderRouteCompletionScreen(state);
+      attachEvents = attachRouteCompletionEvents;
       break;
     case 'scanner':
       screenHtml = renderQRScannerScreen(state);
