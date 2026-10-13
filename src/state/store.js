@@ -251,30 +251,35 @@ class TacticalStore {
     }
 
     const isSameRoute = this.state.route.id === route.id;
-    const completedCount = Math.max(
-      route.stopsDone || 0,
-      this.state.stops.filter((stop) => stop.type !== 'return-station' && stop.status === 'completed').length
-    );
+    const previouslyCompletedStopIds = new Set(isSameRoute
+      ? this.state.stops
+        .filter((stop) => stop.type !== 'return-station' && stop.status === 'completed')
+        .map((stop) => stop.id)
+      : []);
     const routeStops = route.pointIds
       .map((pointId) => this.allStops.find((stop) => stop.id === pointId))
       .filter(Boolean);
-    if (completedCount >= routeStops.length && routeStops.length > 0 && route.status !== 'completed') {
-      routeStops.forEach((stop) => { stop.status = 'completed'; });
-    }
-    routeStops.forEach((stop) => {
-      if (stop.status !== 'completed') stop.status = 'pending';
-    });
-    const firstPendingStop = routeStops.find((stop) => stop.status !== 'completed');
-    const returning = route.status !== 'completed'
-      && (completedCount >= routeStops.length || (isSameRoute && this.state.route.returning));
+    const configuredCompletedCount = route.status === 'completed'
+      ? routeStops.length
+      : Math.max(0, Math.min(routeStops.length, Math.floor(Number(route.stopsDone) || 0)));
+    const mappedRouteStops = routeStops.map((stop, index) => ({
+      ...stop,
+      status: previouslyCompletedStopIds.has(stop.id) || index < configuredCompletedCount
+        ? 'completed'
+        : 'pending'
+    }));
+    const completedCount = mappedRouteStops.filter((stop) => stop.status === 'completed').length;
+    const firstPendingStop = mappedRouteStops.find((stop) => stop.status !== 'completed');
+    const returning = mappedRouteStops.length > 0
+      && (completedCount >= mappedRouteStops.length || (isSameRoute && this.state.route.returning));
     if (firstPendingStop) firstPendingStop.status = 'active';
 
     if (returning) {
-      this.returnStation = { ...this.returnStation, status: route.status === 'completed' ? 'completed' : 'active' };
-      routeStops.push(this.returnStation);
+      this.returnStation = { ...this.returnStation, status: 'active' };
+      mappedRouteStops.push({ ...this.returnStation });
     }
 
-    this.state.stops = routeStops;
+    this.state.stops = mappedRouteStops;
     this.state.activeContainerId = returning
       ? this.returnStation.id
       : firstPendingStop?.id || routeStops[0]?.id || null;
@@ -285,7 +290,9 @@ class TacticalStore {
       totalStops: route.pointIds.length,
       completedCount: Math.min(route.pointIds.length, completedCount),
       currentStopIndex: 0,
-      status: route.status === 'completed' ? 'COMPLETADA' : route.status === 'active' ? 'EN RUTA' : 'PENDIENTE',
+      status: returning
+        ? 'EN RUTA'
+        : route.status === 'completed' ? 'COMPLETADA' : route.status === 'active' ? 'EN RUTA' : 'PENDIENTE',
       startTimestamp: isSameRoute ? this.state.route.startTimestamp : null,
       startTime: isSameRoute ? this.state.route.startTime : '--:-- AM',
       returning,

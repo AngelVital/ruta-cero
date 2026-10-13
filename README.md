@@ -25,9 +25,10 @@ Abre `/?mode=field` o elige **Campo** en la pantalla inicial. El flujo sigue la 
 4. **Iniciar y recorrer:** inicia la ruta desde Despacho. El mapa muestra el punto activo, el avance y los puntos programados; ofrece abrir indicaciones en Google Maps.
 5. **Identificar el contenedor:** escanea el código QR o código de barras del punto activo. Si la cámara no logra leerlo, se puede elegir manualmente el mismo punto activo. Los códigos de otros puntos no permiten avanzar.
 6. **Registrar la recolección:** toma fotos iniciales y finales del exterior e interior, indica el nivel de llenado y registra materiales, peso por material e incidencias. Para nivel medio o lleno se requiere al menos un material con peso mayor que cero; para nivel bajo no hace falta registrar material.
-7. **Guardar y continuar:** guarda el reporte. El punto queda completado y el mapa activa el siguiente; al completar todos los contenedores se agrega la estación de regreso. El botón para finalizar la ruta está visible, pero la pantalla de cierre todavía no está conectada al router.
+7. **Guardar y continuar:** guarda el reporte. El punto queda completado y el mapa activa el siguiente; al completar todos los contenedores de cualquier ruta, se agrega la estación de regreso y se muestran sus indicaciones en el mapa.
+8. **Finalizar la ruta:** al llegar a la estación, captura la evidencia fotográfica de regreso y confirma el cierre para volver a Despacho.
 
-El avance operativo de campo vive en el store en memoria del dispositivo. Los reportes se insertan en Supabase cuando está configurado; si no lo está, quedan registrados solo durante la sesión local. Las fotos se guardan como evidencia/fechas, no como archivos de imagen.
+El avance operativo de campo vive en el store en memoria del dispositivo. Los reportes se insertan en Supabase cuando está configurado; si no lo está, quedan registrados solo durante la sesión local. La evidencia fotográfica de cierre se conserva en el estado de la sesión.
 
 ## Flujo de administración
 
