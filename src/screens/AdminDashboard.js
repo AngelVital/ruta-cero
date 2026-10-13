@@ -2,9 +2,9 @@ import { getFillLevelLabel, normalizeFillLevel } from '../components/CapacityMet
 import {
   createRouteId,
   getConfiguredRoutes,
-  getSelectedRouteId,
-  saveConfiguredRoutes,
-  selectConfiguredRoute
+  getOperationalDate,
+  getScheduledRoute,
+  saveConfiguredRoutes
 } from '../services/routeConfiguration.js';
 
 const getSupabaseService = () => import('../services/supabase.js');
@@ -32,12 +32,18 @@ let demoRoutes = getConfiguredRoutes();
 
 const icon = (name, extraClass = '') => `<span class="material-symbols-outlined ${extraClass}" aria-hidden="true">${name}</span>`;
 
-function renderRouteRow(route, selectedRouteId) {
+function formatScheduledDate(date) {
+  if (!date) return 'Sin programar';
+  const [year, month, day] = date.split('-').map(Number);
+  return new Intl.DateTimeFormat('es-MX', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  }).format(new Date(year, month - 1, day));
+}
+
+function renderRouteRow(route) {
   const progress = route.stopsTotal ? Math.round((route.stopsDone / route.stopsTotal) * 100) : 0;
   const syncClass = route.syncLabel === '1 evento pendiente' ? 'sync-pending' : 'sync-ok';
   const points = route.pointIds.map((pointId) => `<span class="admin-point-chip">${pointId}</span>`).join('');
-  const isSelected = route.id === selectedRouteId;
-
   return `
     <tr data-route-status="${route.status}">
       <td>
@@ -55,10 +61,10 @@ function renderRouteRow(route, selectedRouteId) {
         </div>
       </td>
       <td><span class="admin-status status-${route.status}"><i></i>${route.statusLabel}</span></td>
+      <td><span class="admin-cell-primary">${formatScheduledDate(route.scheduledFor)}</span></td>
       <td><span class="admin-cell-primary">${route.lastUpdate}</span><span class="admin-cell-secondary">${route.lastUpdate === '--:--' ? 'Sin iniciar' : 'hace 3 min'}</span></td>
       <td><span class="admin-sync ${syncClass}"><i></i>${route.syncLabel}</span></td>
       <td class="admin-route-actions">
-        <button type="button" class="admin-route-action ${isSelected ? 'is-selected' : ''}" data-route-action="select" data-route-id="${route.id}" ${isSelected ? 'aria-pressed="true"' : 'aria-pressed="false"'}>${isSelected ? 'En campo' : 'Usar en campo'}</button>
         <button type="button" class="admin-icon-button" data-route-action="edit" data-route-id="${route.id}" aria-label="Editar ${escapeHtml(route.id)}" title="Editar ruta">${icon('edit')}</button>
         <button type="button" class="admin-icon-button admin-icon-button-danger" data-route-action="delete" data-route-id="${route.id}" aria-label="Eliminar ${escapeHtml(route.id)}" title="Eliminar ruta" ${demoRoutes.length === 1 ? 'disabled' : ''}>${icon('delete')}</button>
       </td>
@@ -92,8 +98,8 @@ function getDaysSinceCollection(dateString) {
   return Math.max(0, Math.floor((today - lastCollection) / 86400000));
 }
 
-function renderRouteTable(routes = demoRoutes, selectedRouteId = getSelectedRouteId()) {
-  return routes.map((route) => renderRouteRow(route, selectedRouteId)).join('');
+function renderRouteTable(routes = demoRoutes) {
+  return routes.map((route) => renderRouteRow(route)).join('');
 }
 
 function renderRouteEditorDialog() {
@@ -106,6 +112,7 @@ function renderRouteEditorDialog() {
         </header>
         <input type="hidden" name="routeId">
         <label class="admin-route-field">Nombre o zona de la ruta<input name="zone" type="text" maxlength="60" required placeholder="Ej. Centro Histórico"></label>
+        <label class="admin-route-field">Fecha de operación<input name="scheduledFor" type="date" min="${getOperationalDate()}"><span class="admin-cell-secondary">Déjala vacía para guardar la ruta sin programarla.</span></label>
         <fieldset class="admin-route-point-list">
           <legend>Puntos incluidos</legend>
           ${collectionPoints.map((point) => `
@@ -304,8 +311,7 @@ function renderReportDialog(report) {
 
 function renderAdminOperations(user, reports, reportError = '', routeError = '') {
   demoRoutes = getConfiguredRoutes();
-  const selectedRouteId = getSelectedRouteId();
-  const selectedRoute = demoRoutes.find((route) => route.id === selectedRouteId);
+  const scheduledRoute = getScheduledRoute();
   const today = new Intl.DateTimeFormat('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   }).format(new Date());
@@ -397,8 +403,8 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
             </article>
             <article class="admin-kpi kpi-delay">
               <div class="admin-kpi-top"><span>RUTA EN CURSO</span>${icon('alt_route')}</div>
-              <div class="admin-kpi-value" id="admin-active-route-id">${escapeHtml(selectedRouteId || 'Sin ruta')}</div>
-              <div class="admin-kpi-foot"><span class="kpi-neutral-dot"></span> <span id="admin-active-route-progress">${selectedRoute ? `${selectedRoute.stopsDone} de ${selectedRoute.pointIds.length} puntos atendidos` : 'Selecciona una ruta para campo'}</span></div>
+              <div class="admin-kpi-value" id="admin-active-route-id">${escapeHtml(scheduledRoute?.id || 'Sin ruta')}</div>
+              <div class="admin-kpi-foot"><span class="kpi-neutral-dot"></span> <span id="admin-active-route-progress">${scheduledRoute ? `${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy` : 'No hay ruta programada para hoy'}</span></div>
             </article>
             <article class="admin-kpi kpi-sync">
               <div class="admin-kpi-top"><span>PENDIENTES DE SINCRONIZAR</span>${icon('cloud_upload')}</div>
@@ -419,12 +425,12 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
             <p class="admin-route-message${routeError ? ' is-error' : ''}" id="admin-route-message" role="status" aria-live="polite">${escapeHtml(routeError)}</p>
             <div class="admin-table-scroll">
               <table class="admin-route-table">
-                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
-                <tbody id="admin-route-rows">${renderRouteTable(demoRoutes, selectedRouteId)}</tbody>
+                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">FECHA PROGRAMADA</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
+                <tbody id="admin-route-rows">${renderRouteTable(demoRoutes)}</tbody>
               </table>
               <div class="admin-empty-state" id="admin-route-empty" hidden>${icon('search_off')}<span>No hay rutas que coincidan con esos filtros.</span></div>
             </div>
-            <div class="admin-table-footer"><span id="admin-route-count">${demoRoutes.length} rutas configuradas</span><span id="admin-selected-route-label">${selectedRoute ? `Ruta de campo: ${escapeHtml(selectedRoute.id)} · ${escapeHtml(selectedRoute.zone)}` : 'Sin ruta seleccionada para campo'}</span></div>
+            <div class="admin-table-footer"><span id="admin-route-count">${demoRoutes.length} rutas configuradas</span><span id="admin-selected-route-label">${scheduledRoute ? `Ruta de hoy: ${escapeHtml(scheduledRoute.id)} · ${escapeHtml(scheduledRoute.zone)}` : 'Sin ruta programada para hoy'}</span></div>
             ${renderRouteEditorDialog()}
           </section>
 
@@ -475,7 +481,9 @@ function filterRoutes(searchValue, statusValue) {
 export function applyReportProgress(routes, reports) {
   return routes.map((route) => {
     const routeReports = reports.filter((report) => (
-      report.route_id === route.id && route.pointIds.includes(report.container_id)
+      report.route_id === route.id
+      && route.pointIds.includes(report.container_id)
+      && (!route.scheduledFor || getOperationalDate(new Date(report.created_at)) === route.scheduledFor)
     ));
     const visitedPoints = new Set(routeReports.map((report) => report.container_id));
     const stopsDone = Math.min(route.pointIds.length, visitedPoints.size);
@@ -490,9 +498,13 @@ export function applyReportProgress(routes, reports) {
       stopsTotal: route.pointIds.length,
       lastUpdate: latestReport
         ? new Date(latestReport.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })
-        : route.lastUpdate,
-      status: routeComplete ? 'completed' : stopsDone > 0 ? 'active' : route.status,
-      statusLabel: routeComplete ? 'Completada' : stopsDone > 0 ? 'En ruta' : route.statusLabel
+        : route.scheduledFor ? '--:--' : route.lastUpdate,
+      status: routeComplete
+        ? 'completed'
+        : stopsDone > 0 ? 'active' : route.scheduledFor ? 'scheduled' : route.status,
+      statusLabel: routeComplete
+        ? 'Completada'
+        : stopsDone > 0 ? 'En ruta' : route.scheduledFor ? 'Programada' : route.statusLabel
     };
   });
 }
@@ -514,20 +526,20 @@ function attachAdminDashboardContentEvents(container, initialReports) {
   const updateRoutes = () => {
     demoRoutes = getConfiguredRoutes();
     const filteredRoutes = filterRoutes(search?.value || '', statusFilter?.value || 'all');
-    rows.innerHTML = renderRouteTable(filteredRoutes, getSelectedRouteId());
+    rows.innerHTML = renderRouteTable(filteredRoutes);
     rows.hidden = filteredRoutes.length === 0;
     emptyState.hidden = filteredRoutes.length > 0;
     routeCount.textContent = `${demoRoutes.length} rutas configuradas`;
     container.querySelector('#admin-routes-count').textContent = String(demoRoutes.length);
     container.querySelector('#admin-route-nav-count').textContent = String(demoRoutes.length);
-    const selectedRoute = demoRoutes.find((route) => route.id === getSelectedRouteId());
-    activeRouteId.textContent = selectedRoute?.id || 'Sin ruta';
-    activeRouteProgress.textContent = selectedRoute
-      ? `${selectedRoute.stopsDone} de ${selectedRoute.pointIds.length} puntos atendidos`
-      : 'Selecciona una ruta para campo';
-    container.querySelector('#admin-selected-route-label').textContent = selectedRoute
-      ? `Ruta de campo: ${selectedRoute.id} · ${selectedRoute.zone}`
-      : 'Sin ruta seleccionada para campo';
+    const scheduledRoute = getScheduledRoute();
+    activeRouteId.textContent = scheduledRoute?.id || 'Sin ruta';
+    activeRouteProgress.textContent = scheduledRoute
+      ? `${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy`
+      : 'No hay ruta programada para hoy';
+    container.querySelector('#admin-selected-route-label').textContent = scheduledRoute
+      ? `Ruta de hoy: ${scheduledRoute.id} · ${scheduledRoute.zone}`
+      : 'Sin ruta programada para hoy';
   };
 
   const refreshRoutesFromRemote = async () => {
@@ -535,9 +547,8 @@ function attachAdminDashboardContentEvents(container, initialReports) {
       const remoteRoutes = await fetchRouteConfigurations();
       if (remoteRoutes.length === 0) return;
 
-      const selectedRouteId = remoteRoutes.find((route) => route.isSelected)?.id || remoteRoutes[0].id;
       demoRoutes = remoteRoutes;
-      saveConfiguredRoutes(remoteRoutes, selectedRouteId);
+      saveConfiguredRoutes(remoteRoutes);
       updateRoutes();
     } catch (error) {
       routeMessage.textContent = `No se pudo actualizar el estado de ruta: ${error.message}`;
@@ -558,6 +569,8 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     routeForm.reset();
     routeForm.elements.routeId.value = route?.id || '';
     routeForm.elements.zone.value = route?.zone || '';
+    routeForm.elements.scheduledFor.min = route?.scheduledFor || getOperationalDate();
+    routeForm.elements.scheduledFor.value = route?.scheduledFor || '';
     routeForm.querySelectorAll('input[name="routePoint"]').forEach((checkbox) => {
       checkbox.checked = Boolean(route?.pointIds.includes(checkbox.value));
     });
@@ -577,6 +590,7 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     event.preventDefault();
     const formData = new FormData(routeForm);
     const pointIds = formData.getAll('routePoint');
+    const scheduledFor = String(formData.get('scheduledFor') || '');
     if (pointIds.length === 0) {
       routeFormError.textContent = 'Selecciona al menos un punto para la ruta.';
       return;
@@ -584,15 +598,36 @@ function attachAdminDashboardContentEvents(container, initialReports) {
 
     const routeId = String(formData.get('routeId') || createRouteId(demoRoutes));
     const currentRoute = demoRoutes.find((route) => route.id === routeId);
+    if (scheduledFor && demoRoutes.some((route) => route.id !== routeId && route.scheduledFor === scheduledFor)) {
+      routeFormError.textContent = 'Ya hay otra ruta programada para esa fecha.';
+      return;
+    }
     const zone = String(formData.get('zone')).trim();
+    const normalizedScheduleDate = scheduledFor || null;
+    const routeDefinitionChanged = currentRoute && (
+      currentRoute.scheduledFor !== normalizedScheduleDate
+      || currentRoute.pointIds.length !== pointIds.length
+      || currentRoute.pointIds.some((pointId, index) => pointId !== pointIds[index])
+    );
     const nextRoutes = currentRoute
       ? demoRoutes.map((route) => route.id === routeId
-        ? { ...route, zone, pointIds, stopsTotal: pointIds.length }
+        ? {
+          ...route,
+          zone,
+          pointIds,
+          scheduledFor: normalizedScheduleDate,
+          stopsDone: routeDefinitionChanged ? 0 : route.stopsDone,
+          lastUpdate: routeDefinitionChanged ? '--:--' : route.lastUpdate,
+          status: routeDefinitionChanged ? 'scheduled' : route.status,
+          statusLabel: routeDefinitionChanged ? 'Programada' : route.statusLabel,
+          stopsTotal: pointIds.length
+        }
         : route)
       : [...demoRoutes, {
         id: routeId,
         zone,
         pointIds,
+        scheduledFor: scheduledFor || null,
         stopsDone: 0,
         stopsTotal: pointIds.length,
         lastUpdate: '--:--',
@@ -605,8 +640,8 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     submitButton.disabled = true;
     routeFormError.textContent = '';
     try {
-      await saveRouteConfigurationsRemote(nextRoutes, getSelectedRouteId());
-      saveConfiguredRoutes(nextRoutes, getSelectedRouteId());
+      await saveRouteConfigurationsRemote(nextRoutes);
+      saveConfiguredRoutes(nextRoutes);
       demoRoutes = nextRoutes;
       routeDialog.close();
       updateRoutes();
@@ -631,32 +666,14 @@ function attachAdminDashboardContentEvents(container, initialReports) {
       return;
     }
 
-    if (button.dataset.routeAction === 'select') {
-      button.disabled = true;
-      try {
-        await saveRouteConfigurationsRemote(demoRoutes, route.id);
-        selectConfiguredRoute(route.id);
-        saveConfiguredRoutes(demoRoutes, route.id);
-        updateRoutes();
-        routeMessage.textContent = `${route.id} aparecerá en la interfaz de campo.`;
-        routeMessage.classList.remove('is-error');
-      } catch (error) {
-        routeMessage.textContent = `No se pudo sincronizar la selección: ${error.message}`;
-        routeMessage.classList.add('is-error');
-        button.disabled = false;
-      }
-      return;
-    }
-
     if (button.dataset.routeAction === 'delete') {
       if (demoRoutes.length <= 1) return;
       if (!window.confirm(`¿Eliminar la ruta ${route.id} (${route.zone})?`)) return;
       const nextRoutes = demoRoutes.filter((item) => item.id !== route.id);
-      const nextSelectedId = getSelectedRouteId() === route.id ? nextRoutes[0].id : getSelectedRouteId();
       button.disabled = true;
       try {
-        await saveRouteConfigurationsRemote(nextRoutes, nextSelectedId);
-        saveConfiguredRoutes(nextRoutes, nextSelectedId);
+        await saveRouteConfigurationsRemote(nextRoutes);
+        saveConfiguredRoutes(nextRoutes);
         demoRoutes = nextRoutes;
         updateRoutes();
         routeMessage.textContent = `${route.id} fue eliminada.`;
@@ -731,9 +748,8 @@ function attachAdminDashboardContentEvents(container, initialReports) {
       reports = await fetchAdminContainerReports();
       const remoteRoutes = await fetchRouteConfigurations();
       if (remoteRoutes.length > 0) {
-        const selectedRouteId = remoteRoutes.find((route) => route.isSelected)?.id || remoteRoutes[0].id;
         demoRoutes = remoteRoutes;
-        saveConfiguredRoutes(remoteRoutes, selectedRouteId);
+        saveConfiguredRoutes(remoteRoutes);
       }
       container.querySelector('#admin-report-rows').innerHTML = renderReportRows(reports);
       container.querySelector('#admin-report-count').textContent = String(reports.length);
@@ -819,13 +835,12 @@ async function mountAdminDashboard(container) {
     try {
       const remoteRoutes = await fetchRouteConfigurations();
       if (remoteRoutes.length > 0) {
-        const selectedRouteId = remoteRoutes.find((route) => route.isSelected)?.id || remoteRoutes[0].id;
         demoRoutes = remoteRoutes;
-        saveConfiguredRoutes(remoteRoutes, selectedRouteId);
+        saveConfiguredRoutes(remoteRoutes);
       } else {
         demoRoutes = applyReportProgress(demoRoutes, reports);
-        await saveRouteConfigurationsRemote(demoRoutes, getSelectedRouteId());
-        saveConfiguredRoutes(demoRoutes, getSelectedRouteId());
+        await saveRouteConfigurationsRemote(demoRoutes);
+        saveConfiguredRoutes(demoRoutes);
       }
     } catch (error) {
       routeError = `No se pudieron cargar las rutas compartidas: ${error.message}`;

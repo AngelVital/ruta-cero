@@ -1,5 +1,4 @@
 export const routesStorageKey = 'ruta-cero.routes.v1';
-export const selectedRouteStorageKey = 'ruta-cero.selected-route.v1';
 
 const defaultRoutes = [
   {
@@ -8,6 +7,7 @@ const defaultRoutes = [
     pointIds: ['CONT-01', 'CONT-03', 'CONT-04'],
     stopsDone: 0,
     stopsTotal: 3,
+    scheduledFor: null,
     lastUpdate: '--:--',
     status: 'scheduled',
     statusLabel: 'Programada',
@@ -19,6 +19,7 @@ const defaultRoutes = [
     pointIds: ['CONT-02', 'CONT-07'],
     stopsDone: 0,
     stopsTotal: 2,
+    scheduledFor: null,
     lastUpdate: '--:--',
     status: 'scheduled',
     statusLabel: 'Programada',
@@ -30,6 +31,7 @@ const defaultRoutes = [
     pointIds: ['CONT-05', 'CONT-06', 'CONT-08'],
     stopsDone: 0,
     stopsTotal: 3,
+    scheduledFor: null,
     lastUpdate: '--:--',
     status: 'scheduled',
     statusLabel: 'Programada',
@@ -46,7 +48,22 @@ function getStorage() {
 }
 
 function cloneDefaultRoutes() {
-  return defaultRoutes.map((route) => ({ ...route, pointIds: [...route.pointIds] }));
+  return defaultRoutes.map((route, index) => ({
+    ...route,
+    scheduledFor: index === 0 ? getOperationalDate() : route.scheduledFor,
+    pointIds: [...route.pointIds]
+  }));
+}
+
+export function getOperationalDate(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mazatlan',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 export function getConfiguredRoutes() {
@@ -72,42 +89,16 @@ export function getConfiguredRoutes() {
   return cloneDefaultRoutes();
 }
 
-export function getSelectedRouteId() {
+export function getScheduledRoute(date = getOperationalDate()) {
   const routes = getConfiguredRoutes();
-  const storage = getStorage();
-  const selectedId = storage?.getItem(selectedRouteStorageKey);
-  return routes.some((route) => route.id === selectedId) ? selectedId : routes[0]?.id || null;
+  return routes.find((route) => route.scheduledFor === date) || null;
 }
 
-export function getSelectedRoute() {
-  const selectedId = getSelectedRouteId();
-  return getConfiguredRoutes().find((route) => route.id === selectedId) || null;
-}
-
-export function saveConfiguredRoutes(routes, selectedRouteId = getSelectedRouteId()) {
+export function saveConfiguredRoutes(routes) {
   const storage = getStorage();
   if (!storage) return false;
 
   storage.setItem(routesStorageKey, JSON.stringify(routes));
-  const selectedId = routes.some((route) => route.id === selectedRouteId)
-    ? selectedRouteId
-    : routes[0]?.id;
-  if (selectedId) {
-    storage.setItem(selectedRouteStorageKey, selectedId);
-  } else {
-    storage.removeItem(selectedRouteStorageKey);
-  }
-  return true;
-}
-
-export function selectConfiguredRoute(routeId) {
-  const route = getConfiguredRoutes().find((item) => item.id === routeId);
-  if (!route) return false;
-
-  const storage = getStorage();
-  if (!storage) return false;
-
-  storage.setItem(selectedRouteStorageKey, routeId);
   return true;
 }
 

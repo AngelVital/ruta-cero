@@ -7,10 +7,10 @@
 
 import { store } from './state/store.js';
 import {
-  getSelectedRoute,
+  getOperationalDate,
+  getScheduledRoute,
   routesStorageKey,
-  saveConfiguredRoutes,
-  selectedRouteStorageKey
+  saveConfiguredRoutes
 } from './services/routeConfiguration.js';
 import { renderAdminDashboard, attachAdminDashboardEvents } from './screens/AdminDashboard.js';
 import { renderEntryScreen } from './screens/EntryScreen.js';
@@ -29,14 +29,14 @@ const appEl = document.getElementById('app');
 const isFieldMode = new URLSearchParams(window.location.search).get('mode') === 'field';
 
 async function refreshFieldRouteConfiguration() {
+  store.applyConfiguredRoute(getScheduledRoute());
   try {
     const { fetchRouteConfigurations } = await import('./services/supabase.js');
     const routes = await fetchRouteConfigurations();
     if (routes.length === 0) return;
 
-    const selectedRouteId = routes.find((route) => route.isSelected)?.id || routes[0].id;
-    saveConfiguredRoutes(routes, selectedRouteId);
-    store.applyConfiguredRoute(routes.find((route) => route.id === selectedRouteId));
+    saveConfiguredRoutes(routes);
+    store.applyConfiguredRoute(routes.find((route) => route.scheduledFor === getOperationalDate()) || null);
   } catch {
     // The local route cache remains available while Supabase is offline or unconfigured.
   }
@@ -44,8 +44,8 @@ async function refreshFieldRouteConfiguration() {
 
 if (isFieldMode) {
   window.addEventListener('storage', (event) => {
-    if (event.key === routesStorageKey || event.key === selectedRouteStorageKey || event.key === null) {
-      store.applyConfiguredRoute(getSelectedRoute());
+    if (event.key === routesStorageKey || event.key === null) {
+      store.applyConfiguredRoute(getScheduledRoute());
     }
   });
   window.addEventListener('focus', refreshFieldRouteConfiguration);

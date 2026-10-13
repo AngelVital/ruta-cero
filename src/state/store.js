@@ -2,7 +2,7 @@
  * Store reactivo central para Ruta Cero
  * Coordina las 6 pantallas tácticas y datos compartidos de la operación
  */
-import { getSelectedRoute, selectConfiguredRoute } from '../services/routeConfiguration.js';
+import { getScheduledRoute } from '../services/routeConfiguration.js';
 
 class TacticalStore {
   constructor() {
@@ -154,7 +154,7 @@ class TacticalStore {
       status: 'pending',
       type: 'return-station'
     };
-    this.applyConfiguredRoute(getSelectedRoute(), false);
+    this.applyConfiguredRoute(getScheduledRoute(), false);
     this.listeners = [];
   }
 
@@ -239,6 +239,7 @@ class TacticalStore {
         totalStops: 0,
         completedCount: 0,
         currentStopIndex: 0,
+        status: 'PENDIENTE',
         startTimestamp: null,
         startTime: '--:-- AM',
         returning: false,
@@ -303,14 +304,8 @@ class TacticalStore {
     if (shouldNotify) this.notify();
   }
 
-  selectRoute(routeId) {
-    if (!selectConfiguredRoute(routeId)) return false;
-    const route = getSelectedRoute();
-    this.applyConfiguredRoute(route);
-    return true;
-  }
-
   startRoute() {
+    if (!this.state.route.id) return null;
     const startTimestamp = Date.now();
     this.state.route.startTimestamp = startTimestamp;
     this.state.route.status = 'EN RUTA';
