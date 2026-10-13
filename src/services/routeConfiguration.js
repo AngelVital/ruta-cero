@@ -66,6 +66,33 @@ export function getOperationalDate(date = new Date()) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+export function getRouteForDate(route, date = getOperationalDate()) {
+  const isScheduled = route.scheduledDates?.includes(date);
+  const hasDailyStatus = route.statusDate === date;
+  const dailyStatus = ['scheduled', 'active', 'completed'].includes(route.status)
+    ? route.status
+    : 'scheduled';
+  const status = !isScheduled
+    ? 'unscheduled'
+    : hasDailyStatus ? dailyStatus : 'scheduled';
+  const statusLabels = {
+    unscheduled: 'No programada',
+    scheduled: 'Programada',
+    active: 'En curso',
+    completed: 'Completada'
+  };
+
+  return {
+    ...route,
+    status,
+    statusLabel: statusLabels[status] || statusLabels.scheduled,
+    stopsDone: isScheduled && hasDailyStatus ? route.stopsDone || 0 : 0,
+    lastUpdate: isScheduled && hasDailyStatus ? route.lastUpdate || '--:--' : '--:--',
+    syncLabel: isScheduled && hasDailyStatus ? route.syncLabel || 'Sin iniciar' : 'Sin iniciar',
+    statusDate: date
+  };
+}
+
 export function getConfiguredRoutes() {
   const storage = getStorage();
   if (!storage) return cloneDefaultRoutes();
@@ -96,7 +123,8 @@ export function getConfiguredRoutes() {
 
 export function getScheduledRoute(date = getOperationalDate()) {
   const routes = getConfiguredRoutes();
-  return routes.find((route) => route.scheduledDates?.includes(date)) || null;
+  const route = routes.find((item) => item.scheduledDates?.includes(date));
+  return route ? getRouteForDate(route, date) : null;
 }
 
 export function assignRouteToDate(routes, date, routeId) {

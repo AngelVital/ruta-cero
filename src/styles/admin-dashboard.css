@@ -1764,12 +1764,14 @@ tr[data-route-status="completed"] .admin-progress-track span {
   background: #edf5ef;
 }
 
-#admin-root .admin-status.status-scheduled {
+#admin-root .admin-status.status-scheduled,
+#admin-root .admin-status.status-unscheduled {
   background: #f0f2ef;
   color: #66736a;
 }
 
-#admin-root .admin-status.status-scheduled i {
+#admin-root .admin-status.status-scheduled i,
+#admin-root .admin-status.status-unscheduled i {
   background: #98a49b;
 }
 

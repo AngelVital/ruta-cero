@@ -4,6 +4,7 @@ import {
   assignRouteToDate,
   getConfiguredRoutes,
   getOperationalDate,
+  getRouteForDate,
   getScheduledRoute,
   saveConfiguredRoutes
 } from '../services/routeConfiguration.js';
@@ -472,9 +473,9 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
               <div class="admin-kpi-foot"><span class="kpi-positive-dot"></span> De los 8 puntos de la ciudad</div>
             </article>
             <article class="admin-kpi kpi-delay">
-              <div class="admin-kpi-top"><span>RUTA EN CURSO</span>${icon('alt_route')}</div>
+              <div class="admin-kpi-top"><span>ESTADO DE RUTA</span>${icon('alt_route')}</div>
               <div class="admin-kpi-value" id="admin-active-route-id">${escapeHtml(scheduledRoute?.id || 'Sin ruta')}</div>
-              <div class="admin-kpi-foot"><span class="kpi-neutral-dot"></span> <span id="admin-active-route-progress">${scheduledRoute ? `${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy` : 'No hay ruta programada para hoy'}</span></div>
+              <div class="admin-kpi-foot"><span class="kpi-neutral-dot"></span> <span id="admin-active-route-progress">${scheduledRoute ? `${scheduledRoute.statusLabel} · ${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy` : 'No programada para hoy'}</span></div>
             </article>
             <article class="admin-kpi kpi-sync">
               <div class="admin-kpi-top"><span>PENDIENTES DE SINCRONIZAR</span>${icon('cloud_upload')}</div>
@@ -497,7 +498,7 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
             </div>
             <div class="admin-table-toolbar">
               <label class="admin-search">${icon('search')}<span class="sr-only">Buscar rutas</span><input type="search" id="route-search" placeholder="Buscar ruta, zona o punto"></label>
-              <label class="admin-filter-select"><span class="sr-only">Filtrar rutas por estado</span><select id="route-status-filter"><option value="all">Todos los estados</option><option value="active">En curso</option><option value="scheduled">Programadas</option></select>${icon('expand_more')}</label>
+              <label class="admin-filter-select"><span class="sr-only">Filtrar rutas por estado</span><select id="route-status-filter"><option value="all">Todos los estados</option><option value="unscheduled">No programadas</option><option value="scheduled">Programadas</option><option value="active">En curso</option><option value="completed">Completadas</option></select>${icon('expand_more')}</label>
             </div>
             <p class="admin-route-message${routeError ? ' is-error' : ''}" id="admin-route-message" role="status" aria-live="polite">${escapeHtml(routeError)}</p>
             <div class="admin-table-scroll">
@@ -558,36 +559,37 @@ function filterRoutes(searchValue, statusValue) {
 export function applyReportProgress(routes, reports) {
   return routes.map((route) => {
     const today = getOperationalDate();
-    const progressDate = (route.scheduledDates || [])
-      .filter((date) => date <= today)
-      .sort()
-      .at(-1);
+    const isScheduledToday = route.scheduledDates?.includes(today);
     const routeReports = reports.filter((report) => (
       report.route_id === route.id
       && route.pointIds.includes(report.container_id)
-      && (!progressDate || getOperationalDate(new Date(report.created_at)) === progressDate)
+      && isScheduledToday
+      && getOperationalDate(new Date(report.created_at)) === today
     ));
     const visitedPoints = new Set(routeReports.map((report) => report.container_id));
-    const stopsDone = Math.min(route.pointIds.length, visitedPoints.size);
+    const stopsDone = isScheduledToday
+      ? Math.min(route.pointIds.length, Math.max(route.statusDate === today ? route.stopsDone || 0 : 0, visitedPoints.size))
+      : 0;
     const latestReport = routeReports.reduce((latest, report) => (
       !latest || report.created_at > latest.created_at ? report : latest
     ), null);
-    const routeComplete = stopsDone === route.pointIds.length;
-
-    return {
+    const status = !isScheduledToday
+      ? 'unscheduled'
+      : route.statusDate === today && route.status === 'completed'
+        ? 'completed'
+        : (route.statusDate === today && route.status === 'active') || stopsDone > 0
+          ? 'active'
+          : 'scheduled';
+    return getRouteForDate({
       ...route,
       stopsDone,
       stopsTotal: route.pointIds.length,
       lastUpdate: latestReport
         ? new Date(latestReport.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })
-        : progressDate ? '--:--' : route.lastUpdate,
-      status: routeComplete
-        ? 'completed'
-        : stopsDone > 0 ? 'active' : route.scheduledDates?.length ? 'scheduled' : route.status,
-      statusLabel: routeComplete
-        ? 'Completada'
-        : stopsDone > 0 ? 'En ruta' : route.scheduledDates?.length ? 'Programada' : route.statusLabel
-    };
+        : isScheduledToday ? route.lastUpdate || '--:--' : '--:--',
+      status,
+      statusDate: today
+    }, today);
   });
 }
 
@@ -609,7 +611,7 @@ function attachAdminDashboardContentEvents(container, initialReports) {
   let displayedMonth = parseDateKey(selectedScheduleDate);
 
   const updateRoutes = () => {
-    demoRoutes = getConfiguredRoutes();
+    demoRoutes = getConfiguredRoutes().map((route) => getRouteForDate(route));
     const filteredRoutes = filterRoutes(search?.value || '', statusFilter?.value || 'all');
     rows.innerHTML = renderRouteTable(filteredRoutes);
     rows.hidden = filteredRoutes.length === 0;
@@ -620,8 +622,8 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     const scheduledRoute = getScheduledRoute();
     activeRouteId.textContent = scheduledRoute?.id || 'Sin ruta';
     activeRouteProgress.textContent = scheduledRoute
-      ? `${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy`
-      : 'No hay ruta programada para hoy';
+      ? `${scheduledRoute.statusLabel} · ${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy`
+      : 'No programada para hoy';
     container.querySelector('#admin-selected-route-label').textContent = scheduledRoute
       ? `Ruta de hoy: ${scheduledRoute.id} · ${scheduledRoute.zone}`
       : 'Sin ruta programada para hoy';

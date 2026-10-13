@@ -327,7 +327,6 @@
     padding: 10px;
   }
 }
-}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
