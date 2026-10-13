@@ -349,7 +349,10 @@ as $$
 begin
   update public.route_schedules
   set status = 'active',
-      started_at = coalesce(started_at, now())
+      stops_done = 0,
+      completed_point_ids = '{}',
+      started_at = now(),
+      completed_at = null
   where route_id = p_route_id
     and scheduled_for = (now() at time zone 'America/Mazatlan')::date
     and status <> 'completed';
@@ -387,6 +390,11 @@ begin
   join public.route_configurations route
     on route.id = report.route_id
    and report.container_id = any(route.point_ids)
+  join public.route_schedules schedule
+    on schedule.route_id = route.id
+   and schedule.scheduled_for = (now() at time zone 'America/Mazatlan')::date
+   and schedule.status = 'active'
+   and report.created_at >= schedule.started_at
   where route.id = p_route_id
     and (report.created_at at time zone 'America/Mazatlan')::date =
       (now() at time zone 'America/Mazatlan')::date;
@@ -432,6 +440,13 @@ declare
   completed_points integer;
   completed_ids text[];
 begin
+  update public.route_schedules
+  set status = 'active',
+      started_at = coalesce(started_at, new.created_at)
+  where route_id = new.route_id
+    and scheduled_for = (new.created_at at time zone 'America/Mazatlan')::date
+    and status = 'scheduled';
+
   select count(distinct report.container_id)::integer,
          coalesce(array_agg(distinct report.container_id), '{}'::text[])
   into completed_points, completed_ids
@@ -440,8 +455,10 @@ begin
   join public.route_schedules schedule
     on schedule.route_id = route.id
     and schedule.scheduled_for = (new.created_at at time zone 'America/Mazatlan')::date
+    and schedule.status <> 'completed'
   where report.route_id = route.id
     and report.container_id = any(route.point_ids)
+    and report.created_at >= schedule.started_at
     and (report.created_at at time zone 'America/Mazatlan')::date = schedule.scheduled_for;
 
   update public.route_schedules schedule
@@ -458,7 +475,8 @@ begin
   from public.route_configurations route
   where schedule.route_id = new.route_id
     and schedule.route_id = route.id
-    and schedule.scheduled_for = (new.created_at at time zone 'America/Mazatlan')::date;
+    and schedule.scheduled_for = (new.created_at at time zone 'America/Mazatlan')::date
+    and schedule.status <> 'completed';
 
   update public.route_configurations route
   set stops_done = least(cardinality(route.point_ids), completed_points),
@@ -509,6 +527,7 @@ with route_progress as (
   left join public.container_reports report
     on report.route_id = route.id
     and report.container_id = any(route.point_ids)
+    and report.created_at >= schedule.started_at
     and (report.created_at at time zone 'America/Mazatlan')::date = schedule.scheduled_for
   group by schedule.scheduled_for, schedule.route_id, route.id, route.point_ids
 )

@@ -133,10 +133,6 @@ export function renderRouteMapScreen(state) {
         </button>
       </div>
 
-      <!-- Live GPS Banner Inside Map -->
-      <div style="position: absolute; left: 12px; top: 12px; background: rgba(15, 23, 42, 0.85); border: 1px solid #00a86b; color: #ffffff; padding: 4px 8px; font-family: var(--font-mono); font-size: 11px;">
-        LAT 19.4326° N • LON -99.1332° W
-      </div>
     </div>
 
     <!-- Scheduled Waypoint List Header & Filters -->
