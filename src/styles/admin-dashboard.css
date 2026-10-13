@@ -1497,7 +1497,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
 #admin-root .admin-filter-select,
 #admin-root .admin-point-route-select,
 #admin-root .admin-alert-icon {
-  border-radius: 8px !important;
+  border-radius: var(--radius-sm) !important;
 }
 
 #admin-root .admin-demo-pill,
@@ -1519,7 +1519,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
 #admin-root .admin-kpi {
   border: 1px solid var(--admin-line);
   border-top: 3px solid transparent;
-  border-radius: 10px !important;
+  border-radius: var(--radius-md) !important;
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(27, 54, 39, 0.045);
   transition: box-shadow 160ms ease, transform 160ms ease;
@@ -1533,12 +1533,12 @@ tr[data-route-status="completed"] .admin-progress-track span {
 #admin-root .admin-section {
   overflow: hidden;
   border-color: #d8e1da;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
   box-shadow: 0 2px 10px rgba(27, 54, 39, 0.045);
 }
 
 #admin-root .admin-demo-notice {
-  border-radius: 8px !important;
+  border-radius: var(--radius-sm) !important;
 }
 
 #admin-root .admin-route-points {
@@ -1597,7 +1597,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
 
 @media (max-width: 680px) {
   #admin-root .admin-section {
-    border-radius: 10px !important;
+    border-radius: var(--radius-md) !important;
   }
 
   #admin-root .admin-kpi-grid {
@@ -1624,6 +1624,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   border-top: 4px solid #17845d;
   background: #ffffff;
   box-shadow: 0 8px 28px rgba(27, 54, 39, 0.08);
+  border-radius: var(--radius-lg);
 }
 
 .admin-auth-brand {
@@ -1694,6 +1695,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   border: 1px solid #cbd6ce;
   background: #ffffff;
   color: #1f3027;
+  border-radius: var(--radius-sm);
 }
 
 .admin-auth-form .admin-button {
@@ -1725,6 +1727,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   border: 1px solid #cbd6ce;
   background: #ffffff;
   cursor: pointer;
+  border-radius: var(--radius-sm);
 }
 
 .admin-reports-section {
@@ -1792,6 +1795,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+  border-radius: var(--radius-sm);
 }
 
 .admin-report-open:hover {
@@ -1822,6 +1826,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   background: #ffffff;
   color: var(--admin-ink);
   box-shadow: 0 24px 72px rgba(19, 44, 31, 0.24);
+  border-radius: var(--radius-lg);
 }
 
 .admin-report-dialog::backdrop {
@@ -2054,6 +2059,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   font-size: 10px;
   font-weight: 700;
   cursor: pointer;
+  border-radius: var(--radius-sm);
 }
 
 .admin-route-action.is-selected {
@@ -2098,6 +2104,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   background: #ffffff;
   color: var(--admin-ink);
   box-shadow: 0 24px 72px rgba(19, 44, 31, 0.24);
+  border-radius: var(--radius-lg);
 }
 
 .admin-route-dialog::backdrop {
@@ -2148,6 +2155,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   color: #263c30;
   font: inherit;
   font-weight: 500;
+  border-radius: var(--radius-sm);
 }
 
 .admin-route-point-list {
@@ -2157,6 +2165,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   margin: 0;
   padding: 12px;
   border: 1px solid #d8e1da;
+  border-radius: var(--radius-md);
 }
 
 .admin-route-point-list legend {
@@ -2177,6 +2186,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
   color: #526158;
   font-size: 10px;
   cursor: pointer;
+  border-radius: var(--radius-sm);
 }
 
 .admin-route-point-list input {

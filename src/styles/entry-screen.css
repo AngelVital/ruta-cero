@@ -303,7 +303,7 @@
 #entry-root .entry-choice,
 #entry-root .entry-choice-icon,
 #entry-root .entry-choice-arrow {
-  border-radius: 10px !important;
+  border-radius: var(--radius-md) !important;
 }
 
 #entry-root .entry-brand-mark {

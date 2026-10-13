@@ -25,6 +25,7 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 
 /* Main Content Screen Area */
@@ -122,6 +123,7 @@
   background-color: #e2e8f0;
   border: 2px solid #0f172a;
   overflow: hidden;
+  border-radius: var(--radius-sm);
 }
 
 .capacity-block {
@@ -145,6 +147,8 @@
   border: 2px solid #0f172a;
   box-shadow: var(--shadow-resting);
   background-color: #ffffff;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
 }
 
 .stepper-btn {
@@ -194,6 +198,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-md);
 }
 
 .barcode-camera {
@@ -289,6 +294,7 @@
   letter-spacing: 0.04em;
   z-index: 100;
   animation: toastSlideUp 0.25s ease-out;
+  border-radius: var(--radius-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {

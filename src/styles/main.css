@@ -1,13 +1,12 @@
 /* ==========================================================================
   Ruta Cero • Field-Spec Global Styles
-   Strict 0px Radius Architecture & High-Glare Legibility
+   Soft-edged surfaces & high-glare legibility
    ========================================================================== */
 
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  border-radius: var(--radius-sharp) !important; /* Strict sharp angles */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -219,6 +218,7 @@ html, body {
   transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
   background-color: #ffffff;
   color: var(--color-outline);
+  border-radius: var(--radius-sm);
 }
 
 .btn-tactical:active,
@@ -239,7 +239,7 @@ html, body {
 
 .btn-tactical:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0px #0f172a;
+  box-shadow: 0 6px 16px rgba(27, 54, 39, 0.14);
 }
 
 .btn-tactical-dark {
@@ -265,6 +265,7 @@ html, body {
 
 .card-tactical {
   transition: transform 0.18s ease, box-shadow 0.18s ease;
+  border-radius: var(--radius-md);
 }
 
 .stop-item-card:hover,
@@ -293,6 +294,7 @@ html, body {
   text-transform: uppercase;
   color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-pill);
 }
 
 .badge-material-plastico { background-color: var(--color-waste-plastic); }
@@ -315,6 +317,7 @@ html, body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border: 2px solid var(--color-outline);
+  border-radius: var(--radius-pill);
 }
 
 .status-pill-optimal {
@@ -339,6 +342,7 @@ html, body {
   box-shadow: var(--shadow-resting);
   padding: var(--space-md);
   position: relative;
+  border-radius: var(--radius-md);
 }
 
 .card-tactical-accent {
@@ -356,6 +360,7 @@ html, body {
   color: var(--color-on-surface);
   background-color: #ffffff;
   border: var(--border-structural);
+  border-radius: var(--radius-sm);
   outline: none;
 }
 
