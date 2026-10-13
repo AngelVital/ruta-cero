@@ -98,6 +98,32 @@ create table if not exists public.route_configurations (
   constraint route_configurations_points_not_empty check (cardinality(point_ids) > 0)
 );
 
+alter table public.route_configurations
+  add column if not exists scheduled_for date;
+
+update public.route_configurations
+set scheduled_for = (now() at time zone 'America/Mazatlan')::date,
+    stops_done = 0,
+    last_update = '--:--',
+    status = 'scheduled',
+    status_label = 'Programada'
+where id = (
+  select id
+  from public.route_configurations
+  where is_selected
+    and scheduled_for is null
+  order by updated_at desc
+  limit 1
+);
+
+update public.route_configurations
+set is_selected = false
+where is_selected;
+
+create unique index if not exists route_configurations_one_route_per_date
+  on public.route_configurations (scheduled_for)
+  where scheduled_for is not null;
+
 alter table public.route_configurations enable row level security;
 grant select on public.route_configurations to anon, authenticated;
 
@@ -123,10 +149,9 @@ begin
   end if;
 end $$;
 
-create or replace function public.replace_route_configurations(
-  p_routes jsonb,
-  p_selected_route_id text
-)
+drop function if exists public.replace_route_configurations(jsonb, text);
+
+create or replace function public.replace_route_configurations(p_routes jsonb)
 returns void
 language plpgsql
 security definer
@@ -145,14 +170,6 @@ begin
 
   if jsonb_array_length(p_routes) = 0 then
     raise exception 'Debe existir al menos una ruta.';
-  end if;
-
-  if not exists (
-    select 1
-    from jsonb_array_elements(p_routes) route
-    where route->>'id' = p_selected_route_id
-  ) then
-    raise exception 'Debe existir una ruta seleccionada dentro de la configuración.';
   end if;
 
   if exists (
@@ -174,20 +191,30 @@ begin
     raise exception 'Cada ruta necesita nombre y al menos un punto.';
   end if;
 
+  if exists (
+    select 1
+    from jsonb_array_elements(p_routes) route
+    where route->>'scheduled_for' is not null
+    group by route->>'scheduled_for'
+    having count(*) > 1
+  ) then
+    raise exception 'Solo se puede programar una ruta por fecha.';
+  end if;
+
   delete from public.route_configurations
   where id not in (
     select route->>'id' from jsonb_array_elements(p_routes) route
   );
 
   insert into public.route_configurations (
-    id, zone, point_ids, is_selected, stops_done, last_update,
+    id, zone, point_ids, scheduled_for, stops_done, last_update,
     status, status_label, sync_label, updated_at
   )
   select
     route->>'id',
     route->>'zone',
     array(select jsonb_array_elements_text(route->'point_ids')),
-    route->>'id' = p_selected_route_id,
+    nullif(route->>'scheduled_for', '')::date,
     coalesce((route->>'stops_done')::integer, 0),
     coalesce(route->>'last_update', '--:--'),
     coalesce(route->>'status', 'scheduled'),
@@ -198,7 +225,7 @@ begin
   on conflict (id) do update set
     zone = excluded.zone,
     point_ids = excluded.point_ids,
-    is_selected = excluded.is_selected,
+    scheduled_for = excluded.scheduled_for,
     stops_done = excluded.stops_done,
     last_update = excluded.last_update,
     status = excluded.status,
@@ -208,8 +235,8 @@ begin
 end;
 $$;
 
-revoke all on function public.replace_route_configurations(jsonb, text) from public, anon;
-grant execute on function public.replace_route_configurations(jsonb, text) to authenticated;
+revoke all on function public.replace_route_configurations(jsonb) from public, anon;
+grant execute on function public.replace_route_configurations(jsonb) to authenticated;
 
 create or replace function public.start_route_configuration(p_route_id text)
 returns void
@@ -224,10 +251,10 @@ begin
       last_update = to_char(now() at time zone 'America/Mazatlan', 'HH24:MI'),
       updated_at = now()
   where id = p_route_id
-    and is_selected;
+    and scheduled_for = (now() at time zone 'America/Mazatlan')::date;
 
   if not found then
-    raise exception 'La ruta no existe o no está asignada al campo.';
+    raise exception 'La ruta no existe o no está programada para hoy.';
   end if;
 end;
 $$;
@@ -249,7 +276,11 @@ begin
   from public.container_reports report
   join public.route_configurations route on route.id = new.route_id
   where report.route_id = route.id
-    and report.container_id = any(route.point_ids);
+    and report.container_id = any(route.point_ids)
+    and (
+      route.scheduled_for is null
+      or route.scheduled_for = (report.created_at at time zone 'America/Mazatlan')::date
+    );
 
   update public.route_configurations route
   set stops_done = least(cardinality(route.point_ids), completed_points),
@@ -291,6 +322,10 @@ with route_progress as (
   left join public.container_reports report
     on report.route_id = route.id
     and report.container_id = any(route.point_ids)
+    and (
+      route.scheduled_for is null
+      or route.scheduled_for = (report.created_at at time zone 'America/Mazatlan')::date
+    )
   group by route.id, route.point_ids
 )
 update public.route_configurations route

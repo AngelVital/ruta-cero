@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRouteId, getConfiguredRoutes, getSelectedRoute, saveConfiguredRoutes } from '../src/services/routeConfiguration.js';
+import { createRouteId, getConfiguredRoutes, getOperationalDate, getScheduledRoute, saveConfiguredRoutes } from '../src/services/routeConfiguration.js';
 import { renderDispatchScreen } from '../src/screens/DispatchScreen.js';
 import { renderRouteMapScreen } from '../src/screens/RouteMapScreen.js';
 import { renderRouteCompletionScreen } from '../src/screens/RouteCompletionScreen.js';
@@ -22,7 +22,7 @@ function createMemoryStorage() {
   };
 }
 
-test('la ruta seleccionada y sus puntos aparecen en despacho y mapa', () => {
+test('la ruta programada para hoy aparece automáticamente en despacho y mapa', () => {
   const previousWindow = globalThis.window;
   const defaultRoutes = getConfiguredRoutes();
   globalThis.window = { localStorage: createMemoryStorage() };
@@ -32,6 +32,7 @@ test('la ruta seleccionada y sus puntos aparecen en despacho y mapa', () => {
       id: createRouteId(defaultRoutes),
       zone: 'Ruta Sur',
       pointIds: ['CONT-06', 'CONT-08'],
+      scheduledFor: getOperationalDate(),
       stopsDone: 0,
       stopsTotal: 2,
       lastUpdate: '--:--',
@@ -39,14 +40,19 @@ test('la ruta seleccionada y sus puntos aparecen en despacho y mapa', () => {
       statusLabel: 'Programada',
       syncLabel: 'Sin iniciar'
     };
-    saveConfiguredRoutes([...defaultRoutes, route], route.id);
-    assert.equal(store.selectRoute(route.id), true);
+    const routes = [
+      ...defaultRoutes.map((configuredRoute) => ({ ...configuredRoute, scheduledFor: null })),
+      route
+    ];
+    saveConfiguredRoutes(routes);
+    store.applyConfiguredRoute(getScheduledRoute());
     assert.deepEqual(store.state.stops.map((stop) => stop.id), route.pointIds);
-    assert.equal(getSelectedRoute().id, route.id);
+    assert.equal(getScheduledRoute().id, route.id);
 
     const dispatch = renderDispatchScreen(store.state);
     const routeMap = renderRouteMapScreen(store.state);
     assert.match(dispatch, /R-04 · Ruta Sur/);
+    assert.doesNotMatch(dispatch, /select-route/);
     assert.match(routeMap, /MAPA DE RUTA · R-04 Ruta Sur/);
     assert.match(routeMap, /CONT-06/);
     assert.match(routeMap, /CONT-08/);
@@ -63,6 +69,22 @@ test('la ruta seleccionada y sus puntos aparecen en despacho y mapa', () => {
     assert.equal(store.state.stops[1].status, 'active');
   } finally {
     store.applyConfiguredRoute(defaultRoutes[0]);
+    if (previousWindow === undefined) {
+      delete globalThis.window;
+    } else {
+      globalThis.window = previousWindow;
+    }
+  }
+});
+
+test('no selecciona una ruta cuando la fecha no tiene programación', () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { localStorage: createMemoryStorage() };
+  try {
+    saveConfiguredRoutes(getConfiguredRoutes().map((route) => ({ ...route, scheduledFor: null })));
+    assert.equal(getScheduledRoute('2099-01-01'), null);
+    assert.equal(getScheduledRoute(), null);
+  } finally {
     if (previousWindow === undefined) {
       delete globalThis.window;
     } else {
@@ -152,4 +174,28 @@ test('los reportes previos actualizan el avance por puntos únicos de cada ruta'
   assert.equal(route.lastUpdate, new Date('2026-10-08T11:00:00.000Z').toLocaleTimeString('es-MX', {
     hour: '2-digit', minute: '2-digit', hour12: false
   }));
+});
+
+test('el avance de una ruta programada excluye reportes de otras fechas', () => {
+  const [route] = applyReportProgress([{
+    id: 'R-12',
+    zone: 'Ruta futura',
+    pointIds: ['CONT-01', 'CONT-02'],
+    scheduledFor: '2026-10-08',
+    stopsDone: 2,
+    stopsTotal: 2,
+    lastUpdate: '12:00',
+    status: 'completed',
+    statusLabel: 'Completada',
+    syncLabel: 'Sin iniciar'
+  }], [{
+    route_id: 'R-12',
+    container_id: 'CONT-01',
+    created_at: '2026-10-07T10:00:00.000Z'
+  }]);
+
+  assert.equal(route.stopsDone, 0);
+  assert.equal(route.lastUpdate, '--:--');
+  assert.equal(route.status, 'scheduled');
+  assert.equal(route.statusLabel, 'Programada');
 });
