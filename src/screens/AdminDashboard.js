@@ -1,6 +1,7 @@
 import { getFillLevelLabel, normalizeFillLevel } from '../components/CapacityMeter.js';
 import {
   createRouteId,
+  assignRouteToDate,
   getConfiguredRoutes,
   getOperationalDate,
   getScheduledRoute,
@@ -15,6 +16,7 @@ const isCurrentUserAdmin = async (...args) => (await getSupabaseService()).isCur
 const fetchAdminContainerReports = async (...args) => (await getSupabaseService()).fetchAdminContainerReports(...args);
 const fetchRouteConfigurations = async (...args) => (await getSupabaseService()).fetchRouteConfigurations(...args);
 const saveRouteConfigurationsRemote = async (...args) => (await getSupabaseService()).saveRouteConfigurations(...args);
+const saveRouteScheduleRemote = async (...args) => (await getSupabaseService()).saveRouteSchedule(...args);
 const subscribeToRouteConfigurations = async (...args) => (await getSupabaseService()).subscribeToRouteConfigurations(...args);
 
 const collectionPoints = [
@@ -40,6 +42,74 @@ function formatScheduledDate(date) {
   }).format(new Date(year, month - 1, day));
 }
 
+function parseDateKey(dateKey) {
+  const [year, month] = dateKey.split('-').map(Number);
+  return new Date(year, month - 1, 1, 12);
+}
+
+function toDateKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth) {
+  const monthStart = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), 1, 12);
+  const firstDay = new Date(monthStart);
+  const mondayOffset = (firstDay.getDay() + 6) % 7;
+  firstDay.setDate(firstDay.getDate() - mondayOffset);
+  const dayCount = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
+  const cellCount = Math.ceil((mondayOffset + dayCount) / 7) * 7;
+  const today = getOperationalDate();
+  const selectedRoute = routes.find((route) => route.scheduledDates?.includes(selectedDate));
+  const days = Array.from({ length: cellCount }, (_, index) => {
+    const date = new Date(firstDay);
+    date.setDate(firstDay.getDate() + index);
+    const dateKey = toDateKey(date);
+    const route = routes.find((item) => item.scheduledDates?.includes(dateKey));
+    const outsideMonth = date.getMonth() !== displayedMonth.getMonth();
+    const isPast = dateKey < today;
+
+    return `
+      <button type="button" class="admin-calendar-day${outsideMonth ? ' is-outside-month' : ''}${dateKey === today ? ' is-today' : ''}${dateKey === selectedDate ? ' is-selected' : ''}" data-calendar-date="${dateKey}" aria-pressed="${dateKey === selectedDate}" ${isPast ? 'disabled' : ''}>
+        <span class="admin-calendar-day-number">${date.getDate()}</span>
+        ${route ? `<span class="admin-calendar-route">${escapeHtml(route.id)} · ${escapeHtml(route.zone)}</span>` : '<span class="admin-calendar-empty">Sin ruta</span>'}
+      </button>
+    `;
+  }).join('');
+  const routeOptions = routes.map((route) => `
+    <option value="${escapeHtml(route.id)}" ${route.id === selectedRoute?.id ? 'selected' : ''}>${escapeHtml(route.id)} · ${escapeHtml(route.zone)}</option>
+  `).join('');
+
+  return `
+    <div class="admin-calendar-layout">
+      <div class="admin-calendar">
+        <div class="admin-calendar-toolbar">
+          <button type="button" class="admin-icon-button" data-calendar-month="-1" aria-label="Mes anterior" title="Mes anterior">${icon('chevron_left')}</button>
+          <h3>${new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' }).format(monthStart)}</h3>
+          <button type="button" class="admin-icon-button" data-calendar-month="1" aria-label="Mes siguiente" title="Mes siguiente">${icon('chevron_right')}</button>
+        </div>
+        <div class="admin-calendar-grid admin-calendar-weekdays" aria-hidden="true">
+          ${['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => `<span>${day}</span>`).join('')}
+        </div>
+        <div class="admin-calendar-grid admin-calendar-days">${days}</div>
+        <div class="admin-calendar-legend"><span><i class="calendar-legend-today"></i>Hoy</span><span><i class="calendar-legend-assigned"></i>Día con ruta asignada</span></div>
+      </div>
+      <form class="admin-calendar-assignment" id="admin-calendar-assignment">
+        <div class="admin-section-kicker">ASIGNACIÓN DEL DÍA</div>
+        <h3>${formatScheduledDate(selectedDate)}</h3>
+        <label class="admin-route-field" for="admin-calendar-route">Ruta para esta fecha
+          <select id="admin-calendar-route" name="routeId">
+            <option value="">Sin ruta asignada</option>
+            ${routeOptions}
+          </select>
+        </label>
+        <p class="admin-calendar-assignment-note">Cada día admite una sola ruta. La misma ruta puede asignarse a varios días.</p>
+        <button type="submit" class="admin-button admin-button-dark" ${routes.length ? '' : 'disabled'}>${icon('event_available')}<span>Guardar asignación</span></button>
+        <p class="admin-calendar-message" id="admin-calendar-message" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  `;
+}
+
 function renderRouteRow(route) {
   const progress = route.stopsTotal ? Math.round((route.stopsDone / route.stopsTotal) * 100) : 0;
   const syncClass = route.syncLabel === '1 evento pendiente' ? 'sync-pending' : 'sync-ok';
@@ -61,7 +131,7 @@ function renderRouteRow(route) {
         </div>
       </td>
       <td><span class="admin-status status-${route.status}"><i></i>${route.statusLabel}</span></td>
-      <td><span class="admin-cell-primary">${formatScheduledDate(route.scheduledFor)}</span></td>
+      <td><span class="admin-cell-primary">${route.scheduledDates?.length || 0} ${(route.scheduledDates?.length || 0) === 1 ? 'día' : 'días'}</span></td>
       <td><span class="admin-cell-primary">${route.lastUpdate}</span><span class="admin-cell-secondary">${route.lastUpdate === '--:--' ? 'Sin iniciar' : 'hace 3 min'}</span></td>
       <td><span class="admin-sync ${syncClass}"><i></i>${route.syncLabel}</span></td>
       <td class="admin-route-actions">
@@ -112,7 +182,6 @@ function renderRouteEditorDialog() {
         </header>
         <input type="hidden" name="routeId">
         <label class="admin-route-field">Nombre o zona de la ruta<input name="zone" type="text" maxlength="60" required placeholder="Ej. Centro Histórico"></label>
-        <label class="admin-route-field">Fecha de operación<input name="scheduledFor" type="date" min="${getOperationalDate()}"><span class="admin-cell-secondary">Déjala vacía para guardar la ruta sin programarla.</span></label>
         <fieldset class="admin-route-point-list">
           <legend>Puntos incluidos</legend>
           ${collectionPoints.map((point) => `
@@ -328,6 +397,7 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
         <div class="admin-nav-label">OPERACIÓN</div>
         <nav class="admin-nav" aria-label="Navegación administrativa">
           <a class="admin-nav-link is-active" href="#overview" aria-current="page">${icon('space_dashboard')}<span>Resumen</span></a>
+          <a class="admin-nav-link" href="#schedule">${icon('calendar_month')}<span>Programar rutas</span></a>
           <a class="admin-nav-link" href="#routes">${icon('alt_route')}<span>Rutas</span><span class="admin-nav-count" id="admin-route-nav-count">${demoRoutes.length}</span></a>
           <a class="admin-nav-link" href="#alerts">${icon('notifications_active')}<span>Incidencias</span><span class="admin-nav-count nav-count-alert">1</span></a>
           <a class="admin-nav-link" href="#points">${icon('location_on')}<span>Puntos</span><span class="admin-nav-count">8</span></a>
@@ -413,6 +483,13 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
             </article>
           </section>
 
+          <section class="admin-section admin-schedule-section" id="schedule">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">CALENDARIO OPERATIVO</div><h2>Programar rutas</h2><p>Selecciona un día y asigna la ruta que utilizará el equipo de campo.</p></div>
+            </div>
+            <div class="admin-calendar-container" id="admin-calendar-container">${renderRouteScheduleCalendar(demoRoutes, getOperationalDate(), parseDateKey(getOperationalDate()))}</div>
+          </section>
+
           <section class="admin-section admin-routes-section" id="routes">
             <div class="admin-section-heading">
               <div><div class="admin-section-kicker">PUNTOS DEFINIDOS POR RECORRIDO</div><h2>Rutas configuradas <span class="admin-heading-count" id="admin-routes-count">${demoRoutes.length}</span></h2></div>
@@ -425,7 +502,7 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
             <p class="admin-route-message${routeError ? ' is-error' : ''}" id="admin-route-message" role="status" aria-live="polite">${escapeHtml(routeError)}</p>
             <div class="admin-table-scroll">
               <table class="admin-route-table">
-                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">FECHA PROGRAMADA</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
+                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">DÍAS PROGRAMADOS</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
                 <tbody id="admin-route-rows">${renderRouteTable(demoRoutes)}</tbody>
               </table>
               <div class="admin-empty-state" id="admin-route-empty" hidden>${icon('search_off')}<span>No hay rutas que coincidan con esos filtros.</span></div>
@@ -480,10 +557,15 @@ function filterRoutes(searchValue, statusValue) {
 
 export function applyReportProgress(routes, reports) {
   return routes.map((route) => {
+    const today = getOperationalDate();
+    const progressDate = (route.scheduledDates || [])
+      .filter((date) => date <= today)
+      .sort()
+      .at(-1);
     const routeReports = reports.filter((report) => (
       report.route_id === route.id
       && route.pointIds.includes(report.container_id)
-      && (!route.scheduledFor || getOperationalDate(new Date(report.created_at)) === route.scheduledFor)
+      && (!progressDate || getOperationalDate(new Date(report.created_at)) === progressDate)
     ));
     const visitedPoints = new Set(routeReports.map((report) => report.container_id));
     const stopsDone = Math.min(route.pointIds.length, visitedPoints.size);
@@ -498,13 +580,13 @@ export function applyReportProgress(routes, reports) {
       stopsTotal: route.pointIds.length,
       lastUpdate: latestReport
         ? new Date(latestReport.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })
-        : route.scheduledFor ? '--:--' : route.lastUpdate,
+        : progressDate ? '--:--' : route.lastUpdate,
       status: routeComplete
         ? 'completed'
-        : stopsDone > 0 ? 'active' : route.scheduledFor ? 'scheduled' : route.status,
+        : stopsDone > 0 ? 'active' : route.scheduledDates?.length ? 'scheduled' : route.status,
       statusLabel: routeComplete
         ? 'Completada'
-        : stopsDone > 0 ? 'En ruta' : route.scheduledFor ? 'Programada' : route.statusLabel
+        : stopsDone > 0 ? 'En ruta' : route.scheduledDates?.length ? 'Programada' : route.statusLabel
     };
   });
 }
@@ -522,6 +604,9 @@ function attachAdminDashboardContentEvents(container, initialReports) {
   const routeForm = container.querySelector('#admin-route-form');
   const routeFormError = container.querySelector('#admin-route-form-error');
   const routeMessage = container.querySelector('#admin-route-message');
+  const calendarContainer = container.querySelector('#admin-calendar-container');
+  let selectedScheduleDate = getOperationalDate();
+  let displayedMonth = parseDateKey(selectedScheduleDate);
 
   const updateRoutes = () => {
     demoRoutes = getConfiguredRoutes();
@@ -540,6 +625,7 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     container.querySelector('#admin-selected-route-label').textContent = scheduledRoute
       ? `Ruta de hoy: ${scheduledRoute.id} · ${scheduledRoute.zone}`
       : 'Sin ruta programada para hoy';
+    calendarContainer.innerHTML = renderRouteScheduleCalendar(demoRoutes, selectedScheduleDate, displayedMonth);
   };
 
   const refreshRoutesFromRemote = async () => {
@@ -565,12 +651,54 @@ function attachAdminDashboardContentEvents(container, initialReports) {
   search?.addEventListener('input', updateRoutes);
   statusFilter?.addEventListener('change', updateRoutes);
 
+  calendarContainer?.addEventListener('click', (event) => {
+    const monthButton = event.target.closest('[data-calendar-month]');
+    if (monthButton) {
+      displayedMonth.setMonth(displayedMonth.getMonth() + Number(monthButton.dataset.calendarMonth));
+      calendarContainer.innerHTML = renderRouteScheduleCalendar(demoRoutes, selectedScheduleDate, displayedMonth);
+      return;
+    }
+
+    const dayButton = event.target.closest('[data-calendar-date]');
+    if (!dayButton || dayButton.disabled) return;
+    selectedScheduleDate = dayButton.dataset.calendarDate;
+    calendarContainer.innerHTML = renderRouteScheduleCalendar(demoRoutes, selectedScheduleDate, displayedMonth);
+  });
+
+  calendarContainer?.addEventListener('submit', async (event) => {
+    if (event.target.id !== 'admin-calendar-assignment') return;
+    event.preventDefault();
+    const form = event.target;
+    const button = form.querySelector('button[type="submit"]');
+    const message = form.querySelector('#admin-calendar-message');
+    const routeId = new FormData(form).get('routeId');
+    button.disabled = true;
+    message.textContent = 'Guardando programación…';
+    message.classList.remove('is-error');
+
+    try {
+      await saveRouteScheduleRemote(selectedScheduleDate, routeId);
+      demoRoutes = assignRouteToDate(demoRoutes, selectedScheduleDate, routeId);
+      saveConfiguredRoutes(demoRoutes);
+      updateRoutes();
+      const scheduledRoute = demoRoutes.find((route) => route.id === routeId);
+      const updatedMessage = container.querySelector('#admin-calendar-message');
+      updatedMessage.textContent = scheduledRoute
+        ? `${scheduledRoute.id} quedó asignada para el ${formatScheduledDate(selectedScheduleDate)}.`
+        : `Se quitó la asignación del ${formatScheduledDate(selectedScheduleDate)}.`;
+      routeMessage.textContent = 'Programación guardada y sincronizada con campo.';
+      routeMessage.classList.remove('is-error');
+    } catch (error) {
+      message.textContent = `No se pudo guardar la programación: ${error.message}`;
+      message.classList.add('is-error');
+      button.disabled = false;
+    }
+  });
+
   const openRouteEditor = (route = null) => {
     routeForm.reset();
     routeForm.elements.routeId.value = route?.id || '';
     routeForm.elements.zone.value = route?.zone || '';
-    routeForm.elements.scheduledFor.min = route?.scheduledFor || getOperationalDate();
-    routeForm.elements.scheduledFor.value = route?.scheduledFor || '';
     routeForm.querySelectorAll('input[name="routePoint"]').forEach((checkbox) => {
       checkbox.checked = Boolean(route?.pointIds.includes(checkbox.value));
     });
@@ -590,7 +718,6 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     event.preventDefault();
     const formData = new FormData(routeForm);
     const pointIds = formData.getAll('routePoint');
-    const scheduledFor = String(formData.get('scheduledFor') || '');
     if (pointIds.length === 0) {
       routeFormError.textContent = 'Selecciona al menos un punto para la ruta.';
       return;
@@ -598,15 +725,9 @@ function attachAdminDashboardContentEvents(container, initialReports) {
 
     const routeId = String(formData.get('routeId') || createRouteId(demoRoutes));
     const currentRoute = demoRoutes.find((route) => route.id === routeId);
-    if (scheduledFor && demoRoutes.some((route) => route.id !== routeId && route.scheduledFor === scheduledFor)) {
-      routeFormError.textContent = 'Ya hay otra ruta programada para esa fecha.';
-      return;
-    }
     const zone = String(formData.get('zone')).trim();
-    const normalizedScheduleDate = scheduledFor || null;
     const routeDefinitionChanged = currentRoute && (
-      currentRoute.scheduledFor !== normalizedScheduleDate
-      || currentRoute.pointIds.length !== pointIds.length
+      currentRoute.pointIds.length !== pointIds.length
       || currentRoute.pointIds.some((pointId, index) => pointId !== pointIds[index])
     );
     const nextRoutes = currentRoute
@@ -615,7 +736,6 @@ function attachAdminDashboardContentEvents(container, initialReports) {
           ...route,
           zone,
           pointIds,
-          scheduledFor: normalizedScheduleDate,
           stopsDone: routeDefinitionChanged ? 0 : route.stopsDone,
           lastUpdate: routeDefinitionChanged ? '--:--' : route.lastUpdate,
           status: routeDefinitionChanged ? 'scheduled' : route.status,
@@ -627,7 +747,7 @@ function attachAdminDashboardContentEvents(container, initialReports) {
         id: routeId,
         zone,
         pointIds,
-        scheduledFor: scheduledFor || null,
+        scheduledDates: [],
         stopsDone: 0,
         stopsTotal: pointIds.length,
         lastUpdate: '--:--',
@@ -840,6 +960,9 @@ async function mountAdminDashboard(container) {
       } else {
         demoRoutes = applyReportProgress(demoRoutes, reports);
         await saveRouteConfigurationsRemote(demoRoutes);
+        if (demoRoutes[0]?.scheduledDates?.includes(getOperationalDate())) {
+          await saveRouteScheduleRemote(getOperationalDate(), demoRoutes[0].id);
+        }
         saveConfiguredRoutes(demoRoutes);
       }
     } catch (error) {

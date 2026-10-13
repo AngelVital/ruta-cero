@@ -55,17 +55,31 @@ export async function fetchAdminContainerReports() {
 }
 
 export async function fetchRouteConfigurations() {
-  const { data, error } = await requireSupabase()
-    .from('route_configurations')
-    .select('id, zone, point_ids, scheduled_for, stops_done, last_update, status, status_label, sync_label')
-    .order('id');
+  const client = requireSupabase();
+  const [{ data, error }, { data: schedules, error: schedulesError }] = await Promise.all([
+    client
+      .from('route_configurations')
+      .select('id, zone, point_ids, stops_done, last_update, status, status_label, sync_label')
+      .order('id'),
+    client
+      .from('route_schedules')
+      .select('route_id, scheduled_for')
+  ]);
 
   if (error) throw error;
+  if (schedulesError) throw schedulesError;
+  const scheduledDatesByRoute = new Map();
+  schedules.forEach(({ route_id, scheduled_for }) => {
+    const dates = scheduledDatesByRoute.get(route_id) || [];
+    dates.push(scheduled_for);
+    scheduledDatesByRoute.set(route_id, dates);
+  });
+
   return data.map((route) => ({
     id: route.id,
     zone: route.zone,
     pointIds: route.point_ids || [],
-    scheduledFor: route.scheduled_for || null,
+    scheduledDates: scheduledDatesByRoute.get(route.id) || [],
     stopsDone: route.stops_done || 0,
     stopsTotal: (route.point_ids || []).length,
     lastUpdate: route.last_update || '--:--',
@@ -81,13 +95,21 @@ export async function saveRouteConfigurations(routes) {
       id: route.id,
       zone: route.zone,
       point_ids: route.pointIds,
-      scheduled_for: route.scheduledFor || null,
       stops_done: route.stopsDone || 0,
       last_update: route.lastUpdate || '--:--',
       status: route.status || 'scheduled',
       status_label: route.statusLabel || 'Programada',
       sync_label: route.syncLabel || 'Sin iniciar'
     }))
+  });
+
+  if (error) throw error;
+}
+
+export async function saveRouteSchedule(scheduledFor, routeId) {
+  const { error } = await requireSupabase().rpc('set_route_schedule', {
+    p_scheduled_for: scheduledFor,
+    p_route_id: routeId || null
   });
 
   if (error) throw error;
@@ -110,6 +132,11 @@ export function subscribeToRouteConfigurations(onChange) {
       event: '*',
       schema: 'public',
       table: 'route_configurations'
+    }, onChange)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'route_schedules'
     }, onChange)
     .subscribe();
 

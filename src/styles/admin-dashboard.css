@@ -840,6 +840,204 @@ tr[data-route-status="completed"] .admin-progress-track span {
   font-size: 10px;
 }
 
+.admin-schedule-section {
+  scroll-margin-top: 82px;
+}
+
+.admin-schedule-section .admin-section-heading p {
+  margin-top: 5px;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.admin-calendar-container {
+  padding: 20px;
+}
+
+.admin-calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.admin-calendar {
+  min-width: 0;
+}
+
+.admin-calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.admin-calendar-toolbar h3 {
+  color: #23372b;
+  font-family: var(--font-headline);
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.admin-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.admin-calendar-weekdays {
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-calendar-weekdays span {
+  padding: 8px 4px;
+  color: #738077;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.admin-calendar-days {
+  border-top: 1px solid #e6ece7;
+  border-left: 1px solid #e6ece7;
+}
+
+.admin-calendar-day {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  min-height: 86px;
+  padding: 8px;
+  border: 0;
+  border-right: 1px solid #e6ece7;
+  border-bottom: 1px solid #e6ece7;
+  background: #ffffff;
+  color: var(--admin-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-calendar-day:hover:not(:disabled) {
+  background: #f4f8f5;
+}
+
+.admin-calendar-day.is-outside-month {
+  background: #f8faf8;
+  color: #a3ada6;
+}
+
+.admin-calendar-day.is-today .admin-calendar-day-number {
+  color: var(--admin-green);
+  font-weight: 800;
+}
+
+.admin-calendar-day.is-selected {
+  outline: 2px solid var(--admin-green);
+  outline-offset: -2px;
+  background: #edf6f0;
+}
+
+.admin-calendar-day:disabled {
+  color: #a3ada6;
+  cursor: not-allowed;
+}
+
+.admin-calendar-day-number {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-calendar-route,
+.admin-calendar-empty {
+  display: block;
+  overflow: hidden;
+  color: #347153;
+  font-size: 10px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+
+.admin-calendar-route {
+  padding: 4px 5px;
+  background: #e6f2e9;
+  font-weight: 700;
+}
+
+.admin-calendar-empty {
+  color: #9aa69d;
+}
+
+.admin-calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 12px;
+  color: #738077;
+  font-size: 10px;
+}
+
+.admin-calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendar-legend-today,
+.calendar-legend-assigned {
+  width: 9px;
+  height: 9px;
+  background: #17845d;
+}
+
+.calendar-legend-assigned {
+  background: #e6f2e9;
+  border: 1px solid #b8d8c1;
+}
+
+.admin-calendar-assignment {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  background: #f5f8f5;
+  border: 1px solid var(--admin-line);
+}
+
+.admin-calendar-assignment h3 {
+  color: #23372b;
+  font-family: var(--font-headline);
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.admin-calendar-assignment .admin-route-field select {
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid #cbd6ce;
+  background: #ffffff;
+  color: #263c30;
+  border-radius: var(--radius-sm);
+}
+
+.admin-calendar-assignment-note {
+  color: #65736b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.admin-calendar-message {
+  min-height: 16px;
+  color: #347153;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.admin-calendar-message.is-error {
+  color: #a34839;
+}
+
 .admin-empty-state {
   align-items: center;
   justify-content: center;
@@ -1365,6 +1563,14 @@ tr[data-route-status="completed"] .admin-progress-track span {
     padding-left: 12px;
     font-size: 9px;
   }
+
+  .admin-calendar-container { padding: 12px; }
+  .admin-calendar-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .admin-calendar-day { min-height: 68px; padding: 5px; gap: 5px; }
+  .admin-calendar-route,
+  .admin-calendar-empty { font-size: 8px; }
+  .admin-calendar-weekdays span { font-size: 8px; }
+  .admin-calendar-assignment { padding: 14px; }
 
   .admin-bottom-grid { gap: 16px; }
 
