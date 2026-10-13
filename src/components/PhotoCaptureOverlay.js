@@ -77,7 +77,8 @@ export async function openPhotoCapture(onCaptured, onError) {
     frame.width = video.videoWidth;
     frame.height = video.videoHeight;
     frame.getContext('2d')?.drawImage(video, 0, 0, frame.width, frame.height);
+    const photoDataUrl = frame.toDataURL('image/jpeg', 0.85);
     close();
-    onCaptured?.();
+    onCaptured?.(photoDataUrl);
   });
 }

@@ -60,10 +60,14 @@ export function renderRouteMapScreen(state) {
   const activeStop = state.stops.find(s => s.id === state.activeContainerId)
     || state.stops.find(s => s.status === 'active')
     || state.stops[0];
-  const destination = `${activeStop.latitude},${activeStop.longitude}`;
-  const mapsUrl = `https://www.google.com/maps?q=${destination}&output=embed`;
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+  const destination = activeStop.latitude !== null && activeStop.longitude !== null
+    ? `${activeStop.latitude},${activeStop.longitude}`
+    : activeStop.address;
+  const encodedDestination = encodeURIComponent(destination);
+  const mapsUrl = `https://www.google.com/maps?q=${encodedDestination}&output=embed`;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedDestination}`;
   const routeProgress = `${state.route.completedCount}/${state.route.totalStops}`;
+  const isReturnStation = activeStop.type === 'return-station';
 
   return `
     <div class="screen-header-bar">
@@ -169,7 +173,15 @@ export function renderRouteMapScreen(state) {
 
             <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px solid #e2e8f0; margin-top: 4px;">
             <p class="font-body-sm" style="color: #475569; font-size: 13px; margin-top: 2px;">${stop.address}</p>
-              ${isActive ? `
+              ${isActive && isReturnStation ? `
+                <button
+                  type="button"
+                  class="btn-tactical btn-tactical-sm btn-tactical-primary btn-finish-route"
+                  style="padding: 0 10px; height: 36px; font-size: 12px;"
+                >
+                  FINALIZAR RUTA
+                </button>
+              ` : isActive ? `
                 <button
                   type="button"
                   class="btn-tactical btn-tactical-sm btn-scan-stop"
@@ -223,6 +235,10 @@ export function attachRouteMapEvents(container, store) {
         store.setScreen('scanner');
       }
     });
+  });
+
+  container.querySelector('.btn-finish-route')?.addEventListener('click', () => {
+    store.setScreen('route-completion');
   });
 
   container.querySelectorAll('.btn-map-control').forEach(btn => {
