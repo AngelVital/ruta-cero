@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRouteId, getConfiguredRoutes, getOperationalDate, getScheduledRoute, saveConfiguredRoutes } from '../src/services/routeConfiguration.js';
+import { assignRouteToDate, createRouteId, getConfiguredRoutes, getOperationalDate, getScheduledRoute, saveConfiguredRoutes } from '../src/services/routeConfiguration.js';
 import { renderDispatchScreen } from '../src/screens/DispatchScreen.js';
 import { renderRouteMapScreen } from '../src/screens/RouteMapScreen.js';
 import { renderRouteCompletionScreen } from '../src/screens/RouteCompletionScreen.js';
-import { applyReportProgress } from '../src/screens/AdminDashboard.js';
+import { applyReportProgress, renderRouteScheduleCalendar } from '../src/screens/AdminDashboard.js';
 import { store } from '../src/state/store.js';
 
 function createMemoryStorage() {
@@ -32,7 +32,7 @@ test('la ruta programada para hoy aparece automáticamente en despacho y mapa', 
       id: createRouteId(defaultRoutes),
       zone: 'Ruta Sur',
       pointIds: ['CONT-06', 'CONT-08'],
-      scheduledFor: getOperationalDate(),
+      scheduledDates: [getOperationalDate()],
       stopsDone: 0,
       stopsTotal: 2,
       lastUpdate: '--:--',
@@ -41,7 +41,7 @@ test('la ruta programada para hoy aparece automáticamente en despacho y mapa', 
       syncLabel: 'Sin iniciar'
     };
     const routes = [
-      ...defaultRoutes.map((configuredRoute) => ({ ...configuredRoute, scheduledFor: null })),
+      ...defaultRoutes.map((configuredRoute) => ({ ...configuredRoute, scheduledDates: [] })),
       route
     ];
     saveConfiguredRoutes(routes);
@@ -81,7 +81,7 @@ test('no selecciona una ruta cuando la fecha no tiene programación', () => {
   const previousWindow = globalThis.window;
   globalThis.window = { localStorage: createMemoryStorage() };
   try {
-    saveConfiguredRoutes(getConfiguredRoutes().map((route) => ({ ...route, scheduledFor: null })));
+    saveConfiguredRoutes(getConfiguredRoutes().map((route) => ({ ...route, scheduledDates: [] })));
     assert.equal(getScheduledRoute('2099-01-01'), null);
     assert.equal(getScheduledRoute(), null);
   } finally {
@@ -181,7 +181,7 @@ test('el avance de una ruta programada excluye reportes de otras fechas', () => 
     id: 'R-12',
     zone: 'Ruta futura',
     pointIds: ['CONT-01', 'CONT-02'],
-    scheduledFor: '2026-10-08',
+    scheduledDates: ['2026-10-08'],
     stopsDone: 2,
     stopsTotal: 2,
     lastUpdate: '12:00',
@@ -198,4 +198,29 @@ test('el avance de una ruta programada excluye reportes de otras fechas', () => 
   assert.equal(route.lastUpdate, '--:--');
   assert.equal(route.status, 'scheduled');
   assert.equal(route.statusLabel, 'Programada');
+});
+
+test('una ruta puede asignarse a varios días y cada día solo conserva una ruta', () => {
+  const routes = [
+    { id: 'R-01', scheduledDates: ['2026-10-13', '2026-10-15'] },
+    { id: 'R-02', scheduledDates: [] }
+  ];
+
+  const reassigned = assignRouteToDate(routes, '2026-10-13', 'R-02');
+  assert.deepEqual(reassigned[0].scheduledDates, ['2026-10-15']);
+  assert.deepEqual(reassigned[1].scheduledDates, ['2026-10-13']);
+  assert.equal(reassigned.filter((route) => route.scheduledDates.includes('2026-10-13')).length, 1);
+});
+
+test('el calendario presenta los días y la ruta asignada a la fecha seleccionada', () => {
+  const html = renderRouteScheduleCalendar([{
+    id: 'R-05',
+    zone: 'Centro',
+    scheduledDates: ['2026-10-13']
+  }], '2026-10-13', new Date(2026, 9, 1, 12));
+
+  assert.match(html, /octubre de 2026/);
+  assert.match(html, /data-calendar-date="2026-10-13"/);
+  assert.match(html, /R-05 · Centro/);
+  assert.match(html, /Guardar asignación/);
 });

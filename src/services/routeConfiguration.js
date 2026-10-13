@@ -7,7 +7,7 @@ const defaultRoutes = [
     pointIds: ['CONT-01', 'CONT-03', 'CONT-04'],
     stopsDone: 0,
     stopsTotal: 3,
-    scheduledFor: null,
+    scheduledDates: [],
     lastUpdate: '--:--',
     status: 'scheduled',
     statusLabel: 'Programada',
@@ -19,7 +19,7 @@ const defaultRoutes = [
     pointIds: ['CONT-02', 'CONT-07'],
     stopsDone: 0,
     stopsTotal: 2,
-    scheduledFor: null,
+    scheduledDates: [],
     lastUpdate: '--:--',
     status: 'scheduled',
     statusLabel: 'Programada',
@@ -31,7 +31,7 @@ const defaultRoutes = [
     pointIds: ['CONT-05', 'CONT-06', 'CONT-08'],
     stopsDone: 0,
     stopsTotal: 3,
-    scheduledFor: null,
+    scheduledDates: [],
     lastUpdate: '--:--',
     status: 'scheduled',
     statusLabel: 'Programada',
@@ -50,7 +50,7 @@ function getStorage() {
 function cloneDefaultRoutes() {
   return defaultRoutes.map((route, index) => ({
     ...route,
-    scheduledFor: index === 0 ? getOperationalDate() : route.scheduledFor,
+    scheduledDates: index === 0 ? [getOperationalDate()] : [...route.scheduledDates],
     pointIds: [...route.pointIds]
   }));
 }
@@ -80,7 +80,12 @@ export function getConfiguredRoutes() {
       && typeof route.zone === 'string'
       && Array.isArray(route.pointIds)
     ))) {
-      return routes;
+      return routes.map((route) => ({
+        ...route,
+        scheduledDates: Array.isArray(route.scheduledDates)
+          ? route.scheduledDates
+          : route.scheduledFor ? [route.scheduledFor] : []
+      }));
     }
   } catch {
     return cloneDefaultRoutes();
@@ -91,7 +96,15 @@ export function getConfiguredRoutes() {
 
 export function getScheduledRoute(date = getOperationalDate()) {
   const routes = getConfiguredRoutes();
-  return routes.find((route) => route.scheduledFor === date) || null;
+  return routes.find((route) => route.scheduledDates?.includes(date)) || null;
+}
+
+export function assignRouteToDate(routes, date, routeId) {
+  return routes.map((route) => {
+    const scheduledDates = (route.scheduledDates || []).filter((scheduledDate) => scheduledDate !== date);
+    if (route.id === routeId) scheduledDates.push(date);
+    return { ...route, scheduledDates: scheduledDates.sort() };
+  });
 }
 
 export function saveConfiguredRoutes(routes) {

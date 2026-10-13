@@ -36,11 +36,11 @@ Abre `/?mode=admin` o elige **Administración** en la pantalla inicial. Se requi
 
 1. **Consultar operación:** el resumen muestra reportes de contenedores y cobertura de puntos. Se puede actualizar la consulta, abrir el detalle de cada reporte y revisar su llenado, peso, materiales, incidencias y evidencia registrada.
 2. **Configurar rutas:** crea una ruta con nombre o zona y uno o más puntos, o edita/elimina una ruta existente. La tabla permite buscar por ruta, zona o punto, filtrar por estado y exportar las rutas a CSV.
-3. **Programar rutas:** crea o edita una ruta y elige su **Fecha de operación**. Puedes programarla para hoy o para un día futuro; solo se permite una ruta por fecha. La ruta programada para hoy se muestra automáticamente en campo y los cambios se distribuyen mediante Supabase Realtime.
+3. **Programar rutas:** en **Programar rutas**, navega el calendario, selecciona un día y asigna una ruta. Cada día admite una sola ruta; puedes repetir una misma ruta en distintos días. El panel de campo recibe la asignación del día automáticamente.
 4. **Revisar visitas:** la tabla de puntos usa el reporte más reciente de cada contenedor para mostrar su última visita. Los reportes no se actualizan en vivo: pulsa **Actualizar** para volver a consultarlos.
 5. **Cerrar sesión:** usa **Cerrar sesión** en la barra superior para salir del panel.
 
-Las rutas y su fecha programada se almacenan en `public.route_configurations` y también se mantienen en caché local. El campo ya no permite elegir una ruta manualmente: usa la ruta asignada al día operativo de La Paz (`America/Mazatlan`) y no permite iniciar si no existe una. El avance de los reportes aparece en el panel después de actualizar; la sesión de campo no se restaura al recargar la aplicación.
+Las rutas se almacenan en `public.route_configurations`; las asignaciones por día, en `public.route_schedules`. El campo ya no permite elegir una ruta manualmente: usa la ruta asignada al día operativo de La Paz (`America/Mazatlan`) y no permite iniciar si no existe una. El avance de los reportes aparece en el panel después de actualizar; la sesión de campo no se restaura al recargar la aplicación.
 
 ## Requisitos
 
@@ -74,7 +74,7 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
 
 6. Reinicia Vite con `npm run dev`. Abre `http://localhost:5173/?mode=admin` e inicia sesión con esa cuenta. El panel carga los últimos 200 reportes de `public.container_reports`.
 
-En **Rutas configuradas**, crea o edita una ruta, selecciona los contenedores incluidos y define su fecha de operación. Puedes dejar la fecha vacía para guardar la ruta sin programarla. La ruta asignada a hoy aparece automáticamente en despacho y en el mapa de campo; los cambios se distribuyen a los dispositivos conectados mediante Supabase Realtime. Ejecuta de nuevo `supabase/schema.sql` en proyectos existentes para añadir la fecha programada y actualizar la función RPC.
+En **Rutas configuradas**, crea o edita las rutas y sus puntos. En **Programar rutas**, usa el calendario para asignar una ruta a cada fecha; la ruta de hoy aparece automáticamente en despacho y el mapa de campo. Ejecuta de nuevo `supabase/schema.sql` para crear la tabla de calendario y actualizar las funciones RPC; las asignaciones anteriores se migran cuando es posible.
 
 La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Los reportes solo se pueden leer con una sesión cuya cuenta esté registrada en `admin_users`; la inserción de reportes anónimos sigue habilitada para pruebas. Las fotos se registran actualmente como datos de evidencia, no como archivos de imagen. Sin variables configuradas, la aplicación sigue funcionando en modo local.
 

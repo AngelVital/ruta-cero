@@ -36,7 +36,7 @@ async function refreshFieldRouteConfiguration() {
     if (routes.length === 0) return;
 
     saveConfiguredRoutes(routes);
-    store.applyConfiguredRoute(routes.find((route) => route.scheduledFor === getOperationalDate()) || null);
+    store.applyConfiguredRoute(routes.find((route) => route.scheduledDates?.includes(getOperationalDate())) || null);
   } catch {
     // The local route cache remains available while Supabase is offline or unconfigured.
   }
