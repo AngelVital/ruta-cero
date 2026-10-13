@@ -86,6 +86,9 @@ export function getRouteForDate(route, date = getOperationalDate()) {
     ...route,
     status,
     statusLabel: statusLabels[status] || statusLabels.scheduled,
+    completedPointIds: isScheduled && hasDailyStatus && Array.isArray(route.completedPointIds)
+      ? route.completedPointIds
+      : [],
     stopsDone: isScheduled && hasDailyStatus ? route.stopsDone || 0 : 0,
     lastUpdate: isScheduled && hasDailyStatus ? route.lastUpdate || '--:--' : '--:--',
     syncLabel: isScheduled && hasDailyStatus ? route.syncLabel || 'Sin iniciar' : 'Sin iniciar',

@@ -65,7 +65,7 @@ export async function fetchRouteConfigurations() {
       .order('id'),
     client
       .from('route_schedules')
-      .select('route_id, scheduled_for, status, stops_done, started_at, completed_at')
+      .select('route_id, scheduled_for, status, stops_done, completed_point_ids, started_at, completed_at')
   ]);
 
   if (error) throw error;
@@ -90,6 +90,7 @@ export async function fetchRouteConfigurations() {
       zone: route.zone,
       pointIds: route.point_ids || [],
       scheduledDates: scheduledDatesByRoute.get(route.id) || [],
+      completedPointIds: todaysSchedule?.completed_point_ids || [],
       stopsDone: todaysSchedule?.stops_done || 0,
       stopsTotal: (route.point_ids || []).length,
       lastUpdate: todaysSchedule?.started_at
