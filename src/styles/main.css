@@ -212,7 +212,7 @@ html, body {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  border: var(--border-structural);
+  border: 1px solid #d5e0d8;
   box-shadow: var(--shadow-resting);
   cursor: pointer;
   transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
@@ -223,7 +223,7 @@ html, body {
 
 .btn-tactical:active,
 .btn-tactical.active {
-  transform: translate(2px, 2px);
+  transform: translateY(1px);
   box-shadow: var(--shadow-active);
 }
 
@@ -238,19 +238,19 @@ html, body {
 }
 
 .btn-tactical:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 0 6px 16px rgba(27, 54, 39, 0.14);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(24, 49, 35, 0.14);
 }
 
 .btn-tactical-dark {
   background-color: var(--color-outline);
   color: #ffffff;
-  box-shadow: 4px 4px 0px rgba(0, 168, 107, 0.4);
+  box-shadow: 0 5px 16px rgba(0, 109, 67, 0.2);
 }
 
 .btn-tactical-dark:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px rgba(0, 168, 107, 0.4);
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(0, 109, 67, 0.18);
 }
 
 .btn-tactical-danger {
@@ -272,7 +272,7 @@ html, body {
 .btn-capacity-preset:hover,
 .photo-evidence-section:hover {
   transform: translateY(-2px);
-  box-shadow: 4px 6px 0px #0f172a;
+  box-shadow: 0 10px 24px rgba(24, 49, 35, 0.12);
 }
 
 .btn-tactical-sm {
@@ -362,6 +362,7 @@ html, body {
   border: var(--border-structural);
   border-radius: var(--radius-sm);
   outline: none;
+  border-radius: var(--radius-sm);
 }
 
 .input-tactical:focus {

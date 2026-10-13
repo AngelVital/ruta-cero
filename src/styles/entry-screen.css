@@ -2,11 +2,13 @@
   --entry-ink: #1b2b23;
   --entry-muted: #6f7b73;
   --entry-green: #167a52;
+  --entry-radius-card: 20px;
+  --entry-radius-control: 14px;
   position: fixed;
   inset: 0;
   z-index: 110;
   overflow: auto;
-  background: #eef2ee;
+  background: linear-gradient(135deg, #f4f7f3 0%, #e9f0ea 100%);
   color: var(--entry-ink);
   font-family: var(--font-body);
   user-select: text;
@@ -44,9 +46,10 @@
   overflow: hidden;
   padding: 34px 30px;
   background-color: #173a31;
-  background-image: linear-gradient(rgba(226, 241, 232, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(226, 241, 232, 0.045) 1px, transparent 1px);
-  background-size: 36px 36px;
+  background-image: radial-gradient(ellipse at 20% 20%, rgba(49, 112, 84, 0.48), transparent 58%), linear-gradient(rgba(226, 241, 232, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(226, 241, 232, 0.045) 1px, transparent 1px);
+  background-size: auto, 36px 36px, 36px 36px;
   color: #f4f7f4;
+  border-radius: 0 28px 28px 0;
 }
 
 .entry-brand {
@@ -185,19 +188,19 @@
   min-height: 126px;
   padding: 19px 21px;
   border: 1px solid #d8e1da;
-  border-left: 4px solid var(--entry-green);
+  border-left: 0;
   background: #ffffff;
-  box-shadow: 0 2px 7px rgba(24, 55, 38, 0.045);
-  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  box-shadow: inset 4px 0 0 var(--choice-accent, var(--entry-green)), 0 5px 16px rgba(24, 55, 38, 0.055);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
-.entry-choice-field { border-left-color: #17845d; }
-.entry-choice-admin { border-left-color: #327c9b; }
+.entry-choice-field { --choice-accent: #17845d; }
+.entry-choice-admin { --choice-accent: #327c9b; }
 
 .entry-choice:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: #bdcec2;
-  box-shadow: 0 8px 20px rgba(24, 55, 38, 0.1);
+  box-shadow: inset 4px 0 0 var(--choice-accent, var(--entry-green)), 0 12px 26px rgba(24, 55, 38, 0.12);
 }
 
 .entry-choice:focus-visible {
@@ -303,10 +306,22 @@
 #entry-root .entry-choice,
 #entry-root .entry-choice-icon,
 #entry-root .entry-choice-arrow {
-  border-radius: var(--radius-md) !important;
+#entry-root .entry-choice,
+#entry-root .entry-choice-icon,
+#entry-root .entry-choice-arrow {
+  border-radius: var(--entry-radius-control) !important;
+}
+
+#entry-root .entry-choice {
+  border-radius: var(--entry-radius-card) !important;
+}
 }
 
 #entry-root .entry-brand-mark {
+  border-radius: 50% !important;
+}
+
+#entry-root .entry-choice-arrow {
   border-radius: 50% !important;
 }
 
@@ -324,6 +339,7 @@
   .entry-brand-band {
     min-height: 160px;
     padding: 20px 22px;
+    border-radius: 0 0 24px 24px;
   }
 
   .entry-brand {
