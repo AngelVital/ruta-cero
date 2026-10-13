@@ -309,6 +309,17 @@ class TacticalStore {
 
   startRoute() {
     if (!this.state.route.id) return null;
+    this.state.stops = this.state.stops
+      .filter((stop) => stop.type !== 'return-station')
+      .map((stop) => ({ ...stop, status: 'pending' }));
+    const firstStop = this.state.stops[0];
+    if (firstStop) firstStop.status = 'active';
+    this.state.activeContainerId = firstStop?.id || null;
+    this.returnStation = { ...this.returnStation, status: 'pending' };
+    this.state.route.completedCount = 0;
+    this.state.route.completedPointIds = [];
+    this.state.route.returning = false;
+    this.state.route.dashboardPhoto = null;
     const startTimestamp = Date.now();
     this.state.route.startTimestamp = startTimestamp;
     this.state.route.status = 'EN RUTA';
