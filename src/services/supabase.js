@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getOperationalDate, getRouteForDate } from './routeConfiguration.js';
 
 const environment = import.meta.env || {};
 const supabaseUrl = environment.VITE_SUPABASE_URL;
@@ -56,6 +57,7 @@ export async function fetchAdminContainerReports() {
 
 export async function fetchRouteConfigurations() {
   const client = requireSupabase();
+  const today = getOperationalDate();
   const [{ data, error }, { data: schedules, error: schedulesError }] = await Promise.all([
     client
       .from('route_configurations')
@@ -63,7 +65,7 @@ export async function fetchRouteConfigurations() {
       .order('id'),
     client
       .from('route_schedules')
-      .select('route_id, scheduled_for')
+      .select('route_id, scheduled_for, status, stops_done, started_at, completed_at')
   ]);
 
   if (error) throw error;
@@ -75,18 +77,33 @@ export async function fetchRouteConfigurations() {
     scheduledDatesByRoute.set(route_id, dates);
   });
 
-  return data.map((route) => ({
-    id: route.id,
-    zone: route.zone,
-    pointIds: route.point_ids || [],
-    scheduledDates: scheduledDatesByRoute.get(route.id) || [],
-    stopsDone: route.stops_done || 0,
-    stopsTotal: (route.point_ids || []).length,
-    lastUpdate: route.last_update || '--:--',
-    status: route.status || 'scheduled',
-    statusLabel: route.status_label || 'Programada',
-    syncLabel: route.sync_label || 'Sin iniciar'
-  }));
+  return data.map((route) => {
+    const todaysSchedule = schedules.find((schedule) => (
+      schedule.route_id === route.id && schedule.scheduled_for === today
+    ));
+    const status = !todaysSchedule
+      ? 'unscheduled'
+      : todaysSchedule.status || 'scheduled';
+
+    return getRouteForDate({
+      id: route.id,
+      zone: route.zone,
+      pointIds: route.point_ids || [],
+      scheduledDates: scheduledDatesByRoute.get(route.id) || [],
+      stopsDone: todaysSchedule?.stops_done || 0,
+      stopsTotal: (route.point_ids || []).length,
+      lastUpdate: todaysSchedule?.started_at
+        ? new Date(todaysSchedule.started_at).toLocaleTimeString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        })
+        : '--:--',
+      status,
+      statusDate: today,
+      syncLabel: 'Sin iniciar'
+    }, today);
+  });
 }
 
 export async function saveRouteConfigurations(routes) {
@@ -117,6 +134,14 @@ export async function saveRouteSchedule(scheduledFor, routeId) {
 
 export async function markRouteStarted(routeId) {
   const { error } = await requireSupabase().rpc('start_route_configuration', {
+    p_route_id: routeId
+  });
+
+  if (error) throw error;
+}
+
+export async function markRouteCompleted(routeId) {
+  const { error } = await requireSupabase().rpc('complete_route_configuration', {
     p_route_id: routeId
   });
 

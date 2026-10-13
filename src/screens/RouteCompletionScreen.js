@@ -58,13 +58,24 @@ export function attachRouteCompletionEvents(container, store) {
     );
   });
 
-  container.querySelector('#btn-confirm-route-completion')?.addEventListener('click', () => {
+  container.querySelector('#btn-confirm-route-completion')?.addEventListener('click', async (event) => {
+    const routeId = store.state.route.id;
     if (!store.completeRoute()) {
       store.showToast('Captura la evidencia de regreso antes de finalizar la ruta.', 'info');
       return;
     }
 
-    store.showToast(`Ruta ${store.state.route.id} finalizada correctamente.`);
     store.setScreen('dispatch');
+    try {
+      const { markRouteCompleted } = await import('../services/supabase.js');
+      await markRouteCompleted(routeId);
+      store.showToast(`Ruta ${routeId} finalizada correctamente.`);
+    } catch (error) {
+      store.showToast(
+        `La ruta ${routeId} se finalizó en este dispositivo, pero no se sincronizó: ${error.message}`,
+        'info',
+        8000
+      );
+    }
   });
 }

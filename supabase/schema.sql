@@ -100,8 +100,18 @@ create table if not exists public.route_configurations (
 create table if not exists public.route_schedules (
   scheduled_for date primary key,
   route_id text not null references public.route_configurations(id) on delete cascade,
+  status text not null default 'scheduled',
+  stops_done integer not null default 0,
+  started_at timestamptz,
+  completed_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+alter table public.route_schedules
+  add column if not exists status text not null default 'scheduled',
+  add column if not exists stops_done integer not null default 0,
+  add column if not exists started_at timestamptz,
+  add column if not exists completed_at timestamptz;
 
 do $$
 begin
@@ -300,7 +310,23 @@ begin
   insert into public.route_schedules (scheduled_for, route_id)
   values (p_scheduled_for, p_route_id)
   on conflict (scheduled_for) do update
-    set route_id = excluded.route_id,
+    set status = case
+          when route_schedules.route_id is distinct from excluded.route_id then 'scheduled'
+          else route_schedules.status
+        end,
+        stops_done = case
+          when route_schedules.route_id is distinct from excluded.route_id then 0
+          else route_schedules.stops_done
+        end,
+        started_at = case
+          when route_schedules.route_id is distinct from excluded.route_id then null
+          else route_schedules.started_at
+        end,
+        completed_at = case
+          when route_schedules.route_id is distinct from excluded.route_id then null
+          else route_schedules.completed_at
+        end,
+        route_id = excluded.route_id,
         created_at = now();
 end;
 $$;
@@ -315,27 +341,60 @@ security definer
 set search_path = public
 as $$
 begin
-  update public.route_configurations
+  update public.route_schedules
   set status = 'active',
-      status_label = 'En ruta',
-      last_update = to_char(now() at time zone 'America/Mazatlan', 'HH24:MI'),
-      updated_at = now()
-  where id = p_route_id
-    and exists (
-      select 1
-      from public.route_schedules schedule
-      where schedule.route_id = p_route_id
-        and schedule.scheduled_for = (now() at time zone 'America/Mazatlan')::date
-    );
+      started_at = coalesce(started_at, now())
+  where route_id = p_route_id
+    and scheduled_for = (now() at time zone 'America/Mazatlan')::date
+    and status <> 'completed';
 
   if not found then
     raise exception 'La ruta no existe o no está programada para hoy.';
   end if;
+
+  update public.route_configurations
+  set status = 'active',
+      status_label = 'En curso',
+      last_update = to_char(now() at time zone 'America/Mazatlan', 'HH24:MI'),
+      updated_at = now()
+  where id = p_route_id;
 end;
 $$;
 
 revoke all on function public.start_route_configuration(text) from public;
 grant execute on function public.start_route_configuration(text) to anon, authenticated;
+
+create or replace function public.complete_route_configuration(p_route_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.route_schedules schedule
+  set status = 'completed',
+      completed_at = now()
+  from public.route_configurations route
+  where schedule.route_id = p_route_id
+    and schedule.scheduled_for = (now() at time zone 'America/Mazatlan')::date
+    and schedule.status = 'active'
+    and schedule.stops_done >= cardinality(route.point_ids)
+    and route.id = schedule.route_id;
+
+  if not found then
+    raise exception 'La ruta no está iniciada o aún tiene puntos pendientes.';
+  end if;
+
+  update public.route_configurations
+  set status = 'completed',
+      status_label = 'Completada',
+      updated_at = now()
+  where id = p_route_id;
+end;
+$$;
+
+revoke all on function public.complete_route_configuration(text) from public;
+grant execute on function public.complete_route_configuration(text) to anon, authenticated;
 
 create or replace function public.update_route_progress_from_report()
 returns trigger
@@ -357,18 +416,29 @@ begin
     and report.container_id = any(route.point_ids)
     and (report.created_at at time zone 'America/Mazatlan')::date = schedule.scheduled_for;
 
+  update public.route_schedules schedule
+  set stops_done = least(cardinality(route.point_ids), completed_points),
+      status = case
+        when schedule.status = 'scheduled' and completed_points > 0 then 'active'
+        else schedule.status
+      end,
+      started_at = case
+        when schedule.started_at is null and completed_points > 0 then new.created_at
+        else schedule.started_at
+      end
+  from public.route_configurations route
+  where schedule.route_id = new.route_id
+    and schedule.route_id = route.id
+    and schedule.scheduled_for = (new.created_at at time zone 'America/Mazatlan')::date;
+
   update public.route_configurations route
   set stops_done = least(cardinality(route.point_ids), completed_points),
       last_update = to_char(new.created_at at time zone 'America/Mazatlan', 'HH24:MI'),
       status = case
-        when completed_points >= cardinality(route.point_ids)
-          then 'completed'
         when completed_points > 0 then 'active'
         else route.status
       end,
       status_label = case
-        when completed_points >= cardinality(route.point_ids)
-          then 'Completada'
         when completed_points > 0 then 'En ruta'
         else route.status_label
       end,
@@ -397,31 +467,32 @@ create trigger container_report_updates_route_progress
 
 with route_progress as (
   select
+    schedule.scheduled_for,
+    schedule.route_id,
     route.id,
     least(cardinality(route.point_ids), count(distinct report.container_id)::integer) as stops_done
-  from public.route_configurations route
-  left join public.route_schedules schedule
-    on schedule.route_id = route.id
-    and schedule.scheduled_for = (
-      now() at time zone 'America/Mazatlan'
-    )::date
+  from public.route_schedules schedule
+  join public.route_configurations route
+    on route.id = schedule.route_id
   left join public.container_reports report
     on report.route_id = route.id
     and report.container_id = any(route.point_ids)
     and (report.created_at at time zone 'America/Mazatlan')::date = schedule.scheduled_for
-  group by route.id, route.point_ids
+  where schedule.scheduled_for = (
+      now() at time zone 'America/Mazatlan'
+    )::date
+  group by schedule.scheduled_for, schedule.route_id, route.id, route.point_ids
 )
-update public.route_configurations route
+update public.route_schedules schedule
 set stops_done = progress.stops_done,
     status = case
-      when progress.stops_done >= cardinality(route.point_ids) then 'completed'
-      when progress.stops_done > 0 then 'active'
-      else route.status
+      when schedule.status = 'scheduled' and progress.stops_done > 0 then 'active'
+      else schedule.status
     end,
-    status_label = case
-      when progress.stops_done >= cardinality(route.point_ids) then 'Completada'
-      when progress.stops_done > 0 then 'En ruta'
-      else route.status_label
+    started_at = case
+      when schedule.started_at is null and progress.stops_done > 0 then now()
+      else schedule.started_at
     end
 from route_progress progress
-where route.id = progress.id;
+where schedule.route_id = progress.route_id
+  and schedule.scheduled_for = progress.scheduled_for;
