@@ -15,20 +15,31 @@ HUD táctico para la operación de rutas de recolección inteligente de residuos
   - `src/styles/`: tokens, estilos generales y componentes HUD.
 - **Diseño:** el sistema Field-Spec HUD está documentado en `design-system/DESIGN_SYSTEM.md`, con tokens reutilizables en `design-system/` y `src/styles/`.
 
-## Pantallas y funcionamiento
+## Flujo de campo
 
-La navegación permite cambiar entre estas vistas:
+Abre `/?mode=field` o elige **Campo** en la pantalla inicial. El flujo sigue la ruta seleccionada por administración:
 
-1. **Despacho:** inicio de ruta, unidad, operador, combustible e inspección preoperativa.
-2. **Inspección 360°:** revisión de nueve puntos del vehículo y comentarios.
-3. **Registro de combustible:** litros cargados, preset de carga y odómetro.
-4. **Mapa de ruta:** seguimiento de las paradas y el avance de la ruta R-04.
-5. **Escáner de código de barras:** usa la cámara para identificar contenedores por su ID.
-6. **Reporte de contenedor:** nivel de llenado, materiales y kilos recolectados.
+1. **Preparar la salida:** en Despacho se eligen unidad, operador, auxiliar y ruta. Antes de iniciar, registra el nivel de combustible y completa la inspección 360°.
+2. **Registrar combustible:** selecciona uno de los niveles predefinidos y guarda el registro para volver a Despacho.
+3. **Completar inspección:** revisa los nueve puntos del vehículo como Bien, Regular o Mal. Los estados Regular y Mal requieren comentario; también se debe capturar la evidencia fotográfica del odómetro. Al completar todo, confirma la inspección.
+4. **Iniciar y recorrer:** inicia la ruta desde Despacho. El mapa muestra el punto activo, el avance y los puntos programados; ofrece abrir indicaciones en Google Maps.
+5. **Identificar el contenedor:** escanea el código QR o código de barras del punto activo. Si la cámara no logra leerlo, se puede elegir manualmente el mismo punto activo. Los códigos de otros puntos no permiten avanzar.
+6. **Registrar la recolección:** toma fotos iniciales y finales del exterior e interior, indica el nivel de llenado y registra materiales, peso por material e incidencias. Para nivel medio o lleno se requiere al menos un material con peso mayor que cero; para nivel bajo no hace falta registrar material.
+7. **Guardar y continuar:** guarda el reporte. El punto queda completado y el mapa activa el siguiente; al completar todos los contenedores se agrega la estación de regreso. El botón para finalizar la ruta está visible, pero la pantalla de cierre todavía no está conectada al router.
 
-Las acciones actualizan el store central y provocan el re-render de la interfaz. Al completar un reporte, la parada se marca como completada y se activa automáticamente la siguiente parada pendiente.
+El avance operativo de campo vive en el store en memoria del dispositivo. Los reportes se insertan en Supabase cuando está configurado; si no lo está, quedan registrados solo durante la sesión local. Las fotos se guardan como evidencia/fechas, no como archivos de imagen.
 
-> El avance operativo de la sesión se conserva en memoria. Las rutas creadas, sus puntos y la ruta asignada al campo se guardan en Supabase.
+## Flujo de administración
+
+Abre `/?mode=admin` o elige **Administración** en la pantalla inicial. Se requiere iniciar sesión con una cuenta de Supabase registrada en `public.admin_users`; una cuenta autenticada sin ese permiso no puede abrir el panel.
+
+1. **Consultar operación:** el resumen muestra reportes de contenedores y cobertura de puntos. Se puede actualizar la consulta, abrir el detalle de cada reporte y revisar su llenado, peso, materiales, incidencias y evidencia registrada.
+2. **Configurar rutas:** crea una ruta con nombre o zona y uno o más puntos, o edita/elimina una ruta existente. La tabla permite buscar por ruta, zona o punto, filtrar por estado y exportar las rutas a CSV.
+3. **Asignar a campo:** pulsa **Usar en campo** en una ruta. Esa selección se comparte con el modo de campo y se distribuye mediante Supabase Realtime; el campo también vuelve a consultar la configuración al recuperar el foco.
+4. **Revisar visitas:** la tabla de puntos usa el reporte más reciente de cada contenedor para mostrar su última visita. Los reportes no se actualizan en vivo: pulsa **Actualizar** para volver a consultarlos.
+5. **Cerrar sesión:** usa **Cerrar sesión** en la barra superior para salir del panel.
+
+Las rutas y la selección de campo se almacenan en `public.route_configurations` y también se mantienen en caché local. El avance de los reportes aparece en el panel después de actualizar; la sesión de campo no se restaura al recargar la aplicación.
 
 ## Requisitos
 
