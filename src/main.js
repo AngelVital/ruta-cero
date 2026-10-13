@@ -1,8 +1,8 @@
 /**
- * Ruta Cero • HUD Táctico de Operaciones de Campo
+ * Ruta Cero • Plataforma Operativa de Campo y Administración
  * Entrada Principal de la Aplicación y Router Modular
  * 
- * Basado en el Sistema de Diseño Field-Spec HUD (Stitch #13352991854495087010)
+ * Basado en el Sistema de Diseño Field-Spec (Stitch #13352991854495087010)
  */
 
 import { store } from './state/store.js';

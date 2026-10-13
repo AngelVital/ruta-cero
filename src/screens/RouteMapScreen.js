@@ -1,5 +1,5 @@
 /**
- * Pantalla 4: HUD Táctico - Mapa de Ruta Programada R-04
+ * Pantalla 4: Mapa de Ruta Programada R-04
  */
 
 function formatElapsedRouteTime(startTimestamp) {
@@ -101,7 +101,7 @@ export function renderRouteMapScreen(state) {
       </div>
     </div>
 
-    <!-- Live Telemetry HUD Bar -->
+    <!-- Live route telemetry -->
     <div style="background-color: #0f172a; color: #ffffff; padding: 10px 16px; border-bottom: 2px solid #00a86b; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;">
       <div>
         <span class="font-label-sm" style="color: #64748b; font-size: 11px; display: block;">SIGUIENTE PUNTO</span>

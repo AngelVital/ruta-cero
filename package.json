@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Smart Waste Collection Mobile Operations HUD — Imported from Stitch Project 13352991854495087010",
+  "description": "Plataforma operativa para gestionar rutas urbanas de recolección de residuos de Ruta Cero.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

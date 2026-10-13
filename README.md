@@ -1,6 +1,6 @@
 # Ruta Cero
 
-HUD táctico para la operación de rutas de recolección inteligente de residuos urbanos. La aplicación simula una terminal móvil de cabina para consultar una ruta, realizar verificaciones preoperativas y registrar la recolección de contenedores.
+Plataforma operativa para coordinar las rutas urbanas de recolección de residuos de Ruta Cero. Incluye una aplicación móvil de campo para preparar unidades, recorrer rutas y registrar recolecciones, además de un panel de administración para configurar recorridos y consultar reportes.
 
 ## Arquitectura
 
@@ -12,8 +12,8 @@ HUD táctico para la operación de rutas de recolección inteligente de residuos
 - **UI:**
   - `src/components/`: encabezado, navegación, simulador de dispositivo, medidores y controles.
   - `src/screens/`: vistas operativas y sus manejadores de interacción.
-  - `src/styles/`: tokens, estilos generales y componentes HUD.
-- **Diseño:** el sistema Field-Spec HUD está documentado en `design-system/DESIGN_SYSTEM.md`, con tokens reutilizables en `design-system/` y `src/styles/`.
+  - `src/styles/`: tokens, estilos generales y componentes de interfaz.
+- **Diseño:** el sistema visual Field-Spec está documentado en `design-system/DESIGN_SYSTEM.md`, con tokens reutilizables en `design-system/` y `src/styles/`.
 
 ## Flujo de campo
 
@@ -108,7 +108,7 @@ npm run preview
 │   ├── components/      # Componentes reutilizables
 │   ├── screens/         # Pantallas operativas
 │   ├── state/           # Store reactivo central
-│   ├── styles/          # Tokens y estilos HUD
+│   ├── styles/          # Tokens y estilos de interfaz
 │   └── main.js          # Entrada, router y ciclo de renderizado
 ├── index.html
 ├── package.json
@@ -117,4 +117,4 @@ npm run preview
 
 ## Diseño visual
 
-Field-Spec HUD prioriza legibilidad en cabina y uso con guantes: tipografías Barlow Condensed y Atkinson Hyperlegible Next, controles táctiles de al menos 48 px, bordes rectos, alto contraste y colores semánticos para plástico, cartón y papel.
+Field-Spec prioriza legibilidad en cabina y uso con guantes: tipografías Barlow Condensed y Atkinson Hyperlegible Next, controles táctiles de al menos 48 px, bordes rectos, alto contraste y colores semánticos para plástico, cartón y papel.

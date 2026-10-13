@@ -1,7 +1,7 @@
-# Field-Spec HUD — Sistema de Diseño para Ruta Cero
+# Field-Spec — Sistema de Diseño Operativo para Ruta Cero
 
 > **Proyecto Stitch ID**: `13352991854495087010`  
-> **Nombre del Sistema**: Field-Spec HUD  
+> **Nombre del Sistema**: Field-Spec
 > **Área**: Logística Operativa de Recolección de Residuos Urbanos  
 > **Dispositivo Principal**: Terminal Móvil Rugerizada / Smartphone en Cabina
 
@@ -9,7 +9,7 @@
 
 ## 1. Filosofía y Estilo de Marca
 
-El sistema de diseño **Field-Spec HUD** está diseñado específicamente para operarios de campo en logística de residuos y reciclaje municipal. Los trabajadores operan a la intemperie bajo condiciones climáticas adversas: luz solar directa del mediodía, lluvia, equipo de protección reflectante y guantes industriales gruesos.
+El sistema de diseño **Field-Spec** está diseñado para la aplicación de campo de Ruta Cero, usada en logística de residuos y reciclaje municipal. Los trabajadores operan a la intemperie bajo condiciones climáticas adversas: luz solar directa del mediodía, lluvia, equipo de protección reflectante y guantes industriales gruesos.
 
 El diseño rechaza el embellecimiento innecesario, los radios decorativos y las sutilezas de bajo contraste, priorizando:
 - **Utilidad nítida**: Jerarquías visuales asertivas y reconocimiento visual instantáneo.
@@ -22,7 +22,7 @@ El diseño rechaza el embellecimiento innecesario, los radios decorativos y las 
 ## 2. Paleta de Colores
 
 ### 2.1 Base Estructural y Operacional
-| Nombre del Token | Hex | Uso en HUD |
+| Nombre del Token | Hex | Uso en la interfaz |
 |---|---|---|
 | `--color-primary` | `#006D43` | Acción primaria base / encabezados activos |
 | `--color-primary-container` | `#00A86B` | Verde esmeralda de confirmación y estado óptimo |
