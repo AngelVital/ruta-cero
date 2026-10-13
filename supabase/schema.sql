@@ -102,6 +102,7 @@ create table if not exists public.route_schedules (
   route_id text not null references public.route_configurations(id) on delete cascade,
   status text not null default 'scheduled',
   stops_done integer not null default 0,
+  completed_point_ids text[] not null default '{}',
   started_at timestamptz,
   completed_at timestamptz,
   created_at timestamptz not null default now()
@@ -110,6 +111,7 @@ create table if not exists public.route_schedules (
 alter table public.route_schedules
   add column if not exists status text not null default 'scheduled',
   add column if not exists stops_done integer not null default 0,
+  add column if not exists completed_point_ids text[] not null default '{}',
   add column if not exists started_at timestamptz,
   add column if not exists completed_at timestamptz;
 
@@ -318,6 +320,10 @@ begin
           when route_schedules.route_id is distinct from excluded.route_id then 0
           else route_schedules.stops_done
         end,
+        completed_point_ids = case
+          when route_schedules.route_id is distinct from excluded.route_id then '{}'
+          else route_schedules.completed_point_ids
+        end,
         started_at = case
           when route_schedules.route_id is distinct from excluded.route_id then null
           else route_schedules.started_at
@@ -370,26 +376,46 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  completed_points integer;
+  completed_ids text[];
 begin
-  update public.route_schedules schedule
-  set status = 'completed',
-      completed_at = now()
-  from public.route_configurations route
-  where schedule.route_id = p_route_id
-    and schedule.scheduled_for = (now() at time zone 'America/Mazatlan')::date
-    and schedule.status = 'active'
-    and schedule.stops_done >= cardinality(route.point_ids)
-    and route.id = schedule.route_id;
+  select count(distinct report.container_id)::integer,
+         coalesce(array_agg(distinct report.container_id), '{}'::text[])
+  into completed_points, completed_ids
+  from public.container_reports report
+  join public.route_configurations route
+    on route.id = report.route_id
+   and report.container_id = any(route.point_ids)
+  where route.id = p_route_id
+    and (report.created_at at time zone 'America/Mazatlan')::date =
+      (now() at time zone 'America/Mazatlan')::date;
 
-  if not found then
-    raise exception 'La ruta no está iniciada o aún tiene puntos pendientes.';
+  if not exists (
+    select 1
+    from public.route_schedules
+    where route_id = p_route_id
+      and scheduled_for = (now() at time zone 'America/Mazatlan')::date
+  ) then
+    raise exception 'La ruta no está programada para hoy.';
   end if;
 
-  update public.route_configurations
+  if completed_points < (
+    select cardinality(point_ids)
+    from public.route_configurations
+    where id = p_route_id
+  ) then
+    raise exception 'Aún hay contenedores sin reporte en esta ruta.';
+  end if;
+
+  update public.route_schedules schedule
   set status = 'completed',
-      status_label = 'Completada',
-      updated_at = now()
-  where id = p_route_id;
+      stops_done = completed_points,
+      completed_point_ids = completed_ids,
+      completed_at = now()
+  where schedule.route_id = p_route_id
+    and schedule.scheduled_for = (now() at time zone 'America/Mazatlan')::date
+    and schedule.status <> 'completed';
 end;
 $$;
 
@@ -404,9 +430,11 @@ set search_path = public
 as $$
 declare
   completed_points integer;
+  completed_ids text[];
 begin
-  select count(distinct report.container_id)::integer
-  into completed_points
+  select count(distinct report.container_id)::integer,
+         coalesce(array_agg(distinct report.container_id), '{}'::text[])
+  into completed_points, completed_ids
   from public.container_reports report
   join public.route_configurations route on route.id = new.route_id
   join public.route_schedules schedule
@@ -418,6 +446,7 @@ begin
 
   update public.route_schedules schedule
   set stops_done = least(cardinality(route.point_ids), completed_points),
+      completed_point_ids = completed_ids,
       status = case
         when schedule.status = 'scheduled' and completed_points > 0 then 'active'
         else schedule.status
@@ -470,7 +499,10 @@ with route_progress as (
     schedule.scheduled_for,
     schedule.route_id,
     route.id,
-    least(cardinality(route.point_ids), count(distinct report.container_id)::integer) as stops_done
+    least(cardinality(route.point_ids), count(distinct report.container_id)::integer) as stops_done,
+    coalesce(array_agg(distinct report.container_id) filter (
+      where report.container_id is not null
+    ), '{}'::text[]) as completed_point_ids
   from public.route_schedules schedule
   join public.route_configurations route
     on route.id = schedule.route_id
@@ -478,13 +510,11 @@ with route_progress as (
     on report.route_id = route.id
     and report.container_id = any(route.point_ids)
     and (report.created_at at time zone 'America/Mazatlan')::date = schedule.scheduled_for
-  where schedule.scheduled_for = (
-      now() at time zone 'America/Mazatlan'
-    )::date
   group by schedule.scheduled_for, schedule.route_id, route.id, route.point_ids
 )
 update public.route_schedules schedule
 set stops_done = progress.stops_done,
+    completed_point_ids = progress.completed_point_ids,
     status = case
       when schedule.status = 'scheduled' and progress.stops_done > 0 then 'active'
       else schedule.status
