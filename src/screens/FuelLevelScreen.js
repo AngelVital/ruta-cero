@@ -11,6 +11,7 @@ export function renderFuelLevelScreen(state) {
     { label: 'LLENO (100%)', liters: 250.0, desc: '250.0 Litros Capacidad Total' }
   ];
 
+  
   return `
     <div class="screen-header-bar">
       <div class="screen-header-title">
