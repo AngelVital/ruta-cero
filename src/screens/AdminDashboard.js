@@ -52,7 +52,11 @@ function toDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth) {
+function getReportsForDate(reports, date) {
+  return reports.filter((report) => getOperationalDate(new Date(report.created_at)) === date);
+}
+
+export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth, reports = []) {
   const monthStart = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), 1, 12);
   const firstDay = new Date(monthStart);
   const mondayOffset = (firstDay.getDay() + 6) % 7;
@@ -61,24 +65,42 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
   const cellCount = Math.ceil((mondayOffset + dayCount) / 7) * 7;
   const today = getOperationalDate();
   const selectedRoute = routes.find((route) => route.scheduledDates?.includes(selectedDate));
+  const reportsByDate = new Map();
+  reports.forEach((report, index) => {
+    const date = getOperationalDate(new Date(report.created_at));
+    const dateReports = reportsByDate.get(date) || [];
+    dateReports.push({ report, index });
+    reportsByDate.set(date, dateReports);
+  });
+  const selectedReports = reportsByDate.get(selectedDate) || [];
   const days = Array.from({ length: cellCount }, (_, index) => {
     const date = new Date(firstDay);
     date.setDate(firstDay.getDate() + index);
     const dateKey = toDateKey(date);
     const route = routes.find((item) => item.scheduledDates?.includes(dateKey));
+    const reportCount = reportsByDate.get(dateKey)?.length || 0;
     const outsideMonth = date.getMonth() !== displayedMonth.getMonth();
-    const isPast = dateKey < today;
 
     return `
-      <button type="button" class="admin-calendar-day${outsideMonth ? ' is-outside-month' : ''}${dateKey === today ? ' is-today' : ''}${dateKey === selectedDate ? ' is-selected' : ''}" data-calendar-date="${dateKey}" aria-pressed="${dateKey === selectedDate}" ${isPast ? 'disabled' : ''}>
+      <button type="button" class="admin-calendar-day${outsideMonth ? ' is-outside-month' : ''}${dateKey === today ? ' is-today' : ''}${dateKey === selectedDate ? ' is-selected' : ''}" data-calendar-date="${dateKey}" aria-pressed="${dateKey === selectedDate}">
         <span class="admin-calendar-day-number">${date.getDate()}</span>
         ${route ? `<span class="admin-calendar-route">${escapeHtml(route.id)} · ${escapeHtml(route.zone)}</span>` : '<span class="admin-calendar-empty">Sin ruta</span>'}
+        ${reportCount ? `<span class="admin-calendar-report-count">${reportCount} reporte${reportCount === 1 ? '' : 's'}</span>` : ''}
       </button>
     `;
   }).join('');
   const routeOptions = routes.map((route) => `
     <option value="${escapeHtml(route.id)}" ${route.id === selectedRoute?.id ? 'selected' : ''}>${escapeHtml(route.id)} · ${escapeHtml(route.zone)}</option>
   `).join('');
+  const isPast = selectedDate < today;
+  const reportsHtml = selectedReports.length
+    ? selectedReports.map(({ report, index }) => `
+      <li>
+        <span><strong>${escapeHtml(report.container_id)}</strong><small>${escapeHtml(new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Mazatlan' }).format(new Date(report.created_at)))} · ${escapeHtml(report.route_id)}</small></span>
+        <button type="button" class="admin-report-open" data-calendar-report-index="${index}">${icon('visibility')}<span>Ver</span></button>
+      </li>
+    `).join('')
+    : '<li class="admin-calendar-reports-empty">No hay reportes registrados para este día.</li>';
 
   return `
     <div class="admin-calendar-layout">
@@ -92,20 +114,24 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
           ${['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => `<span>${day}</span>`).join('')}
         </div>
         <div class="admin-calendar-grid admin-calendar-days">${days}</div>
-        <div class="admin-calendar-legend"><span><i class="calendar-legend-today"></i>Hoy</span><span><i class="calendar-legend-assigned"></i>Día con ruta asignada</span></div>
+        <div class="admin-calendar-legend"><span><i class="calendar-legend-today"></i>Hoy</span><span><i class="calendar-legend-assigned"></i>Día con ruta asignada</span><span><i class="calendar-legend-reports"></i>Día con reportes</span></div>
       </div>
       <form class="admin-calendar-assignment" id="admin-calendar-assignment">
         <div class="admin-section-kicker">ASIGNACIÓN DEL DÍA</div>
         <h3>${formatScheduledDate(selectedDate)}</h3>
         <label class="admin-route-field" for="admin-calendar-route">Ruta para esta fecha
-          <select id="admin-calendar-route" name="routeId">
+          <select id="admin-calendar-route" name="routeId" ${isPast ? 'disabled' : ''}>
             <option value="">Sin ruta asignada</option>
             ${routeOptions}
           </select>
         </label>
-        <p class="admin-calendar-assignment-note">Cada día admite una sola ruta. La misma ruta puede asignarse a varios días.</p>
-        <button type="submit" class="admin-button admin-button-dark" ${routes.length ? '' : 'disabled'}>${icon('event_available')}<span>Guardar asignación</span></button>
+        <p class="admin-calendar-assignment-note">${isPast ? 'Las fechas pasadas son de solo lectura; puedes consultar aquí los reportes registrados.' : 'Cada día admite una sola ruta. La misma ruta puede asignarse a varios días.'}</p>
+        <button type="submit" class="admin-button admin-button-dark" ${routes.length && !isPast ? '' : 'disabled'}>${icon('event_available')}<span>Guardar asignación</span></button>
         <p class="admin-calendar-message" id="admin-calendar-message" role="status" aria-live="polite"></p>
+        <div class="admin-calendar-reports">
+          <h4>Reportes del día <span>${selectedReports.length}</span></h4>
+          <ul>${reportsHtml}</ul>
+        </div>
       </form>
     </div>
   `;
@@ -399,6 +425,7 @@ function renderReportDialog(report) {
 function renderAdminOperations(user, reports, reportError = '', routeError = '') {
   demoRoutes = getConfiguredRoutes();
   const scheduledRoute = getScheduledRoute();
+  const todaysReports = getReportsForDate(reports, getOperationalDate());
   const today = new Intl.DateTimeFormat('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   }).format(new Date());
@@ -452,20 +479,46 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
             </div>
           </section>
 
+          <section class="admin-kpi-grid" aria-label="Indicadores de operación">
+            <article class="admin-kpi kpi-routes">
+              <div class="admin-kpi-top"><span>RUTAS CONFIGURADAS</span>${icon('alt_route')}</div>
+              <div class="admin-kpi-value" id="admin-configured-routes-count">${demoRoutes.length}</div>
+              <div class="admin-kpi-foot"><span class="kpi-positive-dot"></span> <span id="admin-scheduled-routes-count">0 programadas hoy</span></div>
+            </article>
+            <article class="admin-kpi kpi-coverage">
+              <div class="admin-kpi-top"><span>PUNTOS ATENDIDOS HOY</span>${icon('location_on')}</div>
+              <div class="admin-kpi-value"><span id="admin-points-done-today">0</span><span class="kpi-denominator">/<span id="admin-points-total-today">0</span></span></div>
+              <div class="admin-kpi-foot"><span class="kpi-positive-dot"></span> Puntos de la ruta programada hoy</div>
+            </article>
+            <article class="admin-kpi kpi-delay">
+              <div class="admin-kpi-top"><span>ESTADO DE RUTA</span>${icon('alt_route')}</div>
+              <div class="admin-kpi-value" id="admin-active-route-id">${escapeHtml(scheduledRoute?.id || 'Sin ruta')}</div>
+              <div class="admin-kpi-foot"><span class="kpi-neutral-dot"></span> <span id="admin-active-route-progress">${scheduledRoute ? `${scheduledRoute.statusLabel} · ${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy` : 'No programada para hoy'}</span></div>
+            </article>
+            <article class="admin-kpi kpi-sync">
+              <div class="admin-kpi-top"><span>REPORTES DE HOY</span>${icon('cloud_upload')}</div>
+              <div class="admin-kpi-value" id="admin-reports-today-count">0</div>
+              <div class="admin-kpi-foot"><span class="kpi-positive-dot"></span> Guardados en Supabase</div>
+            </article>
+          </section>
+
           <div class="admin-demo-notice" role="status">
             ${icon('info')}<span>Los reportes y las rutas se comparten desde Supabase entre administración y campo.</span>
           </div>
 
           <section class="admin-section admin-reports-section" id="reports">
             <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN SUPABASE</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${reports.length}</span></h2></div>
-              <button type="button" class="admin-button" id="admin-refresh-reports">${icon('refresh')}<span>Actualizar</span></button>
+              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN SUPABASE</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${todaysReports.length}</span></h2></div>
+              <div class="admin-report-actions">
+                <button type="button" class="admin-button" id="admin-toggle-all-reports">${icon('list')}<span>Ver todos</span></button>
+                <button type="button" class="admin-button" id="admin-refresh-reports">${icon('refresh')}<span>Actualizar</span></button>
+              </div>
             </div>
             ${reportError ? `<p class="admin-report-error" id="admin-report-message" role="alert">${escapeHtml(reportError)}</p>` : '<p class="admin-report-message" id="admin-report-message" role="status" aria-live="polite"></p>'}
             <div class="admin-points-table-wrap admin-reports-table-wrap">
               <table class="admin-points-table admin-reports-table">
                 <thead><tr><th scope="col">FECHA</th><th scope="col">CONTENEDOR</th><th scope="col">RUTA</th><th scope="col">LLENADO</th><th scope="col">RECOLECTADO</th><th scope="col">MATERIALES</th><th scope="col">INCIDENCIAS</th><th scope="col">DETALLE</th></tr></thead>
-                <tbody id="admin-report-rows">${renderReportRows(reports)}</tbody>
+                <tbody id="admin-report-rows">${renderReportRows(todaysReports)}</tbody>
               </table>
             </div>
           </section>
@@ -478,34 +531,11 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
             <div class="admin-report-dialog-content" id="admin-report-dialog-content"></div>
           </dialog>
 
-          <section class="admin-kpi-grid" aria-label="Indicadores de operación">
-            <article class="admin-kpi kpi-routes">
-              <div class="admin-kpi-top"><span>UNIDAD RECOLECTORA</span>${icon('local_shipping')}</div>
-              <div class="admin-kpi-value">01 <small>U-01</small></div>
-              <div class="admin-kpi-foot"><span class="kpi-positive-dot"></span> <span id="admin-unit-route">Asignada a R-01</span></div>
-            </article>
-            <article class="admin-kpi kpi-coverage">
-              <div class="admin-kpi-top"><span>PUNTOS ATENDIDOS HOY</span>${icon('location_on')}</div>
-              <div class="admin-kpi-value">02<span class="kpi-denominator">/08</span></div>
-              <div class="admin-kpi-foot"><span class="kpi-positive-dot"></span> De los 8 puntos de la ciudad</div>
-            </article>
-            <article class="admin-kpi kpi-delay">
-              <div class="admin-kpi-top"><span>ESTADO DE RUTA</span>${icon('alt_route')}</div>
-              <div class="admin-kpi-value" id="admin-active-route-id">${escapeHtml(scheduledRoute?.id || 'Sin ruta')}</div>
-              <div class="admin-kpi-foot"><span class="kpi-neutral-dot"></span> <span id="admin-active-route-progress">${scheduledRoute ? `${scheduledRoute.statusLabel} · ${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy` : 'No programada para hoy'}</span></div>
-            </article>
-            <article class="admin-kpi kpi-sync">
-              <div class="admin-kpi-top"><span>PENDIENTES DE SINCRONIZAR</span>${icon('cloud_upload')}</div>
-              <div class="admin-kpi-value">01 <small>evento</small></div>
-              <div class="admin-kpi-foot"><span class="kpi-warning-dot"></span> Pendiente en el dispositivo de campo</div>
-            </article>
-          </section>
-
           <section class="admin-section admin-schedule-section" id="schedule">
             <div class="admin-section-heading">
               <div><div class="admin-section-kicker">CALENDARIO OPERATIVO</div><h2>Programar rutas</h2><p>Selecciona un día y asigna la ruta que utilizará el equipo de campo.</p></div>
             </div>
-            <div class="admin-calendar-container" id="admin-calendar-container">${renderRouteScheduleCalendar(demoRoutes, getOperationalDate(), parseDateKey(getOperationalDate()))}</div>
+            <div class="admin-calendar-container" id="admin-calendar-container">${renderRouteScheduleCalendar(demoRoutes, getOperationalDate(), parseDateKey(getOperationalDate()), reports)}</div>
           </section>
 
           <section class="admin-section admin-routes-section" id="routes">
@@ -612,6 +642,8 @@ export function applyReportProgress(routes, reports) {
 
 function attachAdminDashboardContentEvents(container, initialReports) {
   let reports = initialReports;
+  let showAllReports = false;
+  let visibleReports = getReportsForDate(reports, getOperationalDate());
   const search = container.querySelector('#route-search');
   const statusFilter = container.querySelector('#route-status-filter');
   const rows = container.querySelector('#admin-route-rows');
@@ -627,6 +659,18 @@ function attachAdminDashboardContentEvents(container, initialReports) {
   let selectedScheduleDate = getOperationalDate();
   let displayedMonth = parseDateKey(selectedScheduleDate);
 
+  const updateReportList = () => {
+    visibleReports = showAllReports ? reports : getReportsForDate(reports, getOperationalDate());
+    container.querySelector('#admin-report-rows').innerHTML = renderReportRows(visibleReports);
+    container.querySelector('#admin-report-count').textContent = String(visibleReports.length);
+    const toggleButton = container.querySelector('#admin-toggle-all-reports');
+    toggleButton.querySelector('span:last-child').textContent = showAllReports ? 'Ver solo hoy' : 'Ver todos';
+    toggleButton.querySelector('.material-symbols-outlined').textContent = showAllReports ? 'today' : 'list';
+  };
+  const updateCalendar = () => {
+    calendarContainer.innerHTML = renderRouteScheduleCalendar(demoRoutes, selectedScheduleDate, displayedMonth, reports);
+  };
+
   const updateRoutes = () => {
     demoRoutes = getConfiguredRoutes().map((route) => getRouteForDate(route));
     const filteredRoutes = filterRoutes(search?.value || '', statusFilter?.value || 'all');
@@ -636,16 +680,36 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     routeCount.textContent = `${demoRoutes.length} rutas configuradas`;
     container.querySelector('#admin-routes-count').textContent = String(demoRoutes.length);
     container.querySelector('#admin-route-nav-count').textContent = String(demoRoutes.length);
-    const scheduledRoute = getScheduledRoute();
+    const today = getOperationalDate();
+    const scheduledRoute = demoRoutes.find((route) => route.scheduledDates?.includes(today)) || null;
+    const todaysReports = reports.filter((report) => getOperationalDate(new Date(report.created_at)) === today);
+    const visitedPointIds = new Set([
+      ...(scheduledRoute?.completedPointIds || []),
+      ...todaysReports
+        .filter((report) => report.route_id === scheduledRoute?.id)
+        .map((report) => report.container_id)
+        .filter((containerId) => scheduledRoute?.pointIds.includes(containerId))
+    ]);
+    const completedPoints = Math.min(
+      scheduledRoute?.pointIds.length || 0,
+      Math.max(scheduledRoute?.stopsDone || 0, visitedPointIds.size)
+    );
+
+    container.querySelector('#admin-configured-routes-count').textContent = String(demoRoutes.length);
+    container.querySelector('#admin-scheduled-routes-count').textContent = `${demoRoutes.filter((route) => route.scheduledDates?.includes(today)).length} programadas hoy`;
+    container.querySelector('#admin-points-done-today').textContent = String(completedPoints);
+    container.querySelector('#admin-points-total-today').textContent = String(scheduledRoute?.pointIds.length || 0);
+    container.querySelector('#admin-reports-today-count').textContent = String(todaysReports.length);
     activeRouteId.textContent = scheduledRoute?.id || 'Sin ruta';
     activeRouteProgress.textContent = scheduledRoute
-      ? `${scheduledRoute.statusLabel} · ${scheduledRoute.stopsDone} de ${scheduledRoute.pointIds.length} puntos atendidos hoy`
+      ? `${scheduledRoute.statusLabel} · ${completedPoints} de ${scheduledRoute.pointIds.length} puntos atendidos hoy`
       : 'No programada para hoy';
     container.querySelector('#admin-selected-route-label').textContent = scheduledRoute
       ? `Ruta de hoy: ${scheduledRoute.id} · ${scheduledRoute.zone}`
       : 'Sin ruta programada para hoy';
-    calendarContainer.innerHTML = renderRouteScheduleCalendar(demoRoutes, selectedScheduleDate, displayedMonth);
+    updateCalendar();
   };
+  updateRoutes();
 
   let refreshInProgress = null;
   const refreshAdminData = (announce = false) => {
@@ -665,8 +729,7 @@ function attachAdminDashboardContentEvents(container, initialReports) {
           saveConfiguredRoutes(remoteRoutes);
         }
 
-        container.querySelector('#admin-report-rows').innerHTML = renderReportRows(reports);
-        container.querySelector('#admin-report-count').textContent = String(reports.length);
+        updateReportList();
         container.querySelector('#admin-points-rows').innerHTML = renderCollectionPointTable(reports);
         updateRoutes();
         if (reportMessage) {
@@ -728,17 +791,27 @@ function attachAdminDashboardContentEvents(container, initialReports) {
   statusFilter?.addEventListener('change', updateRoutes);
 
   calendarContainer?.addEventListener('click', (event) => {
+    const reportButton = event.target.closest('[data-calendar-report-index]');
+    if (reportButton) {
+      const report = reports[Number(reportButton.dataset.calendarReportIndex)];
+      const reportDialog = container.querySelector('#admin-report-dialog');
+      if (!report || !reportDialog) return;
+      container.querySelector('#admin-report-dialog-content').innerHTML = renderReportDialog(report);
+      reportDialog.showModal();
+      return;
+    }
+
     const monthButton = event.target.closest('[data-calendar-month]');
     if (monthButton) {
       displayedMonth.setMonth(displayedMonth.getMonth() + Number(monthButton.dataset.calendarMonth));
-      calendarContainer.innerHTML = renderRouteScheduleCalendar(demoRoutes, selectedScheduleDate, displayedMonth);
+      updateCalendar();
       return;
     }
 
     const dayButton = event.target.closest('[data-calendar-date]');
-    if (!dayButton || dayButton.disabled) return;
+    if (!dayButton) return;
     selectedScheduleDate = dayButton.dataset.calendarDate;
-    calendarContainer.innerHTML = renderRouteScheduleCalendar(demoRoutes, selectedScheduleDate, displayedMonth);
+    updateCalendar();
   });
 
   calendarContainer?.addEventListener('submit', async (event) => {
@@ -888,7 +961,7 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     const button = event.target.closest('.admin-report-open');
     if (!button) return;
 
-    const report = reports[Number(button.dataset.reportIndex)];
+    const report = visibleReports[Number(button.dataset.reportIndex)];
     if (!report || !reportDialog) return;
 
     container.querySelector('#admin-report-dialog-content').innerHTML = renderReportDialog(report);
@@ -940,6 +1013,11 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     button.disabled = true;
     if (message) message.textContent = 'Actualizando reportes…';
     await refreshAdminData(true);
+  });
+
+  container.querySelector('#admin-toggle-all-reports')?.addEventListener('click', () => {
+    showAllReports = !showAllReports;
+    updateReportList();
   });
 }
 

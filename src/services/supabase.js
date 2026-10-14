@@ -45,14 +45,24 @@ export async function isCurrentUserAdmin() {
 }
 
 export async function fetchAdminContainerReports() {
-  const { data, error } = await requireSupabase()
-    .from('container_reports')
-    .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at')
-    .order('created_at', { ascending: false })
-    .limit(200);
+  const client = requireSupabase();
+  const pageSize = 1000;
+  const reports = [];
+  let from = 0;
 
-  if (error) throw error;
-  return data;
+  while (true) {
+    const { data, error } = await client
+      .from('container_reports')
+      .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at')
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) throw error;
+    reports.push(...data);
+    if (data.length < pageSize) return reports;
+    from += pageSize;
+  }
 }
 
 export async function fetchRouteConfigurations() {
