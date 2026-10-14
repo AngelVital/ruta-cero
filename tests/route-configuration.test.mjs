@@ -238,10 +238,30 @@ test('el calendario presenta los días y la ruta asignada a la fecha seleccionad
     id: 'R-05',
     zone: 'Centro',
     scheduledDates: ['2026-10-13']
-  }], '2026-10-13', new Date(2026, 9, 1, 12));
+  }], '2026-10-13', new Date(2026, 9, 1, 12), [{
+    container_id: 'CONT-01',
+    route_id: 'R-05',
+    created_at: '2026-10-13T15:30:00.000Z'
+  }]);
 
   assert.match(html, /octubre de 2026/);
   assert.match(html, /data-calendar-date="2026-10-13"/);
   assert.match(html, /R-05 · Centro/);
   assert.match(html, /Guardar asignación/);
+  assert.match(html, /1 reporte/);
+  assert.match(html, /data-calendar-report-index="0"/);
+  assert.match(html, /CONT-01/);
+  assert.doesNotMatch(html, /data-calendar-date="2026-10-13"[^>]*disabled/);
+});
+
+test('el calendario permite consultar reportes pasados pero bloquea cambiar su asignación', () => {
+  const html = renderRouteScheduleCalendar([], '2026-10-13', new Date(2026, 9, 1, 12), [{
+    container_id: 'CONT-02',
+    route_id: 'R-02',
+    created_at: '2026-10-13T15:30:00.000Z'
+  }]);
+
+  assert.match(html, /CONT-02/);
+  assert.match(html, /Las fechas pasadas son de solo lectura/);
+  assert.match(html, /<button type="submit" class="admin-button admin-button-dark" disabled>/);
 });

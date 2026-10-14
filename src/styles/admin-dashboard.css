@@ -543,6 +543,12 @@
   padding: 18px 20px 15px;
 }
 
+.admin-report-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
 .admin-section-kicker {
   margin-bottom: 4px;
   color: #728078;
@@ -950,7 +956,8 @@ tr[data-route-status="completed"] .admin-progress-track span {
 }
 
 .admin-calendar-route,
-.admin-calendar-empty {
+.admin-calendar-empty,
+.admin-calendar-report-count {
   display: block;
   overflow: hidden;
   color: #347153;
@@ -967,6 +974,13 @@ tr[data-route-status="completed"] .admin-progress-track span {
 
 .admin-calendar-empty {
   color: #9aa69d;
+}
+
+.admin-calendar-report-count {
+  padding: 3px 5px;
+  background: #eaf2fb;
+  color: #315f8a;
+  font-weight: 700;
 }
 
 .admin-calendar-legend {
@@ -994,6 +1008,13 @@ tr[data-route-status="completed"] .admin-progress-track span {
 .calendar-legend-assigned {
   background: #e6f2e9;
   border: 1px solid #b8d8c1;
+}
+
+.calendar-legend-reports {
+  width: 9px;
+  height: 9px;
+  background: #eaf2fb;
+  border: 1px solid #b8cde2;
 }
 
 .admin-calendar-assignment {
@@ -1025,6 +1046,66 @@ tr[data-route-status="completed"] .admin-progress-track span {
   color: #65736b;
   font-size: 11px;
   line-height: 1.5;
+}
+
+.admin-calendar-reports {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--admin-line);
+}
+
+.admin-calendar-reports h4 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #23372b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-calendar-reports h4 span {
+  color: var(--admin-muted);
+  font-size: 11px;
+}
+
+.admin-calendar-reports ul {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.admin-calendar-reports li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid var(--admin-line);
+}
+
+.admin-calendar-reports li > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-calendar-reports li strong {
+  color: #23372b;
+  font-size: 12px;
+}
+
+.admin-calendar-reports li small,
+.admin-calendar-reports-empty {
+  color: var(--admin-muted);
+  font-size: 10px;
+}
+
+.admin-calendar-reports .admin-report-open {
+  flex: 0 0 auto;
 }
 
 .admin-calendar-message {
@@ -1540,6 +1621,9 @@ tr[data-route-status="completed"] .admin-progress-track span {
   .admin-section-heading {
     padding: 14px 12px 12px;
   }
+
+  .admin-report-actions { gap: 5px; }
+  .admin-report-actions .admin-button { padding: 0 8px; }
 
   .admin-section-heading h2 { font-size: 19px; }
   .admin-section-kicker { font-size: 9px; }
