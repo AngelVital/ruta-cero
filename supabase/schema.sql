@@ -41,6 +41,7 @@ alter table public.container_reports
   check (fill_level in ('low', 'medium', 'full'));
 
 alter table public.container_reports enable row level security;
+grant insert on public.container_reports to anon, authenticated;
 
 drop policy if exists "Allow anonymous report inserts for testing"
   on public.container_reports;

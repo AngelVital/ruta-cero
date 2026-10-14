@@ -129,7 +129,7 @@ function getReportSaveErrorMessage(error) {
   }
 
   if (error?.code === '42501') {
-    return 'Supabase rechazó la inserción por permisos o RLS. Revisa la política INSERT de container_reports.';
+    return 'Supabase rechazó la inserción por permisos o RLS. Ejecuta supabase/schema.sql y verifica el privilegio INSERT y la política de container_reports.';
   }
 
   if (error?.code === '42P01' || error?.code === 'PGRST205') {
