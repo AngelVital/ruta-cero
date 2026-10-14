@@ -114,6 +114,11 @@ html, body {
   transform: scale(0.96);
 }
 
+.photo-capture-shutter:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 /* Material Symbols alignment */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
