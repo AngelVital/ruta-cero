@@ -252,26 +252,9 @@ export function attachInspection360Events(container, store) {
 
   // Odometer photo evidence
   container.querySelector('#btn-odometer-photo')?.addEventListener('click', (event) => {
-    const evidenceButton = event.currentTarget;
     openPhotoCapture(
       () => {
-        store.state.inspection360.odometerPhotoEvidence = true;
-        evidenceButton.classList.add('active');
-        evidenceButton.setAttribute('aria-pressed', 'true');
-        evidenceButton.style.backgroundColor = '#ecfdf5';
-        evidenceButton.style.color = '#047857';
-        evidenceButton.style.borderColor = '#047857';
-        evidenceButton.style.boxShadow = '3px 3px 0px #047857';
-        const icon = evidenceButton.querySelector('.material-symbols-outlined');
-        if (icon) {
-          icon.textContent = 'check_circle';
-          icon.style.color = '#047857';
-        }
-        const status = evidenceButton.querySelector('#odometer-photo-status');
-        if (status) {
-          status.textContent = 'FOTO DEL ODÓMETRO CAPTURADA';
-        }
-        updateConfirmButton();
+        store.updateInspectionItem('odometerPhotoEvidence', true);
         store.showToast('Foto del odómetro tomada correctamente.', 'success');
       },
       (message) => store.showToast(message, 'info')
