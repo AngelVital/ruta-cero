@@ -4,7 +4,7 @@ import { assignRouteToDate, createRouteId, getConfiguredRoutes, getOperationalDa
 import { renderDispatchScreen } from '../src/screens/DispatchScreen.js';
 import { renderRouteMapScreen } from '../src/screens/RouteMapScreen.js';
 import { renderRouteCompletionScreen } from '../src/screens/RouteCompletionScreen.js';
-import { applyReportProgress, renderRouteScheduleCalendar } from '../src/screens/AdminDashboard.js';
+import { applyReportProgress, formatElapsedRouteTime, renderRouteScheduleCalendar, renderRouteTable } from '../src/screens/AdminDashboard.js';
 import { store } from '../src/state/store.js';
 
 function createMemoryStorage() {
@@ -21,6 +21,27 @@ function createMemoryStorage() {
     }
   };
 }
+
+test('el tiempo de ruta calcula la duración desde el inicio y avanza en vivo', () => {
+  const startedAt = '2026-10-14T15:00:00.000Z';
+  assert.equal(formatElapsedRouteTime(startedAt, '2026-10-14T15:01:00.000Z'), '1 min');
+  assert.equal(formatElapsedRouteTime(startedAt, '2026-10-14T16:07:00.000Z'), '1 h 07 min');
+  assert.equal(formatElapsedRouteTime('fecha inválida', '2026-10-14T16:07:00.000Z'), 'Sin iniciar');
+
+  const table = renderRouteTable([{
+    id: 'R-01',
+    zone: 'Centro',
+    pointIds: ['CONT-01'],
+    stopsDone: 0,
+    stopsTotal: 1,
+    status: 'active',
+    statusLabel: 'En curso',
+    lastUpdate: '08:00',
+    startedAt
+  }]);
+  assert.match(table, /data-route-elapsed/);
+  assert.doesNotMatch(table, /hace 3 min/);
+});
 
 test('la ruta programada para hoy aparece automáticamente en despacho y mapa', () => {
   const previousWindow = globalThis.window;
