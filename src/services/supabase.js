@@ -100,6 +100,8 @@ export async function fetchRouteConfigurations() {
           hour12: false
         })
         : '--:--',
+      startedAt: todaysSchedule?.started_at || null,
+      completedAt: todaysSchedule?.completed_at || null,
       status,
       statusDate: today,
       syncLabel: 'Sin iniciar'

@@ -115,6 +115,11 @@ function renderRouteRow(route) {
   const progress = route.stopsTotal ? Math.round((route.stopsDone / route.stopsTotal) * 100) : 0;
   const syncClass = route.syncLabel === '1 evento pendiente' ? 'sync-pending' : 'sync-ok';
   const points = route.pointIds.map((pointId) => `<span class="admin-point-chip">${pointId}</span>`).join('');
+  const isActive = route.status === 'active' && route.startedAt;
+  const isCompleted = route.status === 'completed' && route.startedAt;
+  const elapsedTime = isActive || isCompleted
+    ? formatElapsedRouteTime(route.startedAt, isCompleted && route.completedAt ? route.completedAt : Date.now())
+    : 'Sin iniciar';
   return `
     <tr data-route-status="${route.status}">
       <td>
@@ -132,8 +137,7 @@ function renderRouteRow(route) {
         </div>
       </td>
       <td><span class="admin-status status-${route.status}"><i></i>${route.statusLabel}</span></td>
-      <td><span class="admin-cell-primary">${route.scheduledDates?.length || 0} ${(route.scheduledDates?.length || 0) === 1 ? 'día' : 'días'}</span></td>
-      <td><span class="admin-cell-primary">${route.lastUpdate}</span><span class="admin-cell-secondary">${route.lastUpdate === '--:--' ? 'Sin iniciar' : 'hace 3 min'}</span></td>
+      <td><span class="admin-cell-primary">${route.lastUpdate}</span><span class="admin-cell-secondary"${isActive ? ` data-route-elapsed data-route-started-at="${escapeHtml(route.startedAt)}"` : ''}>${elapsedTime}</span></td>
       <td><span class="admin-sync ${syncClass}"><i></i>${route.syncLabel}</span></td>
       <td class="admin-route-actions">
         <button type="button" class="admin-icon-button" data-route-action="edit" data-route-id="${route.id}" aria-label="Editar ${escapeHtml(route.id)}" title="Editar ruta">${icon('edit')}</button>
@@ -141,6 +145,19 @@ function renderRouteRow(route) {
       </td>
     </tr>
   `;
+}
+
+export function formatElapsedRouteTime(startedAt, endTimestamp = Date.now()) {
+  const startTime = typeof startedAt === 'number' ? startedAt : Date.parse(startedAt);
+  const endTime = typeof endTimestamp === 'number' ? endTimestamp : Date.parse(endTimestamp);
+  if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) return 'Sin iniciar';
+
+  const elapsedMinutes = Math.max(0, Math.floor((endTime - startTime) / 60000));
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  const remainingMinutes = elapsedMinutes % 60;
+  return elapsedHours > 0
+    ? `${elapsedHours} h ${String(remainingMinutes).padStart(2, '0')} min`
+    : `${elapsedMinutes} min`;
 }
 
 function renderCollectionPoint(point, report) {
@@ -169,7 +186,7 @@ function getDaysSinceCollection(dateString) {
   return Math.max(0, Math.floor((today - lastCollection) / 86400000));
 }
 
-function renderRouteTable(routes = demoRoutes) {
+export function renderRouteTable(routes = demoRoutes) {
   return routes.map((route) => renderRouteRow(route)).join('');
 }
 
@@ -503,7 +520,7 @@ function renderAdminOperations(user, reports, reportError = '', routeError = '')
             <p class="admin-route-message${routeError ? ' is-error' : ''}" id="admin-route-message" role="status" aria-live="polite">${escapeHtml(routeError)}</p>
             <div class="admin-table-scroll">
               <table class="admin-route-table">
-                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">DÍAS PROGRAMADOS</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
+                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
                 <tbody id="admin-route-rows">${renderRouteTable(demoRoutes)}</tbody>
               </table>
               <div class="admin-empty-state" id="admin-route-empty" hidden>${icon('search_off')}<span>No hay rutas que coincidan con esos filtros.</span></div>
@@ -649,6 +666,16 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     routeMessage.classList.add('is-error');
   });
   window.addEventListener('focus', refreshRoutesFromRemote);
+
+  const elapsedTimerId = window.setInterval(() => {
+    if (!rows.isConnected) {
+      window.clearInterval(elapsedTimerId);
+      return;
+    }
+    rows.querySelectorAll('[data-route-elapsed]').forEach((counter) => {
+      counter.textContent = formatElapsedRouteTime(counter.dataset.routeStartedAt);
+    });
+  }, 1000);
 
   search?.addEventListener('input', updateRoutes);
   statusFilter?.addEventListener('change', updateRoutes);
