@@ -18,7 +18,7 @@ const fetchAdminContainerReports = async (...args) => (await getSupabaseService(
 const fetchRouteConfigurations = async (...args) => (await getSupabaseService()).fetchRouteConfigurations(...args);
 const saveRouteConfigurationsRemote = async (...args) => (await getSupabaseService()).saveRouteConfigurations(...args);
 const saveRouteScheduleRemote = async (...args) => (await getSupabaseService()).saveRouteSchedule(...args);
-const subscribeToRouteConfigurations = async (...args) => (await getSupabaseService()).subscribeToRouteConfigurations(...args);
+const subscribeToAdminUpdates = async (...args) => (await getSupabaseService()).subscribeToAdminUpdates(...args);
 
 const collectionPoints = [
   { id: 'CONT-01', name: 'Ayuntamiento', lastCollectedOn: '2026-09-30' },
@@ -647,35 +647,82 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     calendarContainer.innerHTML = renderRouteScheduleCalendar(demoRoutes, selectedScheduleDate, displayedMonth);
   };
 
-  const refreshRoutesFromRemote = async () => {
-    try {
-      const remoteRoutes = await fetchRouteConfigurations();
-      if (remoteRoutes.length === 0) return;
+  let refreshInProgress = null;
+  const refreshAdminData = (announce = false) => {
+    if (refreshInProgress) return refreshInProgress;
 
-      demoRoutes = remoteRoutes;
-      saveConfiguredRoutes(remoteRoutes);
-      updateRoutes();
-    } catch (error) {
-      routeMessage.textContent = `No se pudo actualizar el estado de ruta: ${error.message}`;
-      routeMessage.classList.add('is-error');
-    }
+    const refreshButton = container.querySelector('#admin-refresh-reports');
+    const reportMessage = container.querySelector('#admin-report-message');
+    refreshInProgress = (async () => {
+      try {
+        const [updatedReports, remoteRoutes] = await Promise.all([
+          fetchAdminContainerReports(),
+          fetchRouteConfigurations()
+        ]);
+        reports = updatedReports;
+        if (remoteRoutes.length > 0) {
+          demoRoutes = remoteRoutes;
+          saveConfiguredRoutes(remoteRoutes);
+        }
+
+        container.querySelector('#admin-report-rows').innerHTML = renderReportRows(reports);
+        container.querySelector('#admin-report-count').textContent = String(reports.length);
+        container.querySelector('#admin-points-rows').innerHTML = renderCollectionPointTable(reports);
+        updateRoutes();
+        if (reportMessage) {
+          reportMessage.textContent = announce
+            ? `Actualizado: ${formatReportDate(new Date().toISOString())}`
+            : `Sincronizado con el panel de campo · ${formatReportDate(new Date().toISOString())}`;
+          reportMessage.classList.remove('is-error');
+        }
+      } catch (error) {
+        if (reportMessage) {
+          reportMessage.textContent = `No se pudo sincronizar con campo: ${error.message}`;
+          reportMessage.classList.add('is-error');
+        }
+      } finally {
+        if (refreshButton) refreshButton.disabled = false;
+        refreshInProgress = null;
+      }
+    })();
+
+    return refreshInProgress;
   };
 
-  subscribeToRouteConfigurations(refreshRoutesFromRemote).catch((error) => {
+  let unsubscribeAdminUpdates = () => {};
+  subscribeToAdminUpdates(() => refreshAdminData()).then((unsubscribe) => {
+    if (container.isConnected) {
+      unsubscribeAdminUpdates = unsubscribe;
+    } else {
+      unsubscribe();
+    }
+  }).catch((error) => {
     routeMessage.textContent = `No se pudo activar la actualización en vivo: ${error.message}`;
     routeMessage.classList.add('is-error');
   });
-  window.addEventListener('focus', refreshRoutesFromRemote);
+  const refreshWhenVisible = () => {
+    if (document.visibilityState === 'visible') refreshAdminData();
+  };
+  window.addEventListener('focus', refreshWhenVisible);
+  document.addEventListener('visibilitychange', refreshWhenVisible);
 
   const elapsedTimerId = window.setInterval(() => {
     if (!rows.isConnected) {
       window.clearInterval(elapsedTimerId);
+      window.clearInterval(syncTimerId);
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      unsubscribeAdminUpdates();
       return;
     }
     rows.querySelectorAll('[data-route-elapsed]').forEach((counter) => {
       counter.textContent = formatElapsedRouteTime(counter.dataset.routeStartedAt);
     });
   }, 1000);
+  const syncTimerId = window.setInterval(() => {
+    if (!container.isConnected) return;
+    if (document.visibilityState === 'visible') refreshAdminData();
+  }, 30000);
 
   search?.addEventListener('input', updateRoutes);
   statusFilter?.addEventListener('change', updateRoutes);
@@ -892,24 +939,7 @@ function attachAdminDashboardContentEvents(container, initialReports) {
     const message = container.querySelector('#admin-report-message');
     button.disabled = true;
     if (message) message.textContent = 'Actualizando reportes…';
-
-    try {
-      reports = await fetchAdminContainerReports();
-      const remoteRoutes = await fetchRouteConfigurations();
-      if (remoteRoutes.length > 0) {
-        demoRoutes = remoteRoutes;
-        saveConfiguredRoutes(remoteRoutes);
-      }
-      container.querySelector('#admin-report-rows').innerHTML = renderReportRows(reports);
-      container.querySelector('#admin-report-count').textContent = String(reports.length);
-      container.querySelector('#admin-points-rows').innerHTML = renderCollectionPointTable(reports);
-      updateRoutes();
-      if (message) message.textContent = `Actualizado: ${formatReportDate(new Date().toISOString())}`;
-    } catch (error) {
-      if (message) message.textContent = error.message;
-    } finally {
-      button.disabled = false;
-    }
+    await refreshAdminData(true);
   });
 }
 

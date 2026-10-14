@@ -151,24 +151,32 @@ export async function markRouteCompleted(routeId) {
   if (error) throw error;
 }
 
-export function subscribeToRouteConfigurations(onChange) {
+function subscribeToTables(channelName, tables, onChange) {
   if (!supabase) return () => {};
 
-  const channel = supabase
-    .channel('route-configurations')
-    .on('postgres_changes', {
+  const channel = supabase.channel(channelName);
+  tables.forEach((table) => {
+    channel.on('postgres_changes', {
       event: '*',
       schema: 'public',
-      table: 'route_configurations'
-    }, onChange)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'route_schedules'
-    }, onChange)
-    .subscribe();
+      table
+    }, onChange);
+  });
+  channel.subscribe();
 
   return () => supabase.removeChannel(channel);
+}
+
+export function subscribeToRouteConfigurations(onChange) {
+  return subscribeToTables('route-configurations', ['route_configurations', 'route_schedules'], onChange);
+}
+
+export function subscribeToAdminUpdates(onChange) {
+  return subscribeToTables('admin-field-updates', [
+    'route_configurations',
+    'route_schedules',
+    'container_reports'
+  ], onChange);
 }
 
 export async function insertContainerReport(routeId, containerId, report) {

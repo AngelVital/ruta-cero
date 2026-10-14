@@ -197,6 +197,16 @@ begin
     ) then
     alter publication supabase_realtime add table public.route_schedules;
   end if;
+
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+    and not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public'
+        and tablename = 'container_reports'
+    ) then
+    alter publication supabase_realtime add table public.container_reports;
+  end if;
 end $$;
 
 drop function if exists public.replace_route_configurations(jsonb, text);

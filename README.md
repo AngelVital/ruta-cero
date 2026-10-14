@@ -34,7 +34,7 @@ El avance operativo de campo vive en el store en memoria del dispositivo. Los re
 
 Abre `/?mode=admin` o elige **Administración** en la pantalla inicial. Se requiere iniciar sesión con una cuenta de Supabase registrada en `public.admin_users`; una cuenta autenticada sin ese permiso no puede abrir el panel.
 
-1. **Consultar operación:** el resumen muestra reportes de contenedores y cobertura de puntos. Se puede actualizar la consulta, abrir el detalle de cada reporte y revisar su llenado, peso, materiales, incidencias y evidencia registrada.
+1. **Consultar operación:** el resumen muestra reportes de contenedores y cobertura de puntos. Se sincroniza automáticamente con los cambios del panel de campo; también se puede usar **Actualizar** para sincronizar manualmente, abrir el detalle de cada reporte y revisar su llenado, peso, materiales, incidencias y evidencia registrada.
 2. **Configurar rutas:** crea una ruta con nombre o zona y uno o más puntos, o edita/elimina una ruta existente. La tabla permite buscar por ruta, zona o punto, filtrar por estado y exportar las rutas a CSV.
 3. **Programar rutas:** en **Programar rutas**, navega el calendario, selecciona un día y asigna una ruta. Cada día admite una sola ruta; puedes repetir una misma ruta en distintos días. El panel de campo recibe la asignación del día automáticamente.
 4. **Revisar visitas:** la tabla de puntos usa el reporte más reciente de cada contenedor para mostrar su última visita. Los reportes no se actualizan en vivo: pulsa **Actualizar** para volver a consultarlos.
@@ -74,7 +74,7 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
 
 6. Reinicia Vite con `npm run dev`. Abre `http://localhost:5173/?mode=admin` e inicia sesión con esa cuenta. El panel carga los últimos 200 reportes de `public.container_reports`.
 
-En **Rutas configuradas**, crea o edita las rutas y sus puntos. En **Programar rutas**, usa el calendario para asignar una ruta a cada fecha; la ruta de hoy aparece automáticamente en despacho y el mapa de campo. Ejecuta de nuevo `supabase/schema.sql` para crear la tabla de calendario y actualizar las funciones RPC; las asignaciones anteriores se migran cuando es posible.
+En **Rutas configuradas**, crea o edita las rutas y sus puntos. En **Programar rutas**, usa el calendario para asignar una ruta a cada fecha; la ruta de hoy aparece automáticamente en despacho y el mapa de campo. Ejecuta de nuevo `supabase/schema.sql` para crear la tabla de calendario, actualizar las funciones RPC y habilitar las notificaciones Realtime de los reportes; las asignaciones anteriores se migran cuando es posible.
 
 La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Los reportes solo se pueden leer con una sesión cuya cuenta esté registrada en `admin_users`; la inserción de reportes anónimos sigue habilitada para pruebas. Las fotos se registran actualmente como datos de evidencia, no como archivos de imagen. Sin variables configuradas, la aplicación sigue funcionando en modo local.
 
