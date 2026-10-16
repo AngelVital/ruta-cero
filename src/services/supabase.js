@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getOperationalDate, getRouteForDate } from './routeConfiguration.js';
 
 const environment = import.meta.env || {};
 const supabaseUrl = environment.VITE_SUPABASE_URL;
@@ -44,38 +45,81 @@ export async function isCurrentUserAdmin() {
 }
 
 export async function fetchAdminContainerReports() {
-  const { data, error } = await requireSupabase()
-    .from('container_reports')
-    .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at')
-    .order('created_at', { ascending: false })
-    .limit(200);
+  const client = requireSupabase();
+  const pageSize = 1000;
+  const reports = [];
+  let from = 0;
 
-  if (error) throw error;
-  return data;
+  while (true) {
+    const { data, error } = await client
+      .from('container_reports')
+      .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at')
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) throw error;
+    reports.push(...data);
+    if (data.length < pageSize) return reports;
+    from += pageSize;
+  }
 }
 
 export async function fetchRouteConfigurations() {
-  const { data, error } = await requireSupabase()
-    .from('route_configurations')
-    .select('id, zone, point_ids, is_selected, stops_done, last_update, status, status_label, sync_label')
-    .order('id');
+  const client = requireSupabase();
+  const today = getOperationalDate();
+  const [{ data, error }, { data: schedules, error: schedulesError }] = await Promise.all([
+    client
+      .from('route_configurations')
+      .select('id, zone, point_ids, stops_done, last_update, status, status_label, sync_label')
+      .order('id'),
+    client
+      .from('route_schedules')
+      .select('route_id, scheduled_for, status, stops_done, completed_point_ids, started_at, completed_at')
+  ]);
 
   if (error) throw error;
-  return data.map((route) => ({
-    id: route.id,
-    zone: route.zone,
-    pointIds: route.point_ids || [],
-    stopsDone: route.stops_done || 0,
-    stopsTotal: (route.point_ids || []).length,
-    lastUpdate: route.last_update || '--:--',
-    status: route.status || 'scheduled',
-    statusLabel: route.status_label || 'Programada',
-    syncLabel: route.sync_label || 'Sin iniciar',
-    isSelected: route.is_selected
-  }));
+  if (schedulesError) throw schedulesError;
+  const scheduledDatesByRoute = new Map();
+  schedules.forEach(({ route_id, scheduled_for }) => {
+    const dates = scheduledDatesByRoute.get(route_id) || [];
+    dates.push(scheduled_for);
+    scheduledDatesByRoute.set(route_id, dates);
+  });
+
+  return data.map((route) => {
+    const todaysSchedule = schedules.find((schedule) => (
+      schedule.route_id === route.id && schedule.scheduled_for === today
+    ));
+    const status = !todaysSchedule
+      ? 'unscheduled'
+      : todaysSchedule.status || 'scheduled';
+
+    return getRouteForDate({
+      id: route.id,
+      zone: route.zone,
+      pointIds: route.point_ids || [],
+      scheduledDates: scheduledDatesByRoute.get(route.id) || [],
+      completedPointIds: todaysSchedule?.completed_point_ids || [],
+      stopsDone: todaysSchedule?.stops_done || 0,
+      stopsTotal: (route.point_ids || []).length,
+      lastUpdate: todaysSchedule?.started_at
+        ? new Date(todaysSchedule.started_at).toLocaleTimeString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        })
+        : '--:--',
+      startedAt: todaysSchedule?.started_at || null,
+      completedAt: todaysSchedule?.completed_at || null,
+      status,
+      statusDate: today,
+      syncLabel: 'Sin iniciar'
+    }, today);
+  });
 }
 
-export async function saveRouteConfigurations(routes, selectedRouteId) {
+export async function saveRouteConfigurations(routes) {
   const { error } = await requireSupabase().rpc('replace_route_configurations', {
     p_routes: routes.map((route) => ({
       id: route.id,
@@ -86,8 +130,16 @@ export async function saveRouteConfigurations(routes, selectedRouteId) {
       status: route.status || 'scheduled',
       status_label: route.statusLabel || 'Programada',
       sync_label: route.syncLabel || 'Sin iniciar'
-    })),
-    p_selected_route_id: selectedRouteId
+    }))
+  });
+
+  if (error) throw error;
+}
+
+export async function saveRouteSchedule(scheduledFor, routeId) {
+  const { error } = await requireSupabase().rpc('set_route_schedule', {
+    p_scheduled_for: scheduledFor,
+    p_route_id: routeId || null
   });
 
   if (error) throw error;
@@ -101,19 +153,40 @@ export async function markRouteStarted(routeId) {
   if (error) throw error;
 }
 
-export function subscribeToRouteConfigurations(onChange) {
+export async function markRouteCompleted(routeId) {
+  const { error } = await requireSupabase().rpc('complete_route_configuration', {
+    p_route_id: routeId
+  });
+
+  if (error) throw error;
+}
+
+function subscribeToTables(channelName, tables, onChange) {
   if (!supabase) return () => {};
 
-  const channel = supabase
-    .channel('route-configurations')
-    .on('postgres_changes', {
+  const channel = supabase.channel(channelName);
+  tables.forEach((table) => {
+    channel.on('postgres_changes', {
       event: '*',
       schema: 'public',
-      table: 'route_configurations'
-    }, onChange)
-    .subscribe();
+      table
+    }, onChange);
+  });
+  channel.subscribe();
 
   return () => supabase.removeChannel(channel);
+}
+
+export function subscribeToRouteConfigurations(onChange) {
+  return subscribeToTables('route-configurations', ['route_configurations', 'route_schedules'], onChange);
+}
+
+export function subscribeToAdminUpdates(onChange) {
+  return subscribeToTables('admin-field-updates', [
+    'route_configurations',
+    'route_schedules',
+    'container_reports'
+  ], onChange);
 }
 
 export async function insertContainerReport(routeId, containerId, report) {

@@ -1,8 +1,6 @@
 /**
  * Pantalla 1: Despacho • Inicio de Ruta
  */
-import { getConfiguredRoutes } from '../services/routeConfiguration.js';
-
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -31,8 +29,6 @@ export function renderDispatchScreen(state) {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
   const arrivalTimeStr = addHoursToTime(timeStr, 4);
-  const routes = getConfiguredRoutes();
-
   return `
     <div class="screen-header-bar">
       <div class="screen-header-title">
@@ -138,12 +134,12 @@ export function renderDispatchScreen(state) {
 
         <!-- Ruta programada -->
         <div>
-          <label class="font-label-sm" for="select-route" style="display: block; margin-bottom: 4px;">RUTA ASIGNADA</label>
-          <select class="input-tactical" id="select-route" style="font-weight: 700;" ${routes.length ? '' : 'disabled'}>
-            ${routes.map((route) => `<option value="${route.id}" ${route.id === state.route.id ? 'selected' : ''}>${route.id} · ${escapeHtml(route.zone)}</option>`).join('')}
-          </select>
-          <div class="font-label-sm" id="selected-route-stop-count" style="color: #64748b; margin-top: 5px;">
-            ${state.route.totalStops} PARADAS A REALIZAR
+          <div class="font-label-sm" style="display: block; margin-bottom: 4px;">RUTA PROGRAMADA PARA HOY</div>
+          <div class="input-tactical" aria-live="polite" style="font-weight: 700; ${state.route.id ? '' : 'color: #b45309;'}">
+            ${state.route.id ? `${escapeHtml(state.route.id)} · ${escapeHtml(state.route.name)}` : 'SIN RUTA PROGRAMADA'}
+          </div>
+          <div class="font-label-sm" style="color: #64748b; margin-top: 5px;">
+            ${state.route.id ? `${state.route.totalStops} PARADAS A REALIZAR` : 'Solicita a administración que programe una ruta para hoy.'}
           </div>
         </div>
 
@@ -166,7 +162,7 @@ export function renderDispatchScreen(state) {
         </div>
 
         <!-- Master Dispatch Action -->
-        <button type="button" class="btn-tactical btn-tactical-primary" id="btn-start-route" style="margin-top: 6px;">
+        <button type="button" class="btn-tactical btn-tactical-primary" id="btn-start-route" style="margin-top: 6px;" ${state.route.id ? '' : 'disabled'}>
           <span class="material-symbols-outlined" style="font-size: 24px;">play_arrow</span>
           <span>INICIAR RUTA Y MONITOREO</span>
         </button>
@@ -186,10 +182,6 @@ export function attachDispatchScreenEvents(container, store) {
 
   container.querySelector('#select-assistant')?.addEventListener('change', (event) => {
     store.setDispatchAssignment('assistantId', event.currentTarget.value, false);
-  });
-
-  container.querySelector('#select-route')?.addEventListener('change', (event) => {
-    store.selectRoute(event.currentTarget.value);
   });
 
   container.querySelector('#btn-goto-fuel')?.addEventListener('click', () => {
@@ -212,6 +204,10 @@ export function attachDispatchScreenEvents(container, store) {
     }
 
     const routeId = store.startRoute();
+    if (!routeId) {
+      store.showToast('No hay una ruta programada para hoy. Solicita a administración que programe una.', 'info');
+      return;
+    }
     const button = event.currentTarget;
     button.disabled = true;
     try {

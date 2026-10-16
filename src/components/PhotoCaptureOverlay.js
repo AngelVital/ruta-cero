@@ -29,10 +29,10 @@ export async function openPhotoCapture(onCaptured, onError) {
     <div class="photo-capture-stage">
       <video class="photo-capture-video" autoplay muted playsinline></video>
       <div class="photo-capture-guide" aria-hidden="true"></div>
-      <p class="photo-capture-message">ENCUADRA LA EVIDENCIA Y PULSA EL BOTÓN</p>
+      <p class="photo-capture-message">INICIANDO CÁMARA...</p>
     </div>
     <div class="photo-capture-controls">
-      <button type="button" class="photo-capture-shutter" aria-label="Tomar foto" title="Tomar foto">
+      <button type="button" class="photo-capture-shutter" aria-label="Tomar foto" title="Tomar foto" disabled>
         <span class="material-symbols-outlined">photo_camera</span>
       </button>
     </div>
@@ -42,6 +42,7 @@ export async function openPhotoCapture(onCaptured, onError) {
   const video = overlay.querySelector('.photo-capture-video');
   const closeButton = overlay.querySelector('.photo-capture-close');
   const shutterButton = overlay.querySelector('.photo-capture-shutter');
+  const message = overlay.querySelector('.photo-capture-message');
   let closed = false;
 
   const close = () => {
@@ -51,7 +52,27 @@ export async function openPhotoCapture(onCaptured, onError) {
     overlay.remove();
   };
 
+  const enableShutterWhenReady = () => {
+    if (closed || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !video.videoWidth) return;
+    shutterButton.disabled = false;
+    message.textContent = 'ENCUADRA LA EVIDENCIA Y PULSA EL BOTÓN';
+  };
+
   closeButton.addEventListener('click', close);
+  video.addEventListener('loadeddata', enableShutterWhenReady);
+  video.addEventListener('canplay', enableShutterWhenReady);
+  video.addEventListener('playing', enableShutterWhenReady);
+  shutterButton.addEventListener('click', () => {
+    if (closed || shutterButton.disabled || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+
+    const frame = document.createElement('canvas');
+    frame.width = video.videoWidth;
+    frame.height = video.videoHeight;
+    frame.getContext('2d')?.drawImage(video, 0, 0, frame.width, frame.height);
+    const photoDataUrl = frame.toDataURL('image/jpeg', 0.85);
+    close();
+    onCaptured?.(photoDataUrl);
+  });
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -64,21 +85,10 @@ export async function openPhotoCapture(onCaptured, onError) {
     }
     video.srcObject = stream;
     await video.play();
+    enableShutterWhenReady();
   } catch (error) {
     close();
     onError?.('No se pudo abrir la cámara');
     return;
   }
-
-  shutterButton.addEventListener('click', () => {
-    if (closed || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
-
-    const frame = document.createElement('canvas');
-    frame.width = video.videoWidth;
-    frame.height = video.videoHeight;
-    frame.getContext('2d')?.drawImage(video, 0, 0, frame.width, frame.height);
-    const photoDataUrl = frame.toDataURL('image/jpeg', 0.85);
-    close();
-    onCaptured?.(photoDataUrl);
-  });
 }
