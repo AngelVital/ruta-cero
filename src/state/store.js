@@ -304,6 +304,14 @@ class TacticalStore {
   }
 
   startRoute() {
+    // Each start is a new run: forget stops completed in a previous run of this session.
+    const route = getSelectedRoute();
+    if (route) {
+      this.allStops.forEach((stop) => { stop.status = 'pending'; });
+      this.state.stops = [];
+      this.state.route.returning = false;
+      this.applyConfiguredRoute({ ...route, stopsDone: 0, status: 'active' }, false);
+    }
     const startTimestamp = Date.now();
     this.state.route.startTimestamp = startTimestamp;
     this.state.route.status = 'EN RUTA';
