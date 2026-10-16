@@ -77,11 +77,15 @@
   --touch-action: 56px;
   --touch-primary: 60px;
 
-  /* Mechanical Depth Model */
-  --radius-sharp: 0px;
-  --border-structural: 2px solid #0f172a;
-  --border-subtle: 1px solid #0f172a;
-  --shadow-resting: 4px 4px 0px #0f172a;
-  --shadow-active: 2px 2px 0px #0f172a;
-  --shadow-inset: inset 2px 2px 0px rgba(0, 0, 0, 0.25);
+  /* Friendly surfaces and softer depth */
+  --radius-sharp: 4px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  --border-structural: 1px solid #d7e2da;
+  --border-subtle: 1px solid #e3eae5;
+  --shadow-resting: 0 4px 14px rgba(27, 54, 39, 0.1);
+  --shadow-active: 0 2px 7px rgba(27, 54, 39, 0.12);
+  --shadow-inset: inset 0 1px 3px rgba(27, 54, 39, 0.12);
 }

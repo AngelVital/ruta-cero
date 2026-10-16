@@ -111,7 +111,7 @@ export function renderInspection360Screen(state) {
         <!-- Button directly below for Odometer Photographic Evidence -->
         <button type="button" class="btn-tactical btn-tactical-secondary ${odometerPhotoCaptured ? 'active' : ''}" id="btn-odometer-photo" aria-pressed="${odometerPhotoCaptured ? 'true' : 'false'}" style="min-height: 48px; width: 100%; ${odometerPhotoCaptured ? 'background-color: #ecfdf5; color: #047857; border-color: #047857; box-shadow: 3px 3px 0px #047857;' : ''}">
           <span class="material-symbols-outlined" style="font-size: 20px; color: ${odometerPhotoCaptured ? '#047857' : 'var(--color-primary)'};">${odometerPhotoCaptured ? 'check_circle' : 'photo_camera'}</span>
-          <span id="odometer-photo-status">${odometerPhotoCaptured ? 'EVIDENCIA CAPTURADA' : 'FOTO EVIDENCIA DEL ODÓMETRO'}</span>
+          <span id="odometer-photo-status" aria-live="polite">${odometerPhotoCaptured ? 'FOTO DEL ODÓMETRO CAPTURADA' : 'FOTO EVIDENCIA DEL ODÓMETRO'}</span>
         </button>
       </div>
 
@@ -252,26 +252,10 @@ export function attachInspection360Events(container, store) {
 
   // Odometer photo evidence
   container.querySelector('#btn-odometer-photo')?.addEventListener('click', (event) => {
-    const evidenceButton = event.currentTarget;
     openPhotoCapture(
       () => {
-        store.state.inspection360.odometerPhotoEvidence = true;
-        evidenceButton.classList.add('active');
-        evidenceButton.setAttribute('aria-pressed', 'true');
-        evidenceButton.style.backgroundColor = '#ecfdf5';
-        evidenceButton.style.color = '#047857';
-        evidenceButton.style.borderColor = '#047857';
-        evidenceButton.style.boxShadow = '3px 3px 0px #047857';
-        const icon = evidenceButton.querySelector('.material-symbols-outlined');
-        if (icon) {
-          icon.textContent = 'check_circle';
-          icon.style.color = '#047857';
-        }
-        const status = evidenceButton.querySelector('#odometer-photo-status');
-        if (status) {
-          status.textContent = 'EVIDENCIA CAPTURADA';
-        }
-        updateConfirmButton();
+        store.updateInspectionItem('odometerPhotoEvidence', true);
+        store.showToast('Foto del odómetro tomada correctamente.', 'success');
       },
       (message) => store.showToast(message, 'info')
     );

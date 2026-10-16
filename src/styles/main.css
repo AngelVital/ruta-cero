@@ -1,13 +1,12 @@
 /* ==========================================================================
   Ruta Cero • Field-Spec Global Styles
-   Strict 0px Radius Architecture & High-Glare Legibility
+   Soft-edged surfaces & high-glare legibility
    ========================================================================== */
 
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  border-radius: var(--radius-sharp) !important; /* Strict sharp angles */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -115,6 +114,11 @@ html, body {
   transform: scale(0.96);
 }
 
+.photo-capture-shutter:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 /* Material Symbols alignment */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
@@ -213,17 +217,18 @@ html, body {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  border: var(--border-structural);
+  border: 1px solid #d5e0d8;
   box-shadow: var(--shadow-resting);
   cursor: pointer;
   transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
   background-color: #ffffff;
   color: var(--color-outline);
+  border-radius: var(--radius-sm);
 }
 
 .btn-tactical:active,
 .btn-tactical.active {
-  transform: translate(2px, 2px);
+  transform: translateY(1px);
   box-shadow: var(--shadow-active);
 }
 
@@ -238,19 +243,19 @@ html, body {
 }
 
 .btn-tactical:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0px #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(24, 49, 35, 0.14);
 }
 
 .btn-tactical-dark {
   background-color: var(--color-outline);
   color: #ffffff;
-  box-shadow: 4px 4px 0px rgba(0, 168, 107, 0.4);
+  box-shadow: 0 5px 16px rgba(0, 109, 67, 0.2);
 }
 
 .btn-tactical-dark:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px rgba(0, 168, 107, 0.4);
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(0, 109, 67, 0.18);
 }
 
 .btn-tactical-danger {
@@ -265,13 +270,14 @@ html, body {
 
 .card-tactical {
   transition: transform 0.18s ease, box-shadow 0.18s ease;
+  border-radius: var(--radius-md);
 }
 
 .stop-item-card:hover,
 .btn-capacity-preset:hover,
 .photo-evidence-section:hover {
   transform: translateY(-2px);
-  box-shadow: 4px 6px 0px #0f172a;
+  box-shadow: 0 10px 24px rgba(24, 49, 35, 0.12);
 }
 
 .btn-tactical-sm {
@@ -293,6 +299,7 @@ html, body {
   text-transform: uppercase;
   color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-pill);
 }
 
 .badge-material-plastico { background-color: var(--color-waste-plastic); }
@@ -315,6 +322,7 @@ html, body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border: 2px solid var(--color-outline);
+  border-radius: var(--radius-pill);
 }
 
 .status-pill-optimal {
@@ -339,6 +347,7 @@ html, body {
   box-shadow: var(--shadow-resting);
   padding: var(--space-md);
   position: relative;
+  border-radius: var(--radius-md);
 }
 
 .card-tactical-accent {
@@ -356,7 +365,9 @@ html, body {
   color: var(--color-on-surface);
   background-color: #ffffff;
   border: var(--border-structural);
+  border-radius: var(--radius-sm);
   outline: none;
+  border-radius: var(--radius-sm);
 }
 
 .input-tactical:focus {

@@ -2,7 +2,7 @@
  * Store reactivo central para Ruta Cero
  * Coordina las 6 pantallas tácticas y datos compartidos de la operación
  */
-import { getSelectedRoute, selectConfiguredRoute } from '../services/routeConfiguration.js';
+import { getScheduledRoute } from '../services/routeConfiguration.js';
 
 class TacticalStore {
   constructor() {
@@ -53,7 +53,9 @@ class TacticalStore {
         returning: false,
         dashboardPhoto: null,
         dashboardPhotoPath: null,
-        completedAt: null
+        completedAt: null,
+        completedPointIds: [],
+        statusDate: null
       },
       stops: [
         {
@@ -154,7 +156,7 @@ class TacticalStore {
       status: 'pending',
       type: 'return-station'
     };
-    this.applyConfiguredRoute(getSelectedRoute(), false);
+    this.applyConfiguredRoute(getScheduledRoute(), false);
     this.listeners = [];
   }
 
@@ -239,6 +241,7 @@ class TacticalStore {
         totalStops: 0,
         completedCount: 0,
         currentStopIndex: 0,
+        status: 'PENDIENTE',
         startTimestamp: null,
         startTime: '--:-- AM',
         returning: false,
@@ -251,30 +254,34 @@ class TacticalStore {
     }
 
     const isSameRoute = this.state.route.id === route.id;
-    const completedCount = Math.max(
-      route.stopsDone || 0,
-      this.state.stops.filter((stop) => stop.type !== 'return-station' && stop.status === 'completed').length
-    );
+    const isSameRouteDay = isSameRoute && this.state.route.statusDate === route.statusDate;
+    const completedStopIds = new Set([
+      ...(route.completedPointIds || []),
+      ...(isSameRouteDay
+        ? this.state.stops
+          .filter((stop) => stop.type !== 'return-station' && stop.status === 'completed')
+          .map((stop) => stop.id)
+        : [])
+    ]);
     const routeStops = route.pointIds
       .map((pointId) => this.allStops.find((stop) => stop.id === pointId))
       .filter(Boolean);
-    if (completedCount >= routeStops.length && routeStops.length > 0 && route.status !== 'completed') {
-      routeStops.forEach((stop) => { stop.status = 'completed'; });
-    }
-    routeStops.forEach((stop) => {
-      if (stop.status !== 'completed') stop.status = 'pending';
-    });
-    const firstPendingStop = routeStops.find((stop) => stop.status !== 'completed');
-    const returning = route.status !== 'completed'
-      && (completedCount >= routeStops.length || (isSameRoute && this.state.route.returning));
+    const mappedRouteStops = routeStops.map((stop) => ({
+      ...stop,
+      status: completedStopIds.has(stop.id) ? 'completed' : 'pending'
+    }));
+    const completedCount = mappedRouteStops.filter((stop) => stop.status === 'completed').length;
+    const firstPendingStop = mappedRouteStops.find((stop) => stop.status !== 'completed');
+    const returning = route.status !== 'completed' && mappedRouteStops.length > 0
+      && (completedCount >= mappedRouteStops.length || (isSameRoute && this.state.route.returning));
     if (firstPendingStop) firstPendingStop.status = 'active';
 
     if (returning) {
-      this.returnStation = { ...this.returnStation, status: route.status === 'completed' ? 'completed' : 'active' };
-      routeStops.push(this.returnStation);
+      this.returnStation = { ...this.returnStation, status: 'active' };
+      mappedRouteStops.push({ ...this.returnStation });
     }
 
-    this.state.stops = routeStops;
+    this.state.stops = mappedRouteStops;
     this.state.activeContainerId = returning
       ? this.returnStation.id
       : firstPendingStop?.id || routeStops[0]?.id || null;
@@ -285,33 +292,34 @@ class TacticalStore {
       totalStops: route.pointIds.length,
       completedCount: Math.min(route.pointIds.length, completedCount),
       currentStopIndex: 0,
-      status: route.status === 'completed' ? 'COMPLETADA' : route.status === 'active' ? 'EN RUTA' : 'PENDIENTE',
-      startTimestamp: isSameRoute ? this.state.route.startTimestamp : null,
-      startTime: isSameRoute ? this.state.route.startTime : '--:-- AM',
+      status: returning
+        ? 'EN RUTA'
+        : route.status === 'completed' ? 'COMPLETADA' : route.status === 'active' ? 'EN RUTA' : 'PENDIENTE',
+      statusDate: route.statusDate,
+      completedPointIds: [...completedStopIds],
+      startTimestamp: isSameRouteDay ? this.state.route.startTimestamp : null,
+      startTime: isSameRouteDay ? this.state.route.startTime : '--:-- AM',
       returning,
-      dashboardPhoto: isSameRoute ? this.state.route.dashboardPhoto : null,
+      dashboardPhoto: isSameRouteDay ? this.state.route.dashboardPhoto : null,
       dashboardPhotoPath: route.dashboardPhotoPath || null,
       completedAt: route.completedAt || null
     };
     if (shouldNotify) this.notify();
   }
 
-  selectRoute(routeId) {
-    if (!selectConfiguredRoute(routeId)) return false;
-    const route = getSelectedRoute();
-    this.applyConfiguredRoute(route);
-    return true;
-  }
-
   startRoute() {
-    // Each start is a new run: forget stops completed in a previous run of this session.
-    const route = getSelectedRoute();
-    if (route) {
-      this.allStops.forEach((stop) => { stop.status = 'pending'; });
-      this.state.stops = [];
-      this.state.route.returning = false;
-      this.applyConfiguredRoute({ ...route, stopsDone: 0, status: 'active' }, false);
-    }
+    if (!this.state.route.id) return null;
+    this.state.stops = this.state.stops
+      .filter((stop) => stop.type !== 'return-station')
+      .map((stop) => ({ ...stop, status: 'pending' }));
+    const firstStop = this.state.stops[0];
+    if (firstStop) firstStop.status = 'active';
+    this.state.activeContainerId = firstStop?.id || null;
+    this.returnStation = { ...this.returnStation, status: 'pending' };
+    this.state.route.completedCount = 0;
+    this.state.route.completedPointIds = [];
+    this.state.route.returning = false;
+    this.state.route.dashboardPhoto = null;
     const startTimestamp = Date.now();
     this.state.route.startTimestamp = startTimestamp;
     this.state.route.status = 'EN RUTA';
@@ -327,6 +335,10 @@ class TacticalStore {
     const stop = this.state.stops.find(s => s.id === containerId);
     if (stop) {
       stop.status = 'completed';
+      this.state.route.completedPointIds = [...new Set([
+        ...(this.state.route.completedPointIds || []),
+        containerId
+      ])];
       stop.fillLevel = reportData.fillLevel;
       stop.collectedKg = reportData.collectedKg;
       if (reportData.materialWeights) {
