@@ -98,6 +98,10 @@ create table if not exists public.route_configurations (
   constraint route_configurations_points_not_empty check (cardinality(point_ids) > 0)
 );
 
+-- Marks the current run; progress only counts reports created after it.
+alter table public.route_configurations
+  add column if not exists started_at timestamptz;
+
 alter table public.route_configurations enable row level security;
 grant select on public.route_configurations to anon, authenticated;
 
@@ -221,6 +225,8 @@ begin
   update public.route_configurations
   set status = 'active',
       status_label = 'En ruta',
+      stops_done = 0,
+      started_at = now(),
       last_update = to_char(now() at time zone 'America/Mazatlan', 'HH24:MI'),
       updated_at = now()
   where id = p_route_id
@@ -249,7 +255,8 @@ begin
   from public.container_reports report
   join public.route_configurations route on route.id = new.route_id
   where report.route_id = route.id
-    and report.container_id = any(route.point_ids);
+    and report.container_id = any(route.point_ids)
+    and report.created_at >= coalesce(route.started_at, '-infinity');
 
   update public.route_configurations route
   set stops_done = least(cardinality(route.point_ids), completed_points),
@@ -291,6 +298,7 @@ with route_progress as (
   left join public.container_reports report
     on report.route_id = route.id
     and report.container_id = any(route.point_ids)
+    and report.created_at >= coalesce(route.started_at, '-infinity')
   group by route.id, route.point_ids
 )
 update public.route_configurations route

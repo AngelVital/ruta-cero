@@ -70,6 +70,39 @@ test('la ruta seleccionada y sus puntos aparecen en despacho y mapa', () => {
   }
 });
 
+test('iniciar de nuevo una ruta completada empieza una salida desde cero', () => {
+  const previousWindow = globalThis.window;
+  const defaultRoutes = getConfiguredRoutes();
+  globalThis.window = { localStorage: createMemoryStorage() };
+
+  try {
+    const route = { ...defaultRoutes[1], stopsDone: 0, status: 'scheduled' };
+    saveConfiguredRoutes(defaultRoutes, route.id);
+    store.selectRoute(route.id);
+    store.startRoute();
+    route.pointIds.forEach((id) => store.completeContainerReport(id, { fillLevel: 'low', collectedKg: 0 }));
+    assert.equal(store.state.route.returning, true);
+
+    store.startRoute();
+    assert.deepEqual(store.state.stops.map((stop) => stop.id), route.pointIds);
+    assert.deepEqual(store.state.stops.map((stop) => stop.status), ['active', 'pending']);
+    assert.equal(store.state.route.completedCount, 0);
+    assert.equal(store.state.route.returning, false);
+
+    // The server confirms the new run with stops_done reset to 0.
+    store.applyConfiguredRoute({ ...route, stopsDone: 0, status: 'active' });
+    assert.equal(store.state.route.returning, false);
+    assert.equal(store.state.activeContainerId, route.pointIds[0]);
+  } finally {
+    store.applyConfiguredRoute(defaultRoutes[0]);
+    if (previousWindow === undefined) {
+      delete globalThis.window;
+    } else {
+      globalThis.window = previousWindow;
+    }
+  }
+});
+
 test('el identificador nuevo avanza desde el número más alto existente', () => {
   assert.equal(createRouteId([{ id: 'R-03' }, { id: 'R-12' }]), 'R-13');
 });
