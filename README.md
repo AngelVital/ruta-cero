@@ -7,12 +7,19 @@ Plataforma operativa para coordinar las rutas urbanas de recolección de residuo
 - **Frontend:** JavaScript vanilla con módulos ES.
 - **Build y servidor local:** Vite 6.
 - **Entrada:** `index.html` carga `src/main.js`.
-- **Renderizado:** `main.js` funciona como shell y router modular. Selecciona la pantalla activa, monta sus eventos y re-renderiza cuando cambia el estado.
-- **Estado:** `src/state/store.js` contiene un store reactivo en memoria para la operación actual. La configuración de rutas se comparte mediante `public.route_configurations` en Supabase y se mantiene en caché local.
+- **Arranque por modo:** `main.js` solo decide el modo (`entry`, `field` o `admin`) y carga con `import()` el código y el CSS de ese modo. El panel de administración, el lector de códigos (ZXing) y Supabase no se descargan en las pantallas que no los usan.
+- **Renderizado:** cada pantalla expone `renderX(state)`, que devuelve HTML, y `attachX(el, store)`, que monta sus eventos y puede devolver una función de limpieza (temporizadores, cámara). `src/fieldApp.js` es el shell del modo campo: elige la pantalla activa, ejecuta la limpieza de la anterior y vuelve a dibujar cuando cambia el estado.
+- **Estado:** `src/state/store.js` contiene un store inmutable en memoria: cada acción crea un estado nuevo y avisa a los suscriptores. Incluye los borradores de reporte por contenedor, para que una actualización de la ruta o la cámara no borre lo capturado. La configuración de rutas se comparte mediante `public.route_configurations` en Supabase y se mantiene en caché local.
+- **Lógica de negocio:** `src/domain/` contiene funciones puras (validación de inspección y reportes, avance de rutas, resumen del día, CSV), sin acceso al DOM, cubiertas por las pruebas de `tests/`.
 - **UI:**
-  - `src/components/`: encabezado, navegación, simulador de dispositivo, medidores y controles.
-  - `src/screens/`: vistas operativas y sus manejadores de interacción.
-  - `src/styles/`: tokens, estilos generales y componentes de interfaz.
+  - `src/components/`: medidores, controles y captura de fotos.
+  - `src/screens/`: vistas operativas de campo y el controlador del panel de administración.
+  - `src/screens/admin/`: secciones del panel (calendario, tabla de rutas, reportes, puntos, inicio de sesión).
+  - `src/data/`: catálogos fijos (puntos de recolección, estación de regreso, puntos de inspección, combustible).
+  - `src/utils/`: escape de HTML, íconos y formato de horas.
+  - `src/styles/`: tokens, estilos generales y CSS por modo (`field.css`, `admin-dashboard.css`, `entry-screen.css`). Las pantallas usan clases CSS; solo los anchos que dependen de datos van como estilos en línea.
+
+Esta separación (render/attach, store con suscripción y lógica pura en `domain/`) está pensada para facilitar una migración futura a React: las funciones de `domain/` y `data/` se pueden reutilizar tal cual.
 - **Diseño:** el sistema visual Field-Spec está documentado en `design-system/DESIGN_SYSTEM.md`, con tokens reutilizables en `design-system/` y `src/styles/`.
 
 ## Flujo de campo
@@ -21,14 +28,14 @@ Abre `/?mode=field` o elige **Campo** en la pantalla inicial. El flujo sigue la 
 
 1. **Preparar la salida:** en Despacho se eligen unidad, operador, auxiliar y ruta. Antes de iniciar, registra el nivel de combustible y completa la inspección 360°.
 2. **Registrar combustible:** selecciona uno de los niveles predefinidos y guarda el registro para volver a Despacho.
-3. **Completar inspección:** revisa los nueve puntos del vehículo como Bien, Regular o Mal. Los estados Regular y Mal requieren comentario; también se debe capturar la evidencia fotográfica del odómetro. Al completar todo, confirma la inspección.
+3. **Completar inspección:** revisa los nueve puntos del vehículo como Bien, Regular o Mal. Los estados Regular y Mal requieren comentario; también se debe tomar la foto del odómetro (ya no se captura el kilometraje a mano). Al completar todo, confirma la inspección.
 4. **Iniciar y recorrer:** inicia la ruta desde Despacho. El mapa muestra el punto activo, el avance y los puntos programados; ofrece abrir indicaciones en Google Maps.
 5. **Identificar el contenedor:** escanea el código QR o código de barras del punto activo. Si la cámara no logra leerlo, se puede elegir manualmente el mismo punto activo. Los códigos de otros puntos no permiten avanzar.
 6. **Registrar la recolección:** toma fotos iniciales y finales del exterior e interior, indica el nivel de llenado y registra materiales, peso por material e incidencias. Para nivel medio o lleno se requiere al menos un material con peso mayor que cero; para nivel bajo no hace falta registrar material.
 7. **Guardar y continuar:** guarda el reporte. El punto queda completado y el mapa activa el siguiente; al completar todos los contenedores de cualquier ruta, se agrega la estación de regreso y se muestran sus indicaciones en el mapa.
 8. **Finalizar la ruta:** al llegar a la estación, captura la evidencia fotográfica de regreso y confirma el cierre para volver a Despacho.
 
-El avance operativo de campo vive en el store en memoria del dispositivo. Los reportes se insertan en Supabase cuando está configurado; si no lo está, quedan registrados solo durante la sesión local. La evidencia fotográfica de cierre se conserva en el estado de la sesión.
+El avance operativo de campo vive en el store en memoria del dispositivo. Los reportes se insertan en Supabase cuando está configurado; si no lo está, quedan registrados solo durante la sesión local. La evidencia fotográfica de cierre se conserva en el estado de la sesión; de la foto del odómetro solo se registra que fue tomada, la imagen todavía no se guarda. Los borradores de reporte se descartan al iniciar una nueva salida.
 
 ## Flujo de administración
 
@@ -40,11 +47,11 @@ Abre `/?mode=admin` o elige **Administración** en la pantalla inicial. Se requi
 4. **Revisar visitas:** la tabla de puntos usa el reporte más reciente de cada contenedor para mostrar su última visita. Los reportes se sincronizan automáticamente; pulsa **Actualizar** para forzar una consulta.
 5. **Cerrar sesión:** usa **Cerrar sesión** en la barra superior para salir del panel.
 
-Las rutas se almacenan en `public.route_configurations`; las asignaciones por día, en `public.route_schedules`. El campo ya no permite elegir una ruta manualmente: usa la ruta asignada al día operativo de La Paz (`America/Mazatlan`) y no permite iniciar si no existe una. El avance de los reportes aparece en el panel después de actualizar; la sesión de campo no se restaura al recargar la aplicación.
+Las rutas se almacenan en `public.route_configurations`; las asignaciones por día, en `public.route_schedules`. El campo ya no permite elegir una ruta manualmente: usa la ruta asignada al día operativo de La Paz (`America/Mazatlan`) y no permite iniciar si no existe una. El panel descarga el historial completo una vez y después solo pide los reportes nuevos (por Realtime, cada 30 s o con **Actualizar**); al cerrar sesión se detienen esas sincronizaciones. La sesión de campo no se restaura al recargar la aplicación.
 
 ## Requisitos
 
-- Node.js 18 o superior
+- Node.js 18 o superior (22 o superior para `npm test`)
 - npm
 
 ## Instalación y ejecución
@@ -90,6 +97,7 @@ Antes de guardar reportes, ejecuta `supabase/schema.sql` en el SQL Editor de ese
 npm run dev      # Servidor de desarrollo con recarga en caliente
 npm run build    # Genera la versión optimizada en dist/
 npm run preview  # Sirve localmente la compilación de producción
+npm test         # Ejecuta las pruebas de tests/ con el runner de Node
 ```
 
 Para probar la compilación de producción:
@@ -104,13 +112,21 @@ npm run preview
 ```text
 .
 ├── design-system/       # Documentación y tokens del sistema visual
-├── public/              # Assets públicos y capturas
+├── public/              # Favicon
 ├── src/
 │   ├── components/      # Componentes reutilizables
+│   ├── data/            # Catálogos fijos (puntos, inspección, combustible)
+│   ├── domain/          # Lógica de negocio pura (inspección, reportes, rutas)
 │   ├── screens/         # Pantallas operativas
-│   ├── state/           # Store reactivo central
-│   ├── styles/          # Tokens y estilos de interfaz
-│   └── main.js          # Entrada, router y ciclo de renderizado
+│   │   └── admin/       # Secciones del panel de administración
+│   ├── services/        # Supabase y configuración de rutas
+│   ├── state/           # Store inmutable central
+│   ├── styles/          # Tokens y estilos por modo
+│   ├── utils/           # HTML, íconos y formato de horas
+│   ├── fieldApp.js      # Shell y ciclo de renderizado del modo campo
+│   └── main.js          # Entrada: elige el modo y carga su código
+├── supabase/            # Esquema SQL
+├── tests/               # Pruebas (node --test)
 ├── index.html
 ├── package.json
 └── vite.config.js
