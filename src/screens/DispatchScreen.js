@@ -5,6 +5,7 @@ import { getFuelPercent } from '../data/fuel.js';
 import { getInspectionProgress } from '../domain/inspection.js';
 import { formatClockTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
+import { queueFieldAction } from '../services/fieldSync.js';
 
 function addHoursToTime(timeStr, hoursToAdd) {
   const [hours, minutes] = timeStr.split(':').map(Number);
@@ -193,14 +194,12 @@ export function attachDispatchScreenEvents(container, store) {
       store.showToast('No hay una ruta programada para hoy. Solicita a administración que programe una.', 'info');
       return;
     }
-    const button = event.currentTarget;
-    button.disabled = true;
+    event.currentTarget.disabled = true;
     try {
-      const { markRouteStarted } = await import('../services/supabase.js');
-      await markRouteStarted(routeId);
-      store.showToast(`¡${routeId} iniciada y sincronizada! Dirígete al primer punto y escanea el código QR.`, 'success');
+      await queueFieldAction('start', { routeId });
+      store.showToast(`¡${routeId} iniciada! Dirígete al primer punto y escanea el código QR.`, 'success');
     } catch (error) {
-      store.showToast(`Ruta iniciada en este dispositivo, pero no se sincronizó: ${error.message}`, 'info', 8000);
+      store.showToast(`Ruta iniciada en este dispositivo, pero no se pudo guardar para sincronizar: ${error.message}`, 'info', 8000);
     }
     store.setScreen('map');
   });

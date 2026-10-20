@@ -3,7 +3,7 @@
  * Cada sección (calendario, rutas, reportes) vive en src/screens/admin/ y recibe `ctx`,
  * el estado compartido del panel.
  */
-import { getLatestReportCreatedAt, mergeNewReports } from '../domain/report.js';
+import { getLatestReportReceivedAt, mergeNewReports } from '../domain/report.js';
 import { applyReportProgress, getReportsForDate, getTodaySummary } from '../domain/route.js';
 import {
   getConfiguredRoutes,
@@ -88,7 +88,7 @@ function startAdminSync(ctx) {
   const { container } = ctx;
   let refreshInProgress = null;
 
-  // Automatic refreshes only fetch reports newer than the latest one already loaded;
+  // Automatic refreshes only fetch reports received after the latest one already loaded;
   // the "Actualizar" button (announce = true) reloads the full history.
   const refresh = (announce = false) => {
     if (refreshInProgress) return refreshInProgress;
@@ -98,12 +98,12 @@ function startAdminSync(ctx) {
     refreshInProgress = (async () => {
       try {
         const { fetchAdminContainerReports, fetchRouteConfigurations } = await api();
-        const latestCreatedAt = announce ? null : getLatestReportCreatedAt(ctx.reports);
+        const latestReceivedAt = announce ? null : getLatestReportReceivedAt(ctx.reports);
         const [updatedReports, remoteRoutes] = await Promise.all([
-          fetchAdminContainerReports({ since: latestCreatedAt }),
+          fetchAdminContainerReports({ since: latestReceivedAt }),
           fetchRouteConfigurations()
         ]);
-        ctx.reports = latestCreatedAt ? mergeNewReports(ctx.reports, updatedReports) : updatedReports;
+        ctx.reports = latestReceivedAt ? mergeNewReports(ctx.reports, updatedReports) : updatedReports;
         if (remoteRoutes.length > 0) {
           ctx.routes = remoteRoutes;
           saveConfiguredRoutes(remoteRoutes);

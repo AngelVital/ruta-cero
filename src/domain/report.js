@@ -36,17 +36,22 @@ export function getActiveIncidents(incidents) {
     : [];
 }
 
-export function getLatestReportCreatedAt(reports) {
+export function getLatestReportReceivedAt(reports) {
   return reports.reduce((latest, report) => (
-    report.created_at && (!latest || report.created_at > latest) ? report.created_at : latest
+    report.received_at && (!latest || report.received_at > latest) ? report.received_at : latest
   ), null);
 }
 
-/** Prepends newly fetched reports (newest first) and skips the ones already loaded. */
+/**
+ * Adds newly fetched reports, skipping the ones already loaded, and keeps the list newest
+ * first. A report synced late from an offline device can be older than the loaded ones.
+ */
 export function mergeNewReports(currentReports, newReports) {
   const loadedIds = new Set(currentReports.map((report) => report.id));
   const addedReports = newReports.filter((report) => !loadedIds.has(report.id));
-  return addedReports.length ? [...addedReports, ...currentReports] : currentReports;
+  return addedReports.length
+    ? [...addedReports, ...currentReports].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0))
+    : currentReports;
 }
 
 /** Most recent report of each container, keyed by container id. */

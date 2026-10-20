@@ -4,6 +4,7 @@
 
 import { normalizeFillLevel, renderCapacityMeter } from '../components/CapacityMeter.js';
 import { renderStepperControl, attachStepperEvents } from '../components/StepperControl.js';
+import { queueFieldAction } from '../services/fieldSync.js';
 import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
 import {
   getMissingReportPhotos,
@@ -131,23 +132,6 @@ function renderCapacityPreset({ level, label, desc, icon }, selectedLevel) {
       </span>
     </button>
   `;
-}
-
-function getReportSaveErrorMessage(error) {
-  if (error?.code === '22P02' && /"(low|medium|full)"/.test(error.message || '')) {
-    return 'La columna fill_level de Supabase sigue siendo INTEGER. Ejecuta supabase/schema.sql en el SQL Editor de ese proyecto.';
-  }
-
-  if (error?.code === '42501') {
-    return 'Supabase rechazó la inserción por permisos o RLS. Ejecuta supabase/schema.sql y verifica el privilegio INSERT y la política de container_reports.';
-  }
-
-  if (error?.code === '42P01' || error?.code === 'PGRST205') {
-    return 'No se encuentra la tabla container_reports. Ejecuta supabase/schema.sql en tu proyecto de Supabase.';
-  }
-
-  const code = error?.code ? ` (${error.code})` : '';
-  return `Error de Supabase${code}: ${error?.message || 'No se pudo completar la solicitud.'}`;
 }
 
 export function renderContainerReportScreen(state) {
@@ -471,16 +455,16 @@ export function attachContainerReportEvents(containerEl, store) {
     button.querySelector('span:last-child').textContent = 'GUARDANDO...';
 
     try {
-      const { insertContainerReport } = await import('../services/supabase.js');
-      const persisted = await insertContainerReport(store.state.route.id, containerId, reportData);
+      // Saved on the device first; fieldSync sends it to Supabase when there is signal.
+      const queued = await queueFieldAction('report', { routeId: store.state.route.id, containerId, report: reportData });
       store.completeContainerReport(containerId, reportData);
-      store.showToast(persisted
-        ? `¡Reporte de ${containerId} guardado en Supabase!`
-        : `¡Reporte de ${containerId} registrado en modo local!`, persisted ? 'success' : 'info');
+      store.showToast(queued
+        ? `¡Reporte de ${containerId} guardado!`
+        : `¡Reporte de ${containerId} registrado en modo local!`, queued ? 'success' : 'info');
       store.setScreen('map');
     } catch (error) {
-      console.error('No se pudo guardar el reporte en Supabase:', error);
-      store.showToast(getReportSaveErrorMessage(error), 'info', 8000);
+      console.error('No se pudo guardar el reporte en el dispositivo:', error);
+      store.showToast(`No se pudo guardar el reporte en el dispositivo: ${error.message}`, 'info', 8000);
       if (button.isConnected) {
         button.querySelector('span:last-child').textContent = 'GUARDAR REPORTE Y CONTINUAR';
         updateSaveButtonState();

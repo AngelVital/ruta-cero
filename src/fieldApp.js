@@ -4,6 +4,7 @@
  */
 
 import { store } from './state/store.js';
+import { flushFieldQueue, getPendingSyncCount } from './services/fieldSync.js';
 import {
   getOperationalDate,
   getScheduledRoute,
@@ -31,6 +32,8 @@ const screens = {
 async function refreshFieldRouteConfiguration() {
   store.applyConfiguredRoute(getScheduledRoute());
   try {
+    // Send pending actions first so the server state already includes them.
+    await flushFieldQueue();
     const { fetchRouteConfigurations } = await import('./services/supabase.js');
     const routes = await fetchRouteConfigurations();
     if (routes.length === 0) return;
@@ -59,6 +62,17 @@ function renderToast(state) {
   // Messages can include Supabase error text, so they are inserted as text, never as HTML.
   const messageEl = toastRoot.querySelector('.hud-toast-message');
   if (messageEl) messageEl.textContent = state.toast.message;
+}
+
+function renderSyncStatus(state) {
+  const syncRoot = document.getElementById('sync-root');
+  if (!syncRoot) return;
+
+  const count = state.pendingSyncCount;
+  syncRoot.hidden = count === 0;
+  syncRoot.textContent = count === 1
+    ? '1 registro pendiente de sincronizar'
+    : `${count} registros pendientes de sincronizar`;
 }
 
 export function startFieldApp(appEl) {
@@ -94,6 +108,7 @@ export function startFieldApp(appEl) {
     appEl.innerHTML = `
       <div class="hud-canvas">
         <div class="mobile-chassis" id="main-mobile-chassis">
+          <div id="sync-root" class="sync-status" role="status" hidden></div>
           <main class="screen-viewport${screenTransition === 'slide-left' ? ' screen-transition-slide-left' : ''}" id="screen-viewport-root">
             ${renderScreen(state)}
           </main>
@@ -104,6 +119,7 @@ export function startFieldApp(appEl) {
     `;
 
     renderToast(state);
+    renderSyncStatus(state);
 
     const viewport = document.getElementById('screen-viewport-root');
     if (viewport) {
@@ -123,6 +139,10 @@ export function startFieldApp(appEl) {
     }
   });
   window.addEventListener('focus', refreshFieldRouteConfiguration);
+  window.addEventListener('online', refreshFieldRouteConfiguration);
+  // Retries pending actions while the signal comes and goes; a no-op when nothing is pending.
+  setInterval(() => flushFieldQueue(), 30000);
+  store.setPendingSyncCount(getPendingSyncCount());
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') refreshFieldRouteConfiguration();
   });
@@ -138,6 +158,10 @@ export function startFieldApp(appEl) {
   store.subscribe((state, changeType) => {
     if (changeType === 'toast') {
       renderToast(state);
+      return;
+    }
+    if (changeType === 'sync') {
+      renderSyncStatus(state);
       return;
     }
 

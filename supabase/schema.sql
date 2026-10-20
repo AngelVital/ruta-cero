@@ -12,6 +12,14 @@ create table if not exists public.container_reports (
   created_at timestamptz not null default now()
 );
 
+-- When the report reached the server; created_at is the capture time on the device, which
+-- can be much earlier when the field app was offline.
+alter table public.container_reports
+  add column if not exists received_at timestamptz not null default now();
+
+create index if not exists container_reports_received_at_idx
+  on public.container_reports (received_at);
+
 alter table public.container_reports
   drop constraint if exists container_reports_fill_level_check;
 
@@ -351,21 +359,28 @@ $$;
 revoke all on function public.set_route_schedule(date, text) from public, anon;
 grant execute on function public.set_route_schedule(date, text) to authenticated;
 
-create or replace function public.start_route_configuration(p_route_id text)
+-- The single-argument versions are replaced by ones that accept the device time.
+drop function if exists public.start_route_configuration(text);
+drop function if exists public.complete_route_configuration(text);
+
+create or replace function public.start_route_configuration(p_route_id text, p_at timestamptz default now())
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  -- p_at: when it happened on the device (offline sync); never in the future.
+  v_at timestamptz := least(coalesce(p_at, now()), now());
 begin
   update public.route_schedules
   set status = 'active',
       stops_done = 0,
       completed_point_ids = '{}',
-      started_at = now(),
+      started_at = v_at,
       completed_at = null
   where route_id = p_route_id
-    and scheduled_for = (now() at time zone 'America/Mazatlan')::date
+    and scheduled_for = (v_at at time zone 'America/Mazatlan')::date
     and status <> 'completed';
 
   if not found then
@@ -375,22 +390,24 @@ begin
   update public.route_configurations
   set status = 'active',
       status_label = 'En curso',
-      last_update = to_char(now() at time zone 'America/Mazatlan', 'HH24:MI'),
+      last_update = to_char(v_at at time zone 'America/Mazatlan', 'HH24:MI'),
       updated_at = now()
   where id = p_route_id;
 end;
 $$;
 
-revoke all on function public.start_route_configuration(text) from public;
-grant execute on function public.start_route_configuration(text) to anon, authenticated;
+revoke all on function public.start_route_configuration(text, timestamptz) from public;
+grant execute on function public.start_route_configuration(text, timestamptz) to anon, authenticated;
 
-create or replace function public.complete_route_configuration(p_route_id text)
+create or replace function public.complete_route_configuration(p_route_id text, p_at timestamptz default now())
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
+  -- p_at: when it happened on the device (offline sync); never in the future.
+  v_at timestamptz := least(coalesce(p_at, now()), now());
   completed_points integer;
   completed_ids text[];
 begin
@@ -403,18 +420,18 @@ begin
    and report.container_id = any(route.point_ids)
   join public.route_schedules schedule
     on schedule.route_id = route.id
-   and schedule.scheduled_for = (now() at time zone 'America/Mazatlan')::date
+   and schedule.scheduled_for = (v_at at time zone 'America/Mazatlan')::date
    and schedule.status = 'active'
    and report.created_at >= schedule.started_at
   where route.id = p_route_id
     and (report.created_at at time zone 'America/Mazatlan')::date =
-      (now() at time zone 'America/Mazatlan')::date;
+      (v_at at time zone 'America/Mazatlan')::date;
 
   if not exists (
     select 1
     from public.route_schedules
     where route_id = p_route_id
-      and scheduled_for = (now() at time zone 'America/Mazatlan')::date
+      and scheduled_for = (v_at at time zone 'America/Mazatlan')::date
   ) then
     raise exception 'La ruta no está programada para hoy.';
   end if;
@@ -431,15 +448,15 @@ begin
   set status = 'completed',
       stops_done = completed_points,
       completed_point_ids = completed_ids,
-      completed_at = now()
+      completed_at = v_at
   where schedule.route_id = p_route_id
-    and schedule.scheduled_for = (now() at time zone 'America/Mazatlan')::date
+    and schedule.scheduled_for = (v_at at time zone 'America/Mazatlan')::date
     and schedule.status <> 'completed';
 end;
 $$;
 
-revoke all on function public.complete_route_configuration(text) from public;
-grant execute on function public.complete_route_configuration(text) to anon, authenticated;
+revoke all on function public.complete_route_configuration(text, timestamptz) from public;
+grant execute on function public.complete_route_configuration(text, timestamptz) to anon, authenticated;
 
 create or replace function public.update_route_progress_from_report()
 returns trigger
@@ -514,6 +531,29 @@ end;
 $$;
 
 revoke all on function public.update_route_progress_from_report() from public, anon, authenticated;
+
+create or replace function public.prepare_container_report()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  -- Reports captured offline keep their device time, but never a future one.
+  new.created_at := least(coalesce(new.created_at, now()), now());
+  new.received_at := now();
+  return new;
+end;
+$$;
+
+revoke all on function public.prepare_container_report() from public, anon, authenticated;
+
+drop trigger if exists container_report_prepare
+  on public.container_reports;
+
+create trigger container_report_prepare
+  before insert on public.container_reports
+  for each row
+  execute function public.prepare_container_report();
 
 drop trigger if exists container_report_updates_route_progress
   on public.container_reports;

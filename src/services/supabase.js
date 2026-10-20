@@ -10,6 +10,8 @@ const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
+export const isSupabaseConfigured = Boolean(supabase);
+
 function requireSupabase() {
   if (!supabase) {
     throw new Error('Configura VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY para usar Supabase.');
@@ -46,8 +48,9 @@ export async function isCurrentUserAdmin() {
 }
 
 /**
- * Loads container reports, newest first. With `since`, only reports created at or after
+ * Loads container reports, newest first. With `since`, only reports received at or after
  * that ISO timestamp are returned, so automatic refreshes don't download the whole history.
+ * It filters by `received_at` because a report captured offline arrives with an older `created_at`.
  */
 export async function fetchAdminContainerReports({ since = null } = {}) {
   const client = requireSupabase();
@@ -58,8 +61,8 @@ export async function fetchAdminContainerReports({ since = null } = {}) {
   while (true) {
     let query = client
       .from('container_reports')
-      .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at');
-    if (since) query = query.gte('created_at', since);
+      .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at, received_at');
+    if (since) query = query.gte('received_at', since);
     const { data, error } = await query
       .order('created_at', { ascending: false })
       .order('id', { ascending: true })
@@ -146,17 +149,20 @@ export async function saveRouteSchedule(scheduledFor, routeId) {
   if (error) throw error;
 }
 
-export async function markRouteStarted(routeId) {
+/** `at` is when the route started on the device; it may be earlier than the sync time. */
+export async function markRouteStarted(routeId, at) {
   const { error } = await requireSupabase().rpc('start_route_configuration', {
-    p_route_id: routeId
+    p_route_id: routeId,
+    p_at: at
   });
 
   if (error) throw error;
 }
 
-export async function markRouteCompleted(routeId) {
+export async function markRouteCompleted(routeId, at) {
   const { error } = await requireSupabase().rpc('complete_route_configuration', {
-    p_route_id: routeId
+    p_route_id: routeId,
+    p_at: at
   });
 
   if (error) throw error;
@@ -190,7 +196,8 @@ export function subscribeToAdminUpdates(onChange) {
   ], onChange);
 }
 
-export async function insertContainerReport(routeId, containerId, report) {
+/** `id` and `createdAt` come from the device, so a retried insert is detected as a duplicate (23505). */
+export async function insertContainerReport(routeId, containerId, report, { id, createdAt } = {}) {
   if (!supabase) {
     return false;
   }
@@ -198,6 +205,8 @@ export async function insertContainerReport(routeId, containerId, report) {
   const { error } = await supabase
     .from('container_reports')
     .insert({
+      id,
+      created_at: createdAt,
       route_id: routeId,
       container_id: containerId,
       fill_level: report.fillLevel,

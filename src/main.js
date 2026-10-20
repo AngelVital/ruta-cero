@@ -6,13 +6,18 @@
  *
  * Cada modo carga solo su código y su hoja de estilos: el panel de administración
  * no descarga el escáner de campo y el teléfono no descarga el CSS del panel.
+ *
+ * El APK se compila con `vite build --mode android` (npm run build:android): solo
+ * contiene el panel de campo, y el panel de administración ni siquiera se incluye.
  */
 
 const appEl = document.getElementById('app');
-const mode = new URLSearchParams(window.location.search).get('mode');
+// Vite replaces MODE at build time, so the admin and entry branches are removed from the APK bundle.
+const isFieldOnlyBuild = import.meta.env.MODE === 'android';
+const mode = isFieldOnlyBuild ? 'field' : new URLSearchParams(window.location.search).get('mode');
 
 async function startApp() {
-  if (mode === 'admin') {
+  if (!isFieldOnlyBuild && mode === 'admin') {
     const [{ renderAdminDashboard, attachAdminDashboardEvents }] = await Promise.all([
       import('./screens/AdminDashboard.js'),
       import('./styles/admin-dashboard.css')
@@ -30,6 +35,8 @@ async function startApp() {
     startFieldApp(appEl);
     return;
   }
+
+  if (isFieldOnlyBuild) return;
 
   const [{ renderEntryScreen }] = await Promise.all([
     import('./screens/EntryScreen.js'),

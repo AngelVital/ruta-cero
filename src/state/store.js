@@ -6,7 +6,7 @@
  * modificar el actual. Las pantallas solo leen `store.state` y llaman acciones.
  */
 import { collectionPoints, returnStation } from '../data/collectionPoints.js';
-import { getScheduledRoute } from '../services/routeConfiguration.js';
+import { getOperationalDate, getScheduledRoute } from '../services/routeConfiguration.js';
 import { formatClockTime } from '../utils/format.js';
 
 function createInitialState() {
@@ -85,15 +85,42 @@ function createInitialState() {
     },
     // In-progress container reports keyed by container id (fill level, materials, photos…).
     reportDrafts: {},
+    // Field actions saved on the device and not yet sent to Supabase (services/fieldSync.js).
+    pendingSyncCount: 0,
     toast: null
   };
 }
 
 const returnStationStop = (status) => ({ ...returnStation, status });
 
+export const fieldStateStorageKey = 'ruta-cero-field-state';
+// The day's progress, kept on the device so closing the app (or losing signal) doesn't lose it.
+const persistedKeys = [
+  'currentScreen', 'assignment', 'route', 'stops', 'activeContainerId',
+  'inspection360', 'inspectionComments', 'fuelLevel', 'reportDrafts'
+];
+
+function getStorage() {
+  try {
+    return typeof window === 'undefined' ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function loadPersistedState() {
+  try {
+    const saved = JSON.parse(getStorage()?.getItem(fieldStateStorageKey));
+    // Only today's run is restored; a new day starts from scratch.
+    return saved?.route?.statusDate === getOperationalDate() ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
 class TacticalStore {
   constructor() {
-    this.state = createInitialState();
+    this.state = { ...createInitialState(), ...loadPersistedState() };
     this.listeners = [];
     this.lastRouteSignature = undefined;
     this.applyConfiguredRoute(getScheduledRoute(), false);
@@ -118,7 +145,25 @@ class TacticalStore {
   setState(update, { notify = true, changeType = 'state' } = {}) {
     const patch = typeof update === 'function' ? update(this.state) : update;
     this.state = { ...this.state, ...patch };
+    if (persistedKeys.some((key) => key in patch)) this.persist();
     if (notify) this.notify(changeType);
+  }
+
+  persist() {
+    const saved = Object.fromEntries(persistedKeys.map((key) => [key, this.state[key]]));
+    // The return photo is a large data URL; after a restart it is simply taken again.
+    saved.route = { ...saved.route, dashboardPhoto: null };
+    try {
+      getStorage()?.setItem(fieldStateStorageKey, JSON.stringify(saved));
+    } catch {
+      // Storage full or blocked: the app keeps working in memory.
+    }
+  }
+
+  setPendingSyncCount(pendingSyncCount) {
+    if (pendingSyncCount !== this.state.pendingSyncCount) {
+      this.setState({ pendingSyncCount }, { changeType: 'sync' });
+    }
   }
 
   setScreen(screenName, transition = 'slide-left') {
@@ -244,7 +289,10 @@ class TacticalStore {
     }));
     const completedCount = mappedRouteStops.filter((stop) => stop.status === 'completed').length;
     const firstPendingStop = mappedRouteStops.find((stop) => stop.status !== 'completed');
-    const returning = route.status !== 'completed' && mappedRouteStops.length > 0
+    // A device that started or closed the route offline is ahead of the server until it syncs.
+    const isCompleted = route.status === 'completed' || (isSameRouteDay && current.route.status === 'COMPLETADA');
+    const isStarted = route.status === 'active' || (isSameRouteDay && current.route.status === 'EN RUTA');
+    const returning = !isCompleted && mappedRouteStops.length > 0
       && (completedCount >= mappedRouteStops.length || (isSameRoute && current.route.returning));
     if (firstPendingStop) firstPendingStop.status = 'active';
     if (returning) mappedRouteStops.push(returnStationStop('active'));
@@ -264,7 +312,7 @@ class TacticalStore {
         currentStopIndex: 0,
         status: returning
           ? 'EN RUTA'
-          : route.status === 'completed' ? 'COMPLETADA' : route.status === 'active' ? 'EN RUTA' : 'PENDIENTE',
+          : isCompleted ? 'COMPLETADA' : isStarted ? 'EN RUTA' : 'PENDIENTE',
         statusDate: route.statusDate,
         completedPointIds: [...completedStopIds],
         startTimestamp: isSameRouteDay ? current.route.startTimestamp : null,

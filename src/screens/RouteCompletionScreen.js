@@ -1,5 +1,6 @@
 import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
 import { escapeHtml } from '../utils/html.js';
+import { queueFieldAction } from '../services/fieldSync.js';
 
 export function renderRouteCompletionScreen(state) {
   const hasPhoto = Boolean(state.route.dashboardPhoto);
@@ -59,12 +60,11 @@ export function attachRouteCompletionEvents(container, store) {
 
     store.setScreen('dispatch');
     try {
-      const { markRouteCompleted } = await import('../services/supabase.js');
-      await markRouteCompleted(routeId);
+      await queueFieldAction('complete', { routeId });
       store.showToast(`Ruta ${routeId} finalizada correctamente.`);
     } catch (error) {
       store.showToast(
-        `La ruta ${routeId} se finalizó en este dispositivo, pero no se sincronizó: ${error.message}`,
+        `La ruta ${routeId} se finalizó en este dispositivo, pero no se pudo guardar para sincronizar: ${error.message}`,
         'info',
         8000
       );

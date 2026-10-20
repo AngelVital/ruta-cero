@@ -9,7 +9,8 @@ Plataforma operativa para coordinar las rutas urbanas de recolección de residuo
 - **Entrada:** `index.html` carga `src/main.js`.
 - **Arranque por modo:** `main.js` solo decide el modo (`entry`, `field` o `admin`) y carga con `import()` el código y el CSS de ese modo. El panel de administración, el lector de códigos (ZXing) y Supabase no se descargan en las pantallas que no los usan.
 - **Renderizado:** cada pantalla expone `renderX(state)`, que devuelve HTML, y `attachX(el, store)`, que monta sus eventos y puede devolver una función de limpieza (temporizadores, cámara). `src/fieldApp.js` es el shell del modo campo: elige la pantalla activa, ejecuta la limpieza de la anterior y vuelve a dibujar cuando cambia el estado.
-- **Estado:** `src/state/store.js` contiene un store inmutable en memoria: cada acción crea un estado nuevo y avisa a los suscriptores. Incluye los borradores de reporte por contenedor, para que una actualización de la ruta o la cámara no borre lo capturado. La configuración de rutas se comparte mediante `public.route_configurations` en Supabase y se mantiene en caché local.
+- **Estado:** `src/state/store.js` contiene un store inmutable: cada acción crea un estado nuevo y avisa a los suscriptores. Incluye los borradores de reporte por contenedor, para que una actualización de la ruta o la cámara no borre lo capturado. El avance del día se guarda en el dispositivo (`localStorage`) y se recupera al reabrir la app. La configuración de rutas se comparte mediante `public.route_configurations` en Supabase y se mantiene en caché local.
+- **Trabajo sin conexión:** `src/services/fieldSync.js` guarda en una cola del dispositivo el inicio de ruta, cada reporte y el cierre, y los envía a Supabase en orden cuando hay señal.
 - **Lógica de negocio:** `src/domain/` contiene funciones puras (validación de inspección y reportes, avance de rutas, resumen del día, CSV), sin acceso al DOM, cubiertas por las pruebas de `tests/`.
 - **UI:**
   - `src/components/`: medidores, controles y captura de fotos.
@@ -35,7 +36,16 @@ Abre `/?mode=field` o elige **Campo** en la pantalla inicial. El flujo sigue la 
 7. **Guardar y continuar:** guarda el reporte. El punto queda completado y el mapa activa el siguiente; al completar todos los contenedores de cualquier ruta, se agrega la estación de regreso y se muestran sus indicaciones en el mapa.
 8. **Finalizar la ruta:** al llegar a la estación, captura la evidencia fotográfica de regreso y confirma el cierre para volver a Despacho.
 
-El avance operativo de campo vive en el store en memoria del dispositivo. Los reportes se insertan en Supabase cuando está configurado; si no lo está, quedan registrados solo durante la sesión local. La evidencia fotográfica de cierre se conserva en el estado de la sesión; de la foto del odómetro solo se registra que fue tomada, la imagen todavía no se guarda. Los borradores de reporte se descartan al iniciar una nueva salida.
+### Sin conexión
+
+El APK funciona sin señal. El avance del día (despacho, inspección, puntos completados y borradores) se guarda en el teléfono y se recupera si la app se cierra; al día siguiente empieza de cero. Iniciar ruta, cada reporte y el cierre se guardan primero en una cola local y se envían a Supabase en orden al abrir la app, al recuperar la señal y cada 30 segundos. Mientras haya envíos pendientes, la parte superior de la pantalla muestra cuántos faltan.
+
+- Cada registro conserva la hora en que se hizo en el teléfono (no la de envío), así que un reporte sincronizado después cuenta para el día y la ruta correctos. El servidor no acepta horas futuras.
+- Cada reporte lleva un identificador generado en el teléfono; si un envío se repite, Supabase lo detecta como duplicado y no se registra dos veces.
+- Si Supabase rechaza un reporte (por ejemplo, porque falta ejecutar `schema.sql`), se queda en la cola y se reintenta; un inicio o cierre rechazado se descarta y se muestra el motivo.
+- Los pendientes se pierden si se borran los datos de la app o se desinstala antes de sincronizar. La evidencia fotográfica de regreso no se guarda en el teléfono: si la app se cierra antes de finalizar, se toma de nuevo.
+
+Sin Supabase configurado, los reportes quedan registrados solo en el dispositivo. La evidencia fotográfica de cierre se conserva en el estado de la sesión; de la foto del odómetro solo se registra que fue tomada, la imagen todavía no se guarda. Los borradores de reporte se descartan al iniciar una nueva salida.
 
 ## Flujo de administración
 
@@ -47,7 +57,7 @@ Abre `/?mode=admin` o elige **Administración** en la pantalla inicial. Se requi
 4. **Revisar visitas:** la tabla de puntos usa el reporte más reciente de cada contenedor para mostrar su última visita. Los reportes se sincronizan automáticamente; pulsa **Actualizar** para forzar una consulta.
 5. **Cerrar sesión:** usa **Cerrar sesión** en la barra superior para salir del panel.
 
-Las rutas se almacenan en `public.route_configurations`; las asignaciones por día, en `public.route_schedules`. El campo ya no permite elegir una ruta manualmente: usa la ruta asignada al día operativo de La Paz (`America/Mazatlan`) y no permite iniciar si no existe una. El panel descarga el historial completo una vez y después solo pide los reportes nuevos (por Realtime, cada 30 s o con **Actualizar**); al cerrar sesión se detienen esas sincronizaciones. La sesión de campo no se restaura al recargar la aplicación.
+Las rutas se almacenan en `public.route_configurations`; las asignaciones por día, en `public.route_schedules`. El campo ya no permite elegir una ruta manualmente: usa la ruta asignada al día operativo de La Paz (`America/Mazatlan`) y no permite iniciar si no existe una. El panel descarga el historial completo una vez y después solo pide los reportes nuevos (por Realtime, cada 30 s o con **Actualizar**); al cerrar sesión se detienen esas sincronizaciones. Los reportes que llegan tarde desde un teléfono sin señal se detectan por `received_at` (hora de llegada) y se muestran según su hora de captura (`created_at`).
 
 ## Requisitos
 
@@ -81,7 +91,7 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
 
 6. Reinicia Vite con `npm run dev`. Abre `http://localhost:5173/?mode=admin` e inicia sesión con esa cuenta. El panel carga los reportes de `public.container_reports` en páginas para mostrar el historial completo.
 
-En **Rutas configuradas**, crea o edita las rutas y sus puntos. En **Programar rutas**, usa el calendario para asignar una ruta a cada fecha; la ruta de hoy aparece automáticamente en despacho y el mapa de campo. Ejecuta de nuevo `supabase/schema.sql` para crear la tabla de calendario, actualizar las funciones RPC y habilitar las notificaciones Realtime de los reportes; las asignaciones anteriores se migran cuando es posible.
+En **Rutas configuradas**, crea o edita las rutas y sus puntos. En **Programar rutas**, usa el calendario para asignar una ruta a cada fecha; la ruta de hoy aparece automáticamente en despacho y el mapa de campo. Ejecuta de nuevo `supabase/schema.sql` para crear la tabla de calendario, actualizar las funciones RPC (que ahora aceptan la hora del dispositivo), agregar la columna `received_at` y habilitar las notificaciones Realtime de los reportes; las asignaciones anteriores se migran cuando es posible.
 
 La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Los reportes solo se pueden leer con una sesión cuya cuenta esté registrada en `admin_users`; la inserción de reportes anónimos sigue habilitada para pruebas. Las fotos se registran actualmente como datos de evidencia, no como archivos de imagen. Sin variables configuradas, la aplicación sigue funcionando en modo local.
 
@@ -96,6 +106,7 @@ Antes de guardar reportes, ejecuta `supabase/schema.sql` en el SQL Editor de ese
 ```bash
 npm run dev      # Servidor de desarrollo con recarga en caliente
 npm run build    # Genera la versión optimizada en dist/
+npm run build:android  # Compila solo el panel de campo y lo copia al proyecto Android
 npm run preview  # Sirve localmente la compilación de producción
 npm test         # Ejecuta las pruebas de tests/ con el runner de Node
 ```
@@ -106,6 +117,10 @@ Para probar la compilación de producción:
 npm run build
 npm run preview
 ```
+
+## APK de Android
+
+El APK contiene únicamente el panel de campo: `npm run build:android` compila con `vite build --mode android`, que abre siempre el modo campo y deja fuera del paquete la pantalla inicial y el panel de administración. Después de ejecutarlo, genera el APK desde Android Studio (`npx cap open android`). No uses `npm run build` + `npx cap sync` para el APK, porque esa compilación incluye el panel de administración.
 
 ## Estructura principal
 

@@ -333,6 +333,20 @@
 
 .hud-toast .material-symbols-outlined { color: #00a86b; }
 
+/* Pending offline sync banner (fieldApp.js) */
+.sync-status {
+  padding: 6px 16px;
+  background-color: #0f172a;
+  color: var(--color-cap-warning);
+  font-family: var(--font-headline);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.sync-status[hidden] { display: none; }
+
 @media (max-width: 420px) {
   .hud-canvas {
     padding: 8px;
