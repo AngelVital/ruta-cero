@@ -347,6 +347,23 @@
 
 .sync-status[hidden] { display: none; }
 
+/* APK (npm run build:android): the app uses the whole screen, below the system bars. */
+.is-native-app .hud-canvas {
+  padding: 0;
+  background: #f6f9f6;
+}
+
+.is-native-app .mobile-chassis {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
 @media (max-width: 420px) {
   .hud-canvas {
     padding: 8px;
