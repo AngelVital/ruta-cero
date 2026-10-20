@@ -1,0 +1,146 @@
+/**
+ * Ruta Cero • Aplicación de campo
+ * Shell móvil, selección de pantalla y sincronización de la ruta programada.
+ */
+
+import { store } from './state/store.js';
+import {
+  getOperationalDate,
+  getScheduledRoute,
+  routesStorageKey,
+  saveConfiguredRoutes
+} from './services/routeConfiguration.js';
+import { renderDispatchScreen, attachDispatchScreenEvents } from './screens/DispatchScreen.js';
+import { renderInspection360Screen, attachInspection360Events } from './screens/Inspection360Screen.js';
+import { renderFuelLevelScreen, attachFuelLevelEvents } from './screens/FuelLevelScreen.js';
+import { renderRouteMapScreen, attachRouteMapEvents } from './screens/RouteMapScreen.js';
+import { renderRouteCompletionScreen, attachRouteCompletionEvents } from './screens/RouteCompletionScreen.js';
+import { renderQRScannerScreen, attachQRScannerEvents } from './screens/QRScannerScreen.js';
+import { renderContainerReportScreen, attachContainerReportEvents } from './screens/ContainerReportScreen.js';
+
+const screens = {
+  dispatch: [renderDispatchScreen, attachDispatchScreenEvents],
+  inspection: [renderInspection360Screen, attachInspection360Events],
+  fuel: [renderFuelLevelScreen, attachFuelLevelEvents],
+  map: [renderRouteMapScreen, attachRouteMapEvents],
+  'route-completion': [renderRouteCompletionScreen, attachRouteCompletionEvents],
+  scanner: [renderQRScannerScreen, attachQRScannerEvents],
+  report: [renderContainerReportScreen, attachContainerReportEvents]
+};
+
+async function refreshFieldRouteConfiguration() {
+  store.applyConfiguredRoute(getScheduledRoute());
+  try {
+    const { fetchRouteConfigurations } = await import('./services/supabase.js');
+    const routes = await fetchRouteConfigurations();
+    if (routes.length === 0) return;
+
+    saveConfiguredRoutes(routes);
+    store.applyConfiguredRoute(routes.find((route) => route.scheduledDates?.includes(getOperationalDate())) || null);
+  } catch {
+    // The local route cache remains available while Supabase is offline or unconfigured.
+  }
+}
+
+function renderToast(state) {
+  const toastRoot = document.getElementById('toast-root');
+  if (!toastRoot) {
+    return;
+  }
+
+  toastRoot.innerHTML = state.toast ? `
+    <div class="hud-toast">
+      <span class="material-symbols-outlined">
+        ${state.toast.type === 'info' ? 'info' : 'check_circle'}
+      </span>
+      <span class="hud-toast-message"></span>
+    </div>
+  ` : '';
+  // Messages can include Supabase error text, so they are inserted as text, never as HTML.
+  const messageEl = toastRoot.querySelector('.hud-toast-message');
+  if (messageEl) messageEl.textContent = state.toast.message;
+}
+
+export function startFieldApp(appEl) {
+  // Track the last rendered screen to detect navigation vs. in-screen re-renders
+  let previousScreen = null;
+  // Cleanup returned by the active screen's attach function (camera, timers, global listeners)
+  let cleanupScreen = null;
+
+  function renderApp() {
+    const state = store.state;
+    const oldViewport = document.getElementById('screen-viewport-root');
+    const screenChanged = previousScreen !== null && previousScreen !== state.currentScreen;
+    const savedScrollTop = (!screenChanged && oldViewport) ? oldViewport.scrollTop : 0;
+
+    cleanupScreen?.();
+    cleanupScreen = null;
+
+    // The old viewport is discarded on every render, so release any camera it still holds.
+    if (oldViewport) {
+      oldViewport.querySelectorAll('video').forEach((video) => {
+        video.pause();
+        video.srcObject?.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+      });
+    }
+
+    previousScreen = state.currentScreen;
+    const screenTransition = store.consumeScreenTransition();
+
+    const [renderScreen, attachEvents] = screens[state.currentScreen] || screens.dispatch;
+
+    // Master Shell Layout
+    appEl.innerHTML = `
+      <div class="hud-canvas">
+        <div class="mobile-chassis" id="main-mobile-chassis">
+          <main class="screen-viewport${screenTransition === 'slide-left' ? ' screen-transition-slide-left' : ''}" id="screen-viewport-root">
+            ${renderScreen(state)}
+          </main>
+
+          <div id="toast-root"></div>
+        </div>
+      </div>
+    `;
+
+    renderToast(state);
+
+    const viewport = document.getElementById('screen-viewport-root');
+    if (viewport) {
+      const cleanup = attachEvents(viewport, store);
+      cleanupScreen = typeof cleanup === 'function' ? cleanup : null;
+    }
+
+    // Restore scroll position if previously saved
+    if (viewport && savedScrollTop) {
+      viewport.scrollTop = savedScrollTop;
+    }
+  }
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === routesStorageKey || event.key === null) {
+      store.applyConfiguredRoute(getScheduledRoute());
+    }
+  });
+  window.addEventListener('focus', refreshFieldRouteConfiguration);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshFieldRouteConfiguration();
+  });
+
+  import('./services/supabase.js').then(({ subscribeToRouteConfigurations }) => {
+    subscribeToRouteConfigurations(refreshFieldRouteConfiguration);
+  }).catch(() => {});
+  refreshFieldRouteConfiguration();
+
+  renderApp();
+
+  // Subscribe to store updates for reactive re-render
+  store.subscribe((state, changeType) => {
+    if (changeType === 'toast') {
+      renderToast(state);
+      return;
+    }
+
+    renderApp();
+  });
+}

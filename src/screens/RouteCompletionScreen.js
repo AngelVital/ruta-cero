@@ -1,13 +1,5 @@
 import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+import { escapeHtml } from '../utils/html.js';
 
 export function renderRouteCompletionScreen(state) {
   const hasPhoto = Boolean(state.route.dashboardPhoto);
@@ -15,18 +7,18 @@ export function renderRouteCompletionScreen(state) {
   return `
     <div class="screen-header-bar">
       <div class="screen-header-title">
-        <span class="material-symbols-outlined" style="color: var(--color-primary);">flag</span>
+        <span class="material-symbols-outlined">flag</span>
         <span>CIERRE DE RUTA · ${escapeHtml(state.route.id)}</span>
       </div>
       <button type="button" class="btn-tactical btn-tactical-sm" id="btn-back-to-route-map">VOLVER AL MAPA</button>
     </div>
 
-    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
-      <section class="card-tactical card-tactical-accent" style="padding: 16px;">
-        <span class="font-label-sm" style="color: #64748b;">ESTACIÓN DE REGRESO</span>
-        <h2 class="font-headline-sm" style="color: #0f172a; margin: 6px 0;">${escapeHtml(state.stops.find((stop) => stop.type === 'return-station')?.code || 'ESTACIÓN DE REGRESO')}</h2>
-        <p class="font-body-sm" style="color: #475569; margin: 0;">${escapeHtml(state.stops.find((stop) => stop.type === 'return-station')?.address || '')}</p>
-        <p class="font-body-sm" style="color: #475569;">Confirma el regreso y captura la evidencia fotográfica del tablero para finalizar ${escapeHtml(state.route.id)} · ${escapeHtml(state.route.name)}.</p>
+    <div class="screen-body">
+      <section class="card-tactical card-tactical-accent completion-card">
+        <span class="font-label-sm text-muted">ESTACIÓN DE REGRESO</span>
+        <h2 class="font-headline-sm text-ink completion-station">${escapeHtml(state.stops.find((stop) => stop.type === 'return-station')?.code || 'ESTACIÓN DE REGRESO')}</h2>
+        <p class="font-body-sm text-soft completion-address">${escapeHtml(state.stops.find((stop) => stop.type === 'return-station')?.address || '')}</p>
+        <p class="font-body-sm text-soft">Confirma el regreso y captura la evidencia fotográfica del tablero para finalizar ${escapeHtml(state.route.id)} · ${escapeHtml(state.route.name)}.</p>
       </section>
 
       <button type="button" class="btn-tactical" id="btn-capture-route-photo" aria-pressed="${hasPhoto}">
@@ -35,7 +27,7 @@ export function renderRouteCompletionScreen(state) {
       </button>
 
       ${hasPhoto ? `
-        <img src="${state.route.dashboardPhoto}" alt="Evidencia fotográfica de regreso a estación" style="width: 100%; max-height: 280px; object-fit: contain; background: #0f172a;" />
+        <img src="${state.route.dashboardPhoto}" alt="Evidencia fotográfica de regreso a estación" class="completion-photo" />
       ` : ''}
 
       <button type="button" class="btn-tactical btn-tactical-primary" id="btn-confirm-route-completion" ${hasPhoto ? '' : 'disabled'}>

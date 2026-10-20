@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { getOperationalDate, getRouteForDate } from './routeConfiguration.js';
+import { formatClockTime } from '../utils/format.js';
 
 const environment = import.meta.env || {};
 const supabaseUrl = environment.VITE_SUPABASE_URL;
@@ -44,16 +45,22 @@ export async function isCurrentUserAdmin() {
   return Boolean(data);
 }
 
-export async function fetchAdminContainerReports() {
+/**
+ * Loads container reports, newest first. With `since`, only reports created at or after
+ * that ISO timestamp are returned, so automatic refreshes don't download the whole history.
+ */
+export async function fetchAdminContainerReports({ since = null } = {}) {
   const client = requireSupabase();
   const pageSize = 1000;
   const reports = [];
   let from = 0;
 
   while (true) {
-    const { data, error } = await client
+    let query = client
       .from('container_reports')
-      .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at')
+      .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at');
+    if (since) query = query.gte('created_at', since);
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
@@ -103,13 +110,7 @@ export async function fetchRouteConfigurations() {
       completedPointIds: todaysSchedule?.completed_point_ids || [],
       stopsDone: todaysSchedule?.stops_done || 0,
       stopsTotal: (route.point_ids || []).length,
-      lastUpdate: todaysSchedule?.started_at
-        ? new Date(todaysSchedule.started_at).toLocaleTimeString('es-MX', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        })
-        : '--:--',
+      lastUpdate: todaysSchedule?.started_at ? formatClockTime(todaysSchedule.started_at) : '--:--',
       startedAt: todaysSchedule?.started_at || null,
       completedAt: todaysSchedule?.completed_at || null,
       status,

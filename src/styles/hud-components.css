@@ -118,6 +118,20 @@
   gap: 6px;
 }
 
+.capacity-meter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+
+.capacity-meter-label { color: #475569; }
+
+.capacity-level-display { font-weight: 800; }
+.capacity-level-display.is-optimal { color: var(--color-cap-optimal); }
+.capacity-level-display.is-warning { color: var(--color-cap-warning); }
+.capacity-level-display.is-critical { color: var(--color-cap-critical); }
+
 .capacity-blocks {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -187,6 +201,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.stepper-value-input {
+  width: 82px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  text-align: center;
+  font: inherit;
+  color: inherit;
+}
+
+.stepper-unit {
+  font-size: 14px;
+  margin-left: 4px;
+  color: #64748b;
 }
 
 /* QR Scanner Viewfinder & Laser */
@@ -300,14 +331,7 @@
   border-radius: var(--radius-sm);
 }
 
-.screen-viewport [style*="border: 2px solid #0f172a"] {
-  border: 1px solid #d5e0d8 !important;
-  border-radius: var(--radius-sm);
-}
-
-.screen-viewport [style*="border-bottom: 2px solid #0f172a"] {
-  border-bottom: 1px solid #dce6de !important;
-}
+.hud-toast .material-symbols-outlined { color: #00a86b; }
 
 @media (max-width: 420px) {
   .hud-canvas {

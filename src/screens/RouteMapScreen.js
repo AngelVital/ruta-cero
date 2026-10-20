@@ -2,27 +2,11 @@
  * Pantalla 4: Mapa de Ruta Programada R-04
  */
 
+import { formatElapsedTime } from '../utils/format.js';
+import { escapeHtml } from '../utils/html.js';
+
 function formatElapsedRouteTime(startTimestamp) {
-  if (!startTimestamp) {
-    return '0 MIN';
-  }
-
-  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - startTimestamp) / 60000));
-  const elapsedHours = Math.floor(elapsedMinutes / 60);
-  const remainingMinutes = elapsedMinutes % 60;
-
-  return elapsedHours > 0
-    ? `${elapsedHours} H ${String(remainingMinutes).padStart(2, '0')} MIN`
-    : `${elapsedMinutes} MIN`;
-}
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+  return startTimestamp ? formatElapsedTime(startTimestamp).toUpperCase() : '0 MIN';
 }
 
 export function renderRouteMapScreen(state) {
@@ -41,11 +25,11 @@ export function renderRouteMapScreen(state) {
   return `
     <div class="screen-header-bar">
       <div class="screen-header-title">
-        <span class="material-symbols-outlined" style="color: var(--color-primary);">alt_route</span>
+        <span class="material-symbols-outlined">alt_route</span>
         <span>MAPA DE RUTA · ${escapeHtml(state.route.id)} ${escapeHtml(state.route.name)}</span>
       </div>
-      <div style="display: flex; gap: 6px; align-items: center;">
-        <span class="status-pill status-pill-optimal" style="font-size: 11px;">
+      <div class="header-actions">
+        <span class="status-pill status-pill-optimal status-pill-xs">
           ${state.route.completedCount}/${state.stops.length} HECHO
         </span>
       </div>
@@ -60,81 +44,68 @@ export function renderRouteMapScreen(state) {
       ></iframe>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 16px; background-color: #ffffff; border-bottom: 2px solid #0f172a;">
-      <div class="font-headline-sm" style="color: #0f172a; min-width: 0;">${activeStop.id} • ${activeStop.code}</div>
-      <div style="display: flex; gap: 6px;">
-        <a class="btn-tactical btn-tactical-sm btn-tactical-primary" href="${directionsUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
-          <span class="material-symbols-outlined" style="font-size: 16px;">directions</span>
+    <div class="route-active-bar">
+      <div class="font-headline-sm text-ink route-active-title">${activeStop.id} • ${activeStop.code}</div>
+      <div class="route-active-actions">
+        <a class="btn-tactical btn-tactical-sm btn-tactical-primary route-directions-link" href="${directionsUrl}" target="_blank" rel="noopener noreferrer">
+          <span class="material-symbols-outlined icon-16">directions</span>
           <span>CÓMO LLEGAR</span>
         </a>
       </div>
     </div>
 
     <!-- Live route telemetry -->
-    <div style="background-color: #0f172a; color: #ffffff; padding: 10px 16px; border-bottom: 2px solid #00a86b; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;">
+    <div class="route-telemetry">
       <div>
-        <span class="font-label-sm" style="color: #64748b; font-size: 11px; display: block;">SIGUIENTE PUNTO</span>
-        <strong class="font-headline-sm" style="color: #38bdf8; font-size: 15px;">${activeStop.id}</strong>
+        <span class="font-label-sm route-telemetry-label">SIGUIENTE PUNTO</span>
+        <strong class="font-headline-sm route-telemetry-value is-next">${activeStop.id}</strong>
       </div>
-      <div style="border-left: 1px solid #1e293b; border-right: 1px solid #1e293b;">
-        <span class="font-label-sm" style="color: #64748b; font-size: 11px; display: block;">PUNTOS REGISTRADOS</span>
-        <strong class="font-headline-sm" style="color: #4ade80; font-size: 15px;">${routeProgress}</strong>
+      <div class="route-telemetry-mid">
+        <span class="font-label-sm route-telemetry-label">PUNTOS REGISTRADOS</span>
+        <strong class="font-headline-sm route-telemetry-value is-progress">${routeProgress}</strong>
       </div>
       <div>
-        <span class="font-label-sm" style="color: #64748b; font-size: 11px; display: block;">TIEMPO EN RUTA</span>
-        <strong id="route-time-in-route" class="font-headline-sm" style="color: #fbbf24; font-size: 15px;">${formatElapsedRouteTime(state.route.startTimestamp)}</strong>
+        <span class="font-label-sm route-telemetry-label">TIEMPO EN RUTA</span>
+        <strong id="route-time-in-route" class="font-headline-sm route-telemetry-value is-time">${formatElapsedRouteTime(state.route.startTimestamp)}</strong>
       </div>
     </div>
 
-    <!-- Scheduled Waypoint List Header & Filters -->
-    <div style="padding: 12px 16px 6px 16px; background-color: #ffffff; border-bottom: 2px solid #0f172a; display: flex; justify-content: space-between; align-items: center;">
-      <h2 class="font-headline-sm" style="margin: 0;">PUNTOS PROGRAMADOS (${state.stops.length})</h2>
+    <!-- Scheduled Waypoint List Header -->
+    <div class="route-stops-head">
+      <h2 class="font-headline-sm">PUNTOS PROGRAMADOS (${state.stops.length})</h2>
     </div>
 
     <!-- Stops Scrollable Cards -->
-    <div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 10px; background-color: #f1f5f9; flex: 1;">
+    <div class="route-stops">
       ${state.stops.map((stop, index) => {
         const isCompleted = stop.status === 'completed';
         const isActive = stop.status === 'active';
-        
-        let statusBadge = `<span class="status-pill" style="background-color: #94a3b8; color: #ffffff; font-size: 11px;">PENDIENTE</span>`;
+
+        let statusBadge = '<span class="status-pill status-pill-xs status-pill-pending">PENDIENTE</span>';
         if (isCompleted) {
-          statusBadge = `<span class="status-pill status-pill-optimal" style="font-size: 11px;"><span class="material-symbols-outlined" style="font-size: 14px;">check</span>COMPLETADO</span>`;
+          statusBadge = '<span class="status-pill status-pill-optimal status-pill-xs"><span class="material-symbols-outlined">check</span>COMPLETADO</span>';
         } else if (isActive) {
-          statusBadge = `<span class="status-pill status-pill-warning" style="font-size: 11px;"><span class="material-symbols-outlined" style="font-size: 14px;">near_me</span>EN CURSO</span>`;
+          statusBadge = '<span class="status-pill status-pill-warning status-pill-xs"><span class="material-symbols-outlined">near_me</span>EN CURSO</span>';
         }
 
         return `
-          <div 
-            class="card-tactical stop-item-card" 
-            style="cursor: pointer; ${stop.id === activeStop.id ? 'border-color: #0284c7; box-shadow: 4px 4px 0px #0284c7;' : ''}"
-            data-container-id="${stop.id}"
-          >
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
-              <div style="display: flex; align-items: flex-start; gap: 8px; flex: 1; min-width: 0;">
-                <span class="material-symbols-outlined" title="Ver ubicación en el mapa" aria-label="Ver ubicación en el mapa" style="color: #0284c7; font-size: 22px; flex-shrink: 0;">location_on</span>
-                <span class="font-headline-sm" style="color: #0f172a; font-size: 17px;">[${String(index + 1).padStart(2, '0')}] ${stop.id} • ${stop.code}</span>
+          <div class="card-tactical stop-item-card${stop.id === activeStop.id ? ' is-current' : ''}" data-container-id="${stop.id}">
+            <div class="stop-card-head">
+              <div class="stop-card-title">
+                <span class="material-symbols-outlined stop-card-pin" title="Ver ubicación en el mapa" aria-label="Ver ubicación en el mapa">location_on</span>
+                <span class="font-headline-sm text-ink stop-card-name">[${String(index + 1).padStart(2, '0')}] ${stop.id} • ${stop.code}</span>
               </div>
-              <div style="flex-shrink: 0;">${statusBadge}</div>
+              <div class="stop-card-status">${statusBadge}</div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px solid #e2e8f0; margin-top: 4px;">
-            <p class="font-body-sm" style="color: #475569; font-size: 13px; margin-top: 2px;">${stop.address}</p>
+            <div class="stop-card-foot">
+              <p class="font-body-sm stop-card-address">${stop.address}</p>
               ${isActive && isReturnStation ? `
-                <button
-                  type="button"
-                  class="btn-tactical btn-tactical-sm btn-tactical-primary btn-finish-route"
-                  style="padding: 0 10px; height: 36px; font-size: 12px;"
-                >
+                <button type="button" class="btn-tactical btn-tactical-sm btn-tactical-primary btn-finish-route stop-card-action">
                   FINALIZAR RUTA
                 </button>
               ` : isActive ? `
-                <button
-                  type="button"
-                  class="btn-tactical btn-tactical-sm btn-scan-stop"
-                  data-container-id="${stop.id}"
-                  style="padding: 0 10px; height: 36px; font-size: 12px;"
-                >
+                <button type="button" class="btn-tactical btn-tactical-sm btn-scan-stop stop-card-action" data-container-id="${stop.id}">
                   ESCANEAR QR
                 </button>
               ` : ''}
@@ -188,4 +159,5 @@ export function attachRouteMapEvents(container, store) {
     store.setScreen('route-completion');
   });
 
+  return () => clearInterval(timerId);
 }

@@ -1,14 +1,10 @@
 /**
  * Pantalla 1: Despacho • Inicio de Ruta
  */
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+import { getFuelPercent } from '../data/fuel.js';
+import { getInspectionProgress } from '../domain/inspection.js';
+import { formatClockTime } from '../utils/format.js';
+import { escapeHtml } from '../utils/html.js';
 
 function addHoursToTime(timeStr, hoursToAdd) {
   const [hours, minutes] = timeStr.split(':').map(Number);
@@ -25,145 +21,134 @@ function renderAssignmentOptions(options, selectedId) {
 }
 
 export function renderDispatchScreen(state) {
-
   const now = new Date();
-  const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const timeStr = formatClockTime(now);
   const arrivalTimeStr = addHoursToTime(timeStr, 4);
+  const hasFuel = Boolean(state.fuelLevel.preset);
+  const fuelPercent = getFuelPercent(state.fuelLevel.liters);
+  const inspectionDone = state.inspection360.completed;
+  const { total, filled: reviewed } = getInspectionProgress(state.inspection360, state.inspectionComments);
+  const fuelSegments = [0, 25, 50, 75].map((threshold) => (
+    `<div class="fuel-segment${hasFuel && fuelPercent >= threshold + 1 ? ' is-filled' : ''}"></div>`
+  )).join('');
+
   return `
     <div class="screen-header-bar">
       <div class="screen-header-title">
-        <span class="material-symbols-outlined" style="color: var(--color-primary);">local_shipping</span>
+        <span class="material-symbols-outlined">local_shipping</span>
         <span>DESPACHO • INICIO DE RUTA</span>
       </div>
-      <div class="status-pill status-pill-optimal" style="font-size: 11px;">
-        <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
+      <div class="status-pill status-pill-optimal status-pill-xs">
+        <span class="material-symbols-outlined">check_circle</span>
         PRE-OPERATIVO
       </div>
     </div>
 
-    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+    <div class="screen-body">
       <!-- Rapid Diagnostic Badges -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="card-tactical" id="btn-goto-fuel" style="cursor: pointer; padding: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <span class="material-symbols-outlined" style="font-size: 18px; color: ${state.fuelLevel.preset ? 'var(--color-primary)' : '#94a3b8'};">local_gas_station</span>
-              <span class="font-label-sm" style="color: #64748b;">COMBUSTIBLE</span>
+      <div class="dispatch-diagnostics">
+        <div class="card-tactical dispatch-tile" id="btn-goto-fuel">
+          <div class="dispatch-tile-head">
+            <div class="dispatch-tile-title">
+              <span class="material-symbols-outlined icon-18 ${hasFuel ? 'text-primary' : 'text-faint'}">local_gas_station</span>
+              <span class="font-label-sm text-muted">COMBUSTIBLE</span>
             </div>
-            <span class="font-label-sm" style="color: var(--color-primary); font-weight: 800;">VER &gt;</span>
+            <span class="font-label-sm text-primary fw-800">VER &gt;</span>
           </div>
-          <div style="margin-top: 8px;">
-            ${state.fuelLevel.preset ? `
-              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div class="dispatch-tile-body">
+            ${hasFuel ? `
+              <div class="dispatch-fuel-readout">
                 <span class="font-headline-sm">${state.fuelLevel.liters} L</span>
-                <span class="font-label-sm" style="color: #64748b;">${Math.round(state.fuelLevel.liters / 250 * 100)}%</span>
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; height: 8px; margin-top: 6px;">
-                ${[0, 25, 50, 75].map(threshold => {
-                  const pct = state.fuelLevel.liters / 250 * 100;
-                  const filled = pct >= threshold + 1;
-                  return `<div style="background-color: ${filled ? '#00a86b' : '#cbd5e1'}; border: 1px solid #0f172a;"></div>`;
-                }).join('')}
+                <span class="font-label-sm text-muted">${Math.round(fuelPercent)}%</span>
               </div>
             ` : `
-              <span class="font-headline-sm" style="color: #94a3b8;">PENDIENTE</span>
-              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; height: 8px; margin-top: 6px;">
-                <div style="background-color: #cbd5e1; border: 1px solid #0f172a;"></div>
-                <div style="background-color: #cbd5e1; border: 1px solid #0f172a;"></div>
-                <div style="background-color: #cbd5e1; border: 1px solid #0f172a;"></div>
-                <div style="background-color: #cbd5e1; border: 1px solid #0f172a;"></div>
-              </div>
+              <span class="font-headline-sm text-faint">PENDIENTE</span>
             `}
+            <div class="fuel-segments">${fuelSegments}</div>
           </div>
         </div>
 
-        <div class="card-tactical" id="btn-goto-inspection" style="cursor: pointer; padding: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="font-label-sm" style="color: #64748b;">INSPECCIÓN 360°</span>
-            <span class="material-symbols-outlined" style="font-size: 18px; color: ${state.inspection360.completed ? 'var(--color-primary)' : '#94a3b8'};">
-              ${state.inspection360.completed ? 'verified' : 'pending'}
+        <div class="card-tactical dispatch-tile" id="btn-goto-inspection">
+          <div class="dispatch-tile-head">
+            <span class="font-label-sm text-muted">INSPECCIÓN 360°</span>
+            <span class="material-symbols-outlined icon-18 ${inspectionDone ? 'text-primary' : 'text-faint'}">
+              ${inspectionDone ? 'verified' : 'pending'}
             </span>
           </div>
-          <div style="margin-top: 8px;">
-            ${(() => {
-              const total = 9;
-              const reviewed = Object.values(state.inspection360).filter(v => v !== null && v !== false && typeof v === 'string').length;
-              return `
-                <span class="font-headline-sm" style="color: ${state.inspection360.completed ? 'var(--color-primary)' : '#64748b'};">
-                  ${state.inspection360.completed ? 'COMPLETO' : 'PENDIENTE'}
-                </span>
-                <p class="font-label-sm" style="color: #64748b; margin-top: 4px;">${reviewed} / ${total} PUNTOS REVISADOS</p>
-              `;
-            })()}
+          <div class="dispatch-tile-body">
+            <span class="font-headline-sm ${inspectionDone ? 'text-primary' : 'text-muted'}">
+              ${inspectionDone ? 'COMPLETO' : 'PENDIENTE'}
+            </span>
+            <p class="font-label-sm text-muted dispatch-tile-note">${reviewed} / ${total} PUNTOS REVISADOS</p>
           </div>
         </div>
       </div>
 
       <!-- Main Assignment Form -->
-      <div class="card-tactical" style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
-        <div style="border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
-          <h2 class="font-headline-sm" style="color: #0f172a;">DATOS DE ASIGNACIÓN TÁCTICA</h2>
+      <div class="card-tactical dispatch-form">
+        <div class="dispatch-form-head">
+          <h2 class="font-headline-sm text-ink">DATOS DE ASIGNACIÓN TÁCTICA</h2>
         </div>
 
         <div>
-          <label class="font-label-sm" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <label class="font-label-sm dispatch-field-label" for="select-unit">
             <span>1. NO. DE UNIDAD (CAMIÓN)</span>
           </label>
-          <select class="input-tactical" id="select-unit" style="font-weight: 700;">
+          <select class="input-tactical fw-700" id="select-unit">
             ${renderAssignmentOptions(state.dispatchOptions.units, state.assignment.unitId)}
           </select>
         </div>
 
         <div>
-          <label class="font-label-sm" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <label class="font-label-sm dispatch-field-label" for="select-driver">
             <span>2. OPERADOR / CHOFER TITULAR</span>
           </label>
-          <select class="input-tactical" id="select-driver" style="font-weight: 700;">
+          <select class="input-tactical fw-700" id="select-driver">
             ${renderAssignmentOptions(state.dispatchOptions.drivers, state.assignment.driverId)}
           </select>
         </div>
 
         <div>
-          <label class="font-label-sm" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <label class="font-label-sm dispatch-field-label" for="select-assistant">
             <span>3. AUXILIAR</span>
           </label>
-          <select class="input-tactical" id="select-assistant" style="font-weight: 700;">
+          <select class="input-tactical fw-700" id="select-assistant">
             ${renderAssignmentOptions(state.dispatchOptions.assistants, state.assignment.assistantId)}
           </select>
         </div>
 
         <!-- Ruta programada -->
         <div>
-          <div class="font-label-sm" style="display: block; margin-bottom: 4px;">RUTA PROGRAMADA PARA HOY</div>
-          <div class="input-tactical" aria-live="polite" style="font-weight: 700; ${state.route.id ? '' : 'color: #b45309;'}">
+          <div class="font-label-sm field-caption">RUTA PROGRAMADA PARA HOY</div>
+          <div class="input-tactical fw-700${state.route.id ? '' : ' dispatch-route-missing'}" aria-live="polite">
             ${state.route.id ? `${escapeHtml(state.route.id)} · ${escapeHtml(state.route.name)}` : 'SIN RUTA PROGRAMADA'}
           </div>
-          <div class="font-label-sm" style="color: #64748b; margin-top: 5px;">
+          <div class="font-label-sm text-muted dispatch-route-note">
             ${state.route.id ? `${state.route.totalStops} PARADAS A REALIZAR` : 'Solicita a administración que programe una ruta para hoy.'}
           </div>
         </div>
 
         <!-- Time Blocks -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="dispatch-times">
           <div>
-            <label class="font-label-sm" style="color: #475569; margin-bottom: 4px; display: block;">HORA SALIDA</label>
-            <div style="border: 2px solid #0f172a; padding: 10px; background-color: #ffffff; font-family: var(--font-headline); font-size: 18px; font-weight: 800; display: flex; justify-content: space-between;">
+            <span class="font-label-sm text-soft field-caption">HORA SALIDA</span>
+            <div class="dispatch-time">
               <span>${timeStr}</span>
-              <span class="material-symbols-outlined" style="font-size: 18px; color: #64748b;">schedule</span>
+              <span class="material-symbols-outlined icon-18 text-muted">schedule</span>
             </div>
           </div>
           <div>
-            <label class="font-label-sm" style="color: #475569; margin-bottom: 4px; display: block;">LLEGADA EST.</label>
-            <div style="border: 2px solid #0f172a; padding: 10px; background-color: #ffffff; font-family: var(--font-headline); font-size: 18px; font-weight: 800; display: flex; justify-content: space-between;">
+            <span class="font-label-sm text-soft field-caption">LLEGADA EST.</span>
+            <div class="dispatch-time">
               <span>${arrivalTimeStr}</span>
-              <span class="material-symbols-outlined" style="font-size: 18px; color: #64748b;">schedule</span>
+              <span class="material-symbols-outlined icon-18 text-muted">schedule</span>
             </div>
           </div>
         </div>
 
         <!-- Master Dispatch Action -->
-        <button type="button" class="btn-tactical btn-tactical-primary" id="btn-start-route" style="margin-top: 6px;" ${state.route.id ? '' : 'disabled'}>
-          <span class="material-symbols-outlined" style="font-size: 24px;">play_arrow</span>
+        <button type="button" class="btn-tactical btn-tactical-primary dispatch-start" id="btn-start-route" ${state.route.id ? '' : 'disabled'}>
+          <span class="material-symbols-outlined icon-24">play_arrow</span>
           <span>INICIAR RUTA Y MONITOREO</span>
         </button>
       </div>

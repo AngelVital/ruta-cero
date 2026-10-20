@@ -4,7 +4,10 @@ import { assignRouteToDate, createRouteId, getConfiguredRoutes, getOperationalDa
 import { renderDispatchScreen } from '../src/screens/DispatchScreen.js';
 import { renderRouteMapScreen } from '../src/screens/RouteMapScreen.js';
 import { renderRouteCompletionScreen } from '../src/screens/RouteCompletionScreen.js';
-import { applyReportProgress, formatElapsedRouteTime, renderRouteScheduleCalendar, renderRouteTable } from '../src/screens/AdminDashboard.js';
+import { renderRouteScheduleCalendar } from '../src/screens/admin/ScheduleCalendar.js';
+import { renderRouteTable } from '../src/screens/admin/RouteTable.js';
+import { applyReportProgress } from '../src/domain/route.js';
+import { formatElapsedTime as formatElapsedRouteTime } from '../src/utils/format.js';
 import { store } from '../src/state/store.js';
 
 function createMemoryStorage() {
@@ -82,7 +85,7 @@ test('la ruta programada para hoy aparece automáticamente en despacho y mapa', 
     assert.equal(store.startRoute(), route.id);
     assert.equal(store.state.route.status, 'EN RUTA');
     const startedAt = store.state.route.startTimestamp;
-    store.applyConfiguredRoute({ ...route, status: 'active' });
+    store.applyConfiguredRoute({ ...route, status: 'active', statusDate: getOperationalDate() });
     assert.equal(store.state.route.startTimestamp, startedAt);
 
     store.completeContainerReport('CONT-06', { fillLevel: 'low', collectedKg: 0 });
@@ -144,10 +147,12 @@ test('todas las rutas existentes y nuevas regresan a estación y permiten finali
       assert.match(routeMap, /FINALIZAR RUTA/, route.id);
       assert.match(routeMap, /24\.106111%2C-110\.344054/, route.id);
 
+      // A server refresh with every point reported keeps the unit heading to the station.
       store.applyConfiguredRoute({
         ...route,
         stopsDone: route.pointIds.length,
-        status: 'completed'
+        completedPointIds: route.pointIds,
+        status: 'active'
       }, false);
       assert.equal(store.state.route.returning, true, route.id);
       assert.equal(store.state.route.status, 'EN RUTA', route.id);
@@ -157,6 +162,17 @@ test('todas las rutas existentes y nuevas regresan a estación y permiten finali
       assert.match(renderRouteCompletionScreen(store.state), /FINALIZAR RUTA/, route.id);
       assert.equal(store.completeRoute(), true, route.id);
       assert.equal(store.state.route.status, 'COMPLETADA', route.id);
+
+      // Once the server reports the route as completed it stays closed, without a return leg.
+      store.applyConfiguredRoute({
+        ...route,
+        stopsDone: route.pointIds.length,
+        completedPointIds: route.pointIds,
+        status: 'completed'
+      }, false);
+      assert.equal(store.state.route.returning, false, route.id);
+      assert.equal(store.state.route.status, 'COMPLETADA', route.id);
+      assert.equal(store.state.stops.some((stop) => stop.type === 'return-station'), false, route.id);
     }
   } finally {
     store.setDashboardPhoto(null);
@@ -169,6 +185,7 @@ test('los reportes previos actualizan el avance por puntos únicos de cada ruta'
     id: 'R-01',
     zone: 'Centro Histórico',
     pointIds: ['CONT-01', 'CONT-02'],
+    scheduledDates: ['2026-10-08'],
     stopsDone: 0,
     stopsTotal: 2,
     lastUpdate: '--:--',
@@ -187,11 +204,11 @@ test('los reportes previos actualizan el avance por puntos únicos de cada ruta'
     route_id: 'R-02',
     container_id: 'CONT-02',
     created_at: '2026-10-08T12:00:00.000Z'
-  }]);
+  }], '2026-10-08');
 
   assert.equal(route.stopsDone, 1);
   assert.equal(route.status, 'active');
-  assert.equal(route.statusLabel, 'En ruta');
+  assert.equal(route.statusLabel, 'En curso');
   assert.equal(route.lastUpdate, new Date('2026-10-08T11:00:00.000Z').toLocaleTimeString('es-MX', {
     hour: '2-digit', minute: '2-digit', hour12: false
   }));
@@ -213,7 +230,7 @@ test('el avance de una ruta programada excluye reportes de otras fechas', () => 
     route_id: 'R-12',
     container_id: 'CONT-01',
     created_at: '2026-10-07T10:00:00.000Z'
-  }]);
+  }], '2026-10-08');
 
   assert.equal(route.stopsDone, 0);
   assert.equal(route.lastUpdate, '--:--');

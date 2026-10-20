@@ -2,20 +2,15 @@
  * Pantalla 3: Registro de Combustible - Inspección Pre-operativa
  */
 
-export function renderFuelLevelScreen(state) {
-  const presets = [
-    { label: 'VACÍO (0-15%)', liters: 25.0, desc: 'Nivel Crítico < 35 L' },
-    { label: 'RESERVA (25%)', liters: 62.5, desc: '62.5 Litros' },
-    { label: 'MEDIO TANQUE (50%)', liters: 125.0, desc: '125.0 Litros' },
-    { label: '3/4 TANQUE (75%)', liters: 187.5, desc: '187.5 Litros' },
-    { label: 'LLENO (100%)', liters: 250.0, desc: '250.0 Litros Capacidad Total' }
-  ];
+import { fuelPresets as presets, getFuelPercent } from '../data/fuel.js';
 
-  
+export function renderFuelLevelScreen(state) {
+  const hasPreset = Boolean(state.fuelLevel.preset);
+
   return `
     <div class="screen-header-bar">
       <div class="screen-header-title">
-        <span class="material-symbols-outlined" style="color: var(--color-primary);">local_gas_station</span>
+        <span class="material-symbols-outlined">local_gas_station</span>
         <span>REGISTRO DE COMBUSTIBLE</span>
       </div>
       <button type="button" class="btn-tactical btn-tactical-sm" id="btn-fuel-back">
@@ -23,53 +18,52 @@ export function renderFuelLevelScreen(state) {
       </button>
     </div>
 
-    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+    <div class="screen-body">
       <!-- Volume Readout Card -->
-      <div class="card-tactical card-tactical-accent" style="padding: 16px;">
-        <span class="font-label-sm" style="color: #64748b;">NIVEL EN TANQUE SELECCIONADO</span>
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 4px 0 10px 0;">
-            <h2 id="fuel-liters-readout" class="font-display" style="color: ${state.fuelLevel.preset ? 'var(--color-primary)' : '#94a3b8'}; font-size: 42px; margin: 0;">
-              ${state.fuelLevel.liters.toFixed(1)} <span style="font-size: 20px; color: #0f172a;">L</span>
-            </h2>
-            <span id="fuel-preset-readout" class="font-headline-sm" style="color: ${state.fuelLevel.preset ? '#0f172a' : '#94a3b8'};">
-              ${state.fuelLevel.preset ?? 'SIN REGISTRAR'}
-            </span>
+      <div class="card-tactical card-tactical-accent fuel-readout-card">
+        <span class="font-label-sm text-muted">NIVEL EN TANQUE SELECCIONADO</span>
+        <div class="fuel-readout">
+          <h2 id="fuel-liters-readout" class="font-display fuel-liters${hasPreset ? ' is-set' : ''}">
+            ${state.fuelLevel.liters.toFixed(1)} <span class="fuel-liters-unit">L</span>
+          </h2>
+          <span id="fuel-preset-readout" class="font-headline-sm fuel-preset-name${hasPreset ? ' is-set' : ''}">
+            ${state.fuelLevel.preset ?? 'SIN REGISTRAR'}
+          </span>
         </div>
 
         <!-- Visual Tank Bar -->
-        <div style="border: 2px solid #0f172a; height: 18px; background-color: #e2e8f0; display: flex;">
-          <div id="fuel-level-bar" style="width: ${(state.fuelLevel.liters / 250 * 100).toFixed(0)}%; background-color: var(--color-primary-container); border-right: 2px solid #0f172a;"></div>
+        <div class="fuel-tank">
+          <div id="fuel-level-bar" class="fuel-tank-level" style="width: ${getFuelPercent(state.fuelLevel.liters).toFixed(0)}%;"></div>
         </div>
       </div>
 
       <!-- Tank Presets Grid -->
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <label class="font-label-sm" style="color: #475569;">NIVEL VISUAL RÁPIDO</label>
-        ${presets.map(p => {
-    const isSelected = state.fuelLevel.preset === p.label;
-    return `
-            <button 
-              type="button" 
-              class="card-tactical btn-fuel-preset" 
-              style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; text-align: left; padding: 10px 14px; ${isSelected ? 'border-color: #00a86b; background-color: #eff4ff;' : ''}"
+      <div class="fuel-presets">
+        <span class="font-label-sm text-soft">NIVEL VISUAL RÁPIDO</span>
+        ${presets.map((p) => {
+          const isSelected = state.fuelLevel.preset === p.label;
+          return `
+            <button
+              type="button"
+              class="card-tactical btn-fuel-preset${isSelected ? ' is-selected' : ''}"
               data-preset="${p.label}"
               data-liters="${p.liters}"
             >
               <div>
-                <strong class="font-headline-sm" style="display: block; font-size: 16px;">${p.label}</strong>
-                <span class="font-body-sm" style="color: #64748b; font-size: 13px;">${p.desc}</span>
+                <strong class="font-headline-sm fuel-preset-title">${p.label}</strong>
+                <span class="font-body-sm fuel-preset-desc">${p.desc}</span>
               </div>
-              <span class="material-symbols-outlined" style="color: ${isSelected ? '#00a86b' : '#cbd5e1'}; font-size: 22px;">
+              <span class="material-symbols-outlined fuel-preset-check">
                 ${isSelected ? 'check_circle' : 'radio_button_unchecked'}
               </span>
             </button>
           `;
-  }).join('')}
+        }).join('')}
       </div>
 
       <!-- Save Button -->
       <button type="button" class="btn-tactical btn-tactical-primary" id="btn-save-fuel">
-        <span class="material-symbols-outlined" style="font-size: 22px;">save</span>
+        <span class="material-symbols-outlined icon-22">save</span>
         <span>GUARDAR NIVEL PREOPERATIVO</span>
       </button>
     </div>
@@ -104,24 +98,20 @@ function updateFuelSelection(container, preset, liters) {
 
   if (litersReadout) {
     litersReadout.firstChild.textContent = `${liters.toFixed(1)} `;
-    litersReadout.style.color = 'var(--color-primary)';
+    litersReadout.classList.add('is-set');
   }
   if (presetReadout) {
     presetReadout.textContent = preset;
-    presetReadout.style.color = '#0f172a';
+    presetReadout.classList.add('is-set');
   }
   if (levelBar) {
-    levelBar.style.width = `${(liters / 250 * 100).toFixed(0)}%`;
+    levelBar.style.width = `${getFuelPercent(liters).toFixed(0)}%`;
   }
 
   container.querySelectorAll('.btn-fuel-preset').forEach((button) => {
     const selected = button.getAttribute('data-preset') === preset;
-    button.style.borderColor = selected ? '#00a86b' : '';
-    button.style.backgroundColor = selected ? '#eff4ff' : '';
-    const icon = button.querySelector('.material-symbols-outlined');
-    if (icon) {
-      icon.textContent = selected ? 'check_circle' : 'radio_button_unchecked';
-      icon.style.color = selected ? '#00a86b' : '#cbd5e1';
-    }
+    button.classList.toggle('is-selected', selected);
+    const icon = button.querySelector('.fuel-preset-check');
+    if (icon) icon.textContent = selected ? 'check_circle' : 'radio_button_unchecked';
   });
 }

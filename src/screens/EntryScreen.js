@@ -1,4 +1,4 @@
-const icon = (name) => `<span class="material-symbols-outlined" aria-hidden="true">${name}</span>`;
+import { icon } from '../utils/html.js';
 
 export function renderEntryScreen() {
   return `

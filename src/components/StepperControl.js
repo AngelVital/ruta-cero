@@ -9,9 +9,9 @@ export function renderStepperControl({ id, value, unit = '', step = 1, min = 0, 
       <button type="button" class="stepper-btn btn-stepper-decrement" aria-label="Decrementar">−</button>
       <div class="stepper-value-display">
         ${editable
-          ? `<input type="number" class="stepper-value-input ${inputClass}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="numeric" aria-label="Kilos del material" style="width: 82px; min-width: 0; border: 0; background: transparent; outline: none; text-align: center; font: inherit; color: inherit;">`
+          ? `<input type="number" class="stepper-value-input ${inputClass}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="numeric" aria-label="Kilos del material">`
           : `<span class="stepper-value">${value}</span>`}
-        ${unit ? `<span style="font-size: 14px; margin-left: 4px; color: #64748b;">${unit}</span>` : ''}
+        ${unit ? `<span class="stepper-unit">${unit}</span>` : ''}
       </div>
       <button type="button" class="stepper-btn btn-stepper-increment" aria-label="Incrementar">+</button>
     </div>

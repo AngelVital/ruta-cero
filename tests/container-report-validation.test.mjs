@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getFillLevelLabel, normalizeFillLevel, renderCapacityMeter } from '../src/components/CapacityMeter.js';
-import { validateContainerReport } from '../src/screens/ContainerReportScreen.js';
-import { renderCollectionPointTable } from '../src/screens/AdminDashboard.js';
+import { validateContainerReport } from '../src/domain/report.js';
+import { renderCollectionPointTable } from '../src/screens/admin/CollectionPoints.js';
 
 test('exige seleccionar un nivel de llenado', () => {
   assert.equal(validateContainerReport(null, [], {}), 'Selecciona un nivel de llenado del contenedor');

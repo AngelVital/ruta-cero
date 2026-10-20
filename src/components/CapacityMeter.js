@@ -30,9 +30,9 @@ export function renderCapacityMeter(value) {
 
   return `
     <div class="capacity-meter-wrap">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-        <span class="font-label-sm" style="color: #475569;">NIVEL DEL CONTENEDOR</span>
-        <span class="font-headline-sm" id="capacity-level-display" style="color: var(--color-cap-${statusClass}); font-weight: 800;">
+      <div class="capacity-meter-head">
+        <span class="font-label-sm capacity-meter-label">NIVEL DEL CONTENEDOR</span>
+        <span class="font-headline-sm capacity-level-display is-${statusClass}" id="capacity-level-display">
           ${getFillLevelLabel(level)}
         </span>
       </div>
