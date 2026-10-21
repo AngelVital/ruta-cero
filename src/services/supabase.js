@@ -200,6 +200,14 @@ function subscribeToTables(channelName, tables, onChange) {
   return () => supabase.removeChannel(channel);
 }
 
+export function subscribeToAdminUpdates(onChange) {
+  return subscribeToTables('admin-field-updates', [
+    'route_configurations',
+    'route_schedules',
+    'container_reports'
+  ], onChange);
+}
+
 export function subscribeToRouteConfigurations(onChange) {
   return subscribeToTables('route-configurations', ['route_configurations', 'route_schedules', 'fleet_resources'], onChange);
 }
