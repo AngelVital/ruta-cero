@@ -577,6 +577,8 @@ revoke all on function public.update_route_progress_from_report() from public, a
 create or replace function public.prepare_container_report()
 returns trigger
 language plpgsql
+-- Definer: known_fleet_resource_id is revoked from anon/authenticated, the field roles that insert.
+security definer
 set search_path = public
 as $$
 begin
