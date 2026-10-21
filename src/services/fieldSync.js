@@ -32,7 +32,9 @@ const senders = {
   }),
   complete: (api, { payload, at, crew }) => api.markRouteCompleted(payload.routeId, at, crew),
   incident: (api, { id, payload, at, crew }) => api.insertIncidentReport(payload, { id, createdAt: at, crew }),
-  refuel: (api, { id, payload, at, crew }) => api.insertFuelLoad(payload, { id, createdAt: at, crew })
+  refuel: (api, { id, payload, at, crew }) => api.insertFuelLoad(payload, { id, createdAt: at, crew }),
+  inspection: (api, { id, payload, at, crew }) => api.insertDispatchInspection(payload, { id, createdAt: at, crew }),
+  closure: (api, { id, payload, at, crew }) => api.insertRouteCompletion(payload, { id, createdAt: at, crew })
 };
 
 // Records kept in the queue when Supabase rejects them: usually a schema problem the admin
@@ -40,12 +42,18 @@ const senders = {
 const keptOnRejection = {
   report: ({ containerId }) => [`Reporte de ${containerId}`, 'container_reports'],
   incident: () => ['Incidencia', 'incident_reports'],
-  refuel: () => ['Carga de combustible', 'fuel_loads']
+  refuel: () => ['Carga de combustible', 'fuel_loads'],
+  inspection: () => ['Inspección 360°', 'dispatch_inspections'],
+  closure: ({ routeId }) => [`Evidencia de cierre de ${routeId}`, 'route_completions']
 };
 
 function getReportSaveErrorMessage(error, table = 'container_reports') {
   if (error?.code === '22P02' && /"(low|medium|full)"/.test(error.message || '')) {
     return 'La columna fill_level de Supabase sigue siendo INTEGER. Ejecuta supabase/schema.sql en el SQL Editor de ese proyecto.';
+  }
+
+  if (String(error?.code).startsWith('STORAGE_')) {
+    return `Supabase Storage rechazó la foto (${error.code}): ${error.message}. Ejecuta supabase/schema.sql para crear el bucket field-photos y sus permisos.`;
   }
 
   if (error?.code === '42501') {

@@ -22,6 +22,24 @@ export function getInspectionProgress(inspection360, comments = {}) {
   };
 }
 
+/** What the dispatch sends to Supabase: each point's result, its comment if required, fuel and odometer photo. */
+export function buildDispatchInspection({ inspection360, inspectionComments = {}, fuelLevel, route }) {
+  const results = Object.fromEntries(inspectionKeys.map((key) => [key, inspection360[key] ?? null]));
+  const comments = Object.fromEntries(inspectionKeys
+    .filter((key) => requiresInspectionComment(results[key]))
+    .map((key) => [key, (inspectionComments[key] || '').trim()]));
+  const photo = inspection360.odometerPhotoEvidence;
+
+  return {
+    routeId: route.id,
+    results,
+    comments,
+    fuelLiters: fuelLevel.liters,
+    // Inspections saved before the photo was kept only stored `true`.
+    odometerPhoto: typeof photo === 'string' ? photo : null
+  };
+}
+
 export function getInspectionStatusLabel(progress) {
   const { ready, missingPoints, odometerPhotoCaptured, missingCommentKeys } = progress;
   const missingComments = missingCommentKeys.length;

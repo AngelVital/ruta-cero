@@ -2,7 +2,7 @@
  * Pantalla 1: Despacho • Inicio de Ruta
  */
 import { getFuelPercent } from '../data/fuel.js';
-import { getInspectionProgress } from '../domain/inspection.js';
+import { buildDispatchInspection, getInspectionProgress } from '../domain/inspection.js';
 import { formatClockTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 import { queueFieldAction } from '../services/fieldSync.js';
@@ -205,6 +205,7 @@ export function attachDispatchScreenEvents(container, store) {
     }
     event.currentTarget.disabled = true;
     try {
+      await queueFieldAction('inspection', buildDispatchInspection(store.state));
       await queueFieldAction('start', { routeId });
       store.showToast(`¡${routeId} iniciada! Dirígete al primer punto y escanea el código QR.`, 'success');
     } catch (error) {

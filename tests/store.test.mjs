@@ -25,7 +25,7 @@ test('las acciones crean un estado nuevo sin modificar el anterior', () => {
     () => store.startRoute(),
     () => store.completeContainerReport('CONT-02', { fillLevel: 'low', collectedKg: 0 }),
     () => store.completeContainerReport('CONT-05', { fillLevel: 'full', collectedKg: 40, materials: ['papel'] }),
-    () => store.setDashboardPhoto('data:image/jpeg;base64,x'),
+    () => store.setCompletionPhotos(['a', 'b', 'c'].map((photo) => `data:image/jpeg;base64,${photo}`)),
     () => store.completeRoute()
   ];
 

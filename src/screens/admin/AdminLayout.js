@@ -3,7 +3,7 @@ import { getReportsForDate } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
 import { renderCollectionPointTable } from './CollectionPoints.js';
-import { renderFieldEventDialogShell, renderFuelRows, renderIncidentRows } from './FieldEvents.js';
+import { renderClosureRows, renderFieldEventDialogShell, renderFuelRows, renderIncidentRows, renderInspectionRows } from './FieldEvents.js';
 import { renderFleetSection } from './Fleet.js';
 import { formatLongDate, parseDateKey } from './format.js';
 import { renderReportDialogShell, renderReportRows } from './Reports.js';
@@ -13,7 +13,7 @@ import { renderRouteScheduleCalendar } from './ScheduleCalendar.js';
 
 /** Full admin panel: sidebar, KPIs, reports, calendar, routes, incidents and points. */
 export function renderAdminOperations({
-  user, routes, scheduledRoute, reports, incidents = [], fuelLoads = [], fleet = [],
+  user, routes, scheduledRoute, reports, incidents = [], fuelLoads = [], inspections = [], closures = [], fleet = [],
   reportError = '', routeError = '', fieldEventError = '', fleetError = ''
 }) {
   const today = getOperationalDate();
@@ -36,6 +36,8 @@ export function renderAdminOperations({
           <a class="admin-nav-link" href="#fleet">${icon('groups')}<span>Personal y unidades</span></a>
           <a class="admin-nav-link" href="#alerts">${icon('notifications_active')}<span>Incidencias</span><span class="admin-nav-count nav-count-alert" data-incident-count>${incidents.length}</span></a>
           <a class="admin-nav-link" href="#fuel">${icon('local_gas_station')}<span>Combustible</span></a>
+          <a class="admin-nav-link" href="#inspections">${icon('fact_check')}<span>Inspecciones</span></a>
+          <a class="admin-nav-link" href="#closures">${icon('flag')}<span>Cierres de ruta</span></a>
           <a class="admin-nav-link" href="#points">${icon('location_on')}<span>Puntos</span><span class="admin-nav-count">${collectionPoints.length}</span></a>
         </nav>
 
@@ -127,6 +129,32 @@ export function renderAdminOperations({
               <table class="admin-points-table admin-reports-table">
                 <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">LITROS</th><th scope="col">IMPORTE</th><th scope="col">ODÓMETRO</th><th scope="col">TICKET</th></tr></thead>
                 <tbody id="admin-fuel-rows">${renderFuelRows(fuelLoads)}</tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="admin-section admin-reports-section" id="inspections">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">INSPECCIÓN 360° AL DESPACHAR · ÚLTIMAS 100</div><h2>Inspecciones <span class="admin-heading-count" id="admin-inspection-count">${inspections.length}</span></h2></div>
+            </div>
+            ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
+            <div class="admin-points-table-wrap admin-reports-table-wrap">
+              <table class="admin-points-table admin-reports-table">
+                <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">COMBUSTIBLE</th><th scope="col">REGULAR</th><th scope="col">MAL</th><th scope="col">DETALLE</th></tr></thead>
+                <tbody id="admin-inspection-rows">${renderInspectionRows(inspections)}</tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="admin-section admin-reports-section" id="closures">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">EVIDENCIA AL REGRESAR A ESTACIÓN · ÚLTIMOS 100</div><h2>Cierres de ruta <span class="admin-heading-count" id="admin-closure-count">${closures.length}</span></h2></div>
+            </div>
+            ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
+            <div class="admin-points-table-wrap admin-reports-table-wrap">
+              <table class="admin-points-table admin-reports-table">
+                <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">EVIDENCIA</th></tr></thead>
+                <tbody id="admin-closure-rows">${renderClosureRows(closures)}</tbody>
               </table>
             </div>
           </section>

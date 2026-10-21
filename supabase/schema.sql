@@ -17,6 +17,11 @@ create table if not exists public.container_reports (
 alter table public.container_reports
   add column if not exists received_at timestamptz not null default now();
 
+-- The 4 evidence photos keyed like photo_evidence (which keeps the capture times): a path in the
+-- field-photos Storage bucket, or a JPEG data URL in older rows. Kept apart from the admin list.
+alter table public.container_reports
+  add column if not exists photos jsonb not null default '{}';
+
 create index if not exists container_reports_received_at_idx
   on public.container_reports (received_at);
 
@@ -645,7 +650,7 @@ from route_progress progress
 where schedule.route_id = progress.route_id
   and schedule.scheduled_for = progress.scheduled_for;
 -- Field events that don't stop the route: incidents (crash, breakdown…) and fuel loads.
--- Photos are compressed JPEG data URLs captured by the field app.
+-- Photos are paths in the field-photos Storage bucket (older rows hold JPEG data URLs).
 create table if not exists public.incident_reports (
   id uuid primary key default gen_random_uuid(),
   route_id text not null default '',
@@ -676,6 +681,40 @@ create table if not exists public.fuel_loads (
   received_at timestamptz not null default now()
 );
 
+-- 360° inspection recorded at dispatch, sent when the route starts. `results` maps each
+-- checklist key (tires, brakes…) to BIEN / REGULAR / MAL; `comments` holds the REGULAR/MAL notes.
+create table if not exists public.dispatch_inspections (
+  id uuid primary key default gen_random_uuid(),
+  route_id text not null default '',
+  unit_id text,
+  driver_id text,
+  assistant_id text,
+  results jsonb not null default '{}' check (jsonb_typeof(results) = 'object'),
+  comments jsonb not null default '{}' check (jsonb_typeof(comments) = 'object'),
+  fuel_liters numeric check (fuel_liters >= 0),
+  odometer_photo text,
+  created_at timestamptz not null default now(),
+  received_at timestamptz not null default now()
+);
+
+create index if not exists dispatch_inspections_created_at_idx
+  on public.dispatch_inspections (created_at desc);
+
+-- Evidence photos taken at the return station when the route is closed.
+create table if not exists public.route_completions (
+  id uuid primary key default gen_random_uuid(),
+  route_id text not null default '',
+  unit_id text,
+  driver_id text,
+  assistant_id text,
+  photos text[] not null default '{}',
+  created_at timestamptz not null default now(),
+  received_at timestamptz not null default now()
+);
+
+create index if not exists route_completions_created_at_idx
+  on public.route_completions (created_at desc);
+
 create index if not exists incident_reports_created_at_idx
   on public.incident_reports (created_at desc);
 
@@ -686,7 +725,7 @@ do $$
 declare
   field_table text;
 begin
-  foreach field_table in array array['incident_reports', 'fuel_loads'] loop
+  foreach field_table in array array['incident_reports', 'fuel_loads', 'dispatch_inspections', 'route_completions'] loop
     execute format('alter table public.%I enable row level security', field_table);
     execute format('grant insert on public.%I to anon, authenticated', field_table);
     execute format('grant select on public.%I to authenticated', field_table);
@@ -830,7 +869,7 @@ declare
   crew_table text;
   crew_column text;
 begin
-  foreach crew_table in array array['container_reports', 'incident_reports', 'fuel_loads', 'route_schedules'] loop
+  foreach crew_table in array array['container_reports', 'incident_reports', 'fuel_loads', 'dispatch_inspections', 'route_completions', 'route_schedules'] loop
     foreach crew_column in array array['unit_id', 'driver_id', 'assistant_id'] loop
       execute format('alter table public.%I add column if not exists %I text', crew_table, crew_column);
       execute format('alter table public.%I alter column %I drop not null, alter column %I drop default',
@@ -907,3 +946,30 @@ $$;
 
 revoke all on function public.next_route_id() from public, anon;
 grant execute on function public.next_route_id() to authenticated;
+
+-- Field photos as JPEG files in Storage (its own 1 GB on the free plan) instead of base64 text in
+-- rows. Paths are <table>/<record id>/<name>.jpg. The field app can only upload; admins read them
+-- through short-lived signed URLs. Type and size are capped because the anon key is public.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('field-photos', 'field-photos', false, 1048576, array['image/jpeg'])
+on conflict (id) do update
+set public = false,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Field app can upload photos" on storage.objects;
+create policy "Field app can upload photos"
+  on storage.objects
+  for insert
+  to anon, authenticated
+  with check (bucket_id = 'field-photos');
+
+drop policy if exists "Admins can read photos" on storage.objects;
+create policy "Admins can read photos"
+  on storage.objects
+  for select
+  to authenticated
+  using (
+    bucket_id = 'field-photos'
+    and exists (select 1 from public.admin_users where user_id = auth.uid())
+  );

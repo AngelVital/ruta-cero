@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getInspectionProgress, getInspectionStatusLabel } from '../src/domain/inspection.js';
+import { buildDispatchInspection, getInspectionProgress, getInspectionStatusLabel } from '../src/domain/inspection.js';
 import { getActiveIncidents, getMissingReportPhotos, getTotalMaterialWeight, isContainerReportReady } from '../src/domain/report.js';
 import { filterRoutes, getPeriodRange, getTodaySummary, summarizeReports, upsertRoute } from '../src/domain/route.js';
 import { inspectionKeys } from '../src/data/inspectionItems.js';
@@ -23,6 +23,23 @@ test('los estados Regular y Mal exigen comentario antes de confirmar', () => {
   const complete = getInspectionProgress(inspection, { brakes: 'Pastillas gastadas', mirrors: 'Espejo flojo' });
   assert.equal(complete.ready, true);
   assert.equal(getInspectionStatusLabel(complete), 'CONFIRMAR Y FIRMAR INSPECCIÓN');
+});
+
+test('la inspección del despacho envía resultados, solo los comentarios exigidos y la foto del odómetro', () => {
+  const inspection = buildDispatchInspection({
+    inspection360: { ...allGood, brakes: 'MAL', odometerPhotoEvidence: 'data:image/jpeg;base64,x', completed: true },
+    inspectionComments: { brakes: ' Pastillas gastadas ', tires: 'ya no aplica' },
+    fuelLevel: { liters: 120 },
+    route: { id: 'R-01' }
+  });
+  assert.equal(inspection.results.brakes, 'MAL');
+  assert.equal('completed' in inspection.results, false);
+  assert.deepEqual(inspection.comments, { brakes: 'Pastillas gastadas' });
+  assert.equal(inspection.odometerPhoto, 'data:image/jpeg;base64,x');
+  assert.equal(inspection.fuelLiters, 120);
+
+  const legacy = buildDispatchInspection({ inspection360: { ...allGood, odometerPhotoEvidence: true }, fuelLevel: { liters: 0 }, route: { id: 'R-01' } });
+  assert.equal(legacy.odometerPhoto, null);
 });
 
 test('el reporte requiere las cuatro fotos y suma el peso de los materiales seleccionados', () => {

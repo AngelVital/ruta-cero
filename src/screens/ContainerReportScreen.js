@@ -6,6 +6,7 @@ import { normalizeFillLevel, renderCapacityMeter } from '../components/CapacityM
 import { renderStepperControl, attachStepperEvents } from '../components/StepperControl.js';
 import { queueFieldAction } from '../services/fieldSync.js';
 import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
+import { reportPhotoOptions } from '../components/FieldPhotos.js';
 import {
   getMissingReportPhotos,
   getTotalMaterialWeight,
@@ -35,6 +36,8 @@ function getReportDraft(state, containerId) {
     materials,
     materialWeights,
     photoEvidence: { ...draft.photoEvidence },
+    // JPEG data URLs keyed like photoEvidence (which keeps the capture times).
+    photos: { ...draft.photos },
     incidents: { ...draft.incidents },
     incidentComments: draft.incidentComments || ''
   };
@@ -399,12 +402,14 @@ export function attachContainerReportEvents(containerEl, store) {
 
       const evidenceButton = event.currentTarget;
 
-      openPhotoCapture(() => {
+      openPhotoCapture((photo) => {
         const capturedAt = new Date().toISOString();
         // Patch only this photo from the stored draft: the screen may have re-rendered
         // while the camera was open, leaving this closure with older data.
+        const storedDraft = getReportDraft(store.state, containerId);
         saveDraft({
-          photoEvidence: { ...getReportDraft(store.state, containerId).photoEvidence, [photoKey]: capturedAt }
+          photoEvidence: { ...storedDraft.photoEvidence, [photoKey]: capturedAt },
+          photos: { ...storedDraft.photos, [photoKey]: photo }
         });
         if (!evidenceButton.isConnected) {
           store.notify();
@@ -420,7 +425,7 @@ export function attachContainerReportEvents(containerEl, store) {
           status.textContent = 'EVIDENCIA CAPTURADA';
         }
         updateSaveButtonState();
-      }, (message) => store.showToast(message, 'info'));
+      }, (message) => store.showToast(message, 'info'), reportPhotoOptions);
     });
   });
 
@@ -446,6 +451,7 @@ export function attachContainerReportEvents(containerEl, store) {
       materials: [...selectedMaterials],
       materialWeights: { ...materialTotals },
       photoEvidence: { ...photoEvidence },
+      photos: getReportDraft(store.state, containerId).photos,
       incidents: { ...incidents },
       incidentComments
     };

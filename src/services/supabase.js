@@ -256,12 +256,62 @@ const crewColumns = (crew = {}) => ({
   assistant_id: crew.assistantId || null
 });
 
+// Photos go to Storage as JPEG files and rows keep only the path (`<table>/<id>/<name>.jpg`).
+// Rows saved before this hold the data URL itself; both are still shown.
+const photoBucket = 'field-photos';
+const photoPathPattern = /^[a-z_]+\/[0-9a-f-]+\/[\w-]+\.jpg$/;
+const isDataUrlPhoto = (value) => typeof value === 'string' && value.startsWith('data:image/');
+
+/**
+ * Uploads a data URL photo to `path` and returns the path; other values pass through.
+ * The path comes from the record id, so a retried sync finds the file already uploaded.
+ */
+async function uploadPhoto(path, photo) {
+  if (!isDataUrlPhoto(photo)) return photo ?? null;
+  const blob = await (await fetch(photo)).blob();
+  const { error } = await requireSupabase().storage
+    .from(photoBucket)
+    .upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+
+  if (error && error.status !== 409 && String(error.statusCode) !== '409') {
+    // fieldSync reads an error without `code` as "offline"; a Storage rejection gets one.
+    if (error.status) error.code = `STORAGE_${error.statusCode || error.status}`;
+    throw error;
+  }
+  return path;
+}
+
+const uploadPhotoList = (folder, photos = []) => Promise.all(
+  photos.map((photo, index) => uploadPhoto(`${folder}/${index + 1}.jpg`, photo))
+);
+
+async function uploadPhotoMap(folder, photos = {}) {
+  const entries = await Promise.all(Object.entries(photos).map(async ([key, photo]) => (
+    [key, await uploadPhoto(`${folder}/${key}.jpg`, photo)]
+  )));
+  return Object.fromEntries(entries);
+}
+
+/** Stored photo values as displayable URLs: Storage paths get a 1-hour signed URL, anything unknown is null. */
+async function resolvePhotoUrls(values) {
+  const paths = values.filter((value) => typeof value === 'string' && photoPathPattern.test(value));
+  const signedUrls = new Map();
+  if (paths.length) {
+    const { data, error } = await requireSupabase().storage.from(photoBucket).createSignedUrls(paths, 3600);
+    if (error) throw error;
+    data.forEach((item) => signedUrls.set(item.path, item.signedUrl));
+  }
+  return values.map((value) => (isDataUrlPhoto(value) ? value : signedUrls.get(value) || null));
+}
+
 /** `id` and `createdAt` come from the device, so a retried insert is detected as a duplicate (23505). */
 export async function insertContainerReport(routeId, containerId, report, { id, createdAt, crew } = {}) {
   if (!supabase) {
     return false;
   }
 
+  // Reports queued before photos were kept have none.
+  const photos = await uploadPhotoMap(`container_reports/${id}`, report.photos);
   const { error } = await supabase
     .from('container_reports')
     .insert({
@@ -274,6 +324,7 @@ export async function insertContainerReport(routeId, containerId, report, { id, 
       materials: report.materials,
       material_weights: report.materialWeights,
       photo_evidence: report.photoEvidence,
+      photos,
       incidents: report.incidents,
       incident_comments: report.incidentComments,
       ...crewColumns(crew)
@@ -288,6 +339,7 @@ export async function insertContainerReport(routeId, containerId, report, { id, 
 
 /** `id` and `createdAt` come from the device, so a retried insert is detected as a duplicate (23505). */
 export async function insertIncidentReport(incident, { id, createdAt, crew } = {}) {
+  const photos = await uploadPhotoList(`incident_reports/${id}`, incident.photos);
   const { error } = await requireSupabase()
     .from('incident_reports')
     .insert({
@@ -299,7 +351,7 @@ export async function insertIncidentReport(incident, { id, createdAt, crew } = {
       incident_type: incident.type,
       severity: incident.severity,
       description: incident.description,
-      photos: incident.photos,
+      photos,
       latitude: incident.latitude,
       longitude: incident.longitude
     });
@@ -308,6 +360,7 @@ export async function insertIncidentReport(incident, { id, createdAt, crew } = {
 }
 
 export async function insertFuelLoad(fuelLoad, { id, createdAt, crew } = {}) {
+  const ticketPhoto = await uploadPhoto(`fuel_loads/${id}/ticket.jpg`, fuelLoad.ticketPhoto);
   const { error } = await requireSupabase()
     .from('fuel_loads')
     .insert({
@@ -318,9 +371,42 @@ export async function insertFuelLoad(fuelLoad, { id, createdAt, crew } = {}) {
       liters: fuelLoad.liters,
       amount: fuelLoad.amount,
       odometer_km: fuelLoad.odometerKm,
-      ticket_photo: fuelLoad.ticketPhoto,
+      ticket_photo: ticketPhoto,
       latitude: fuelLoad.latitude,
       longitude: fuelLoad.longitude
+    });
+
+  if (error) throw error;
+}
+
+export async function insertDispatchInspection(inspection, { id, createdAt, crew } = {}) {
+  const odometerPhoto = await uploadPhoto(`dispatch_inspections/${id}/odometer.jpg`, inspection.odometerPhoto);
+  const { error } = await requireSupabase()
+    .from('dispatch_inspections')
+    .insert({
+      id,
+      created_at: createdAt,
+      route_id: inspection.routeId || '',
+      ...crewColumns(crew),
+      results: inspection.results,
+      comments: inspection.comments,
+      fuel_liters: inspection.fuelLiters,
+      odometer_photo: odometerPhoto
+    });
+
+  if (error) throw error;
+}
+
+export async function insertRouteCompletion(completion, { id, createdAt, crew } = {}) {
+  const photos = await uploadPhotoList(`route_completions/${id}`, completion.photos);
+  const { error } = await requireSupabase()
+    .from('route_completions')
+    .insert({
+      id,
+      created_at: createdAt,
+      route_id: completion.routeId || '',
+      ...crewColumns(crew),
+      photos
     });
 
   if (error) throw error;
@@ -351,9 +437,47 @@ export async function fetchAdminFuelLoads() {
   return data;
 }
 
-/** Photos of one incident (`incident_reports`) or fuel load (`fuel_loads`) as data URLs. */
+export async function fetchAdminDispatchInspections() {
+  const { data, error } = await requireSupabase()
+    .from('dispatch_inspections')
+    .select('id, route_id, unit_id, driver_id, assistant_id, results, comments, fuel_liters, created_at')
+    .order('created_at', { ascending: false })
+    .limit(recentFieldEventLimit);
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchAdminRouteCompletions() {
+  const { data, error } = await requireSupabase()
+    .from('route_completions')
+    .select('id, route_id, unit_id, driver_id, assistant_id, created_at')
+    .order('created_at', { ascending: false })
+    .limit(recentFieldEventLimit);
+
+  if (error) throw error;
+  return data;
+}
+
+/** Photos of one container report as { initialExterior: url, … }; the list leaves them out. */
+export async function fetchContainerReportPhotos(id) {
+  const { data, error } = await requireSupabase()
+    .from('container_reports')
+    .select('photos')
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  const entries = Object.entries(data.photos || {});
+  const urls = await resolvePhotoUrls(entries.map(([, photo]) => photo));
+  return Object.fromEntries(entries.map(([key], index) => [key, urls[index]]));
+}
+
+const fieldEventPhotoColumns = { fuel_loads: 'ticket_photo', dispatch_inspections: 'odometer_photo' };
+
+/** Photo URLs of one incident, fuel load, dispatch inspection or route closure (by table). */
 export async function fetchFieldEventPhotos(table, id) {
-  const column = table === 'fuel_loads' ? 'ticket_photo' : 'photos';
+  const column = fieldEventPhotoColumns[table] || 'photos';
   const { data, error } = await requireSupabase()
     .from(table)
     .select(column)
@@ -361,5 +485,5 @@ export async function fetchFieldEventPhotos(table, id) {
     .single();
 
   if (error) throw error;
-  return [data[column]].flat().filter(Boolean);
+  return (await resolvePhotoUrls([data[column]].flat().filter(Boolean))).filter(Boolean);
 }

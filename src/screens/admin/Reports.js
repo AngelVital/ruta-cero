@@ -84,6 +84,7 @@ export function renderReportDialog(report) {
       <section class="admin-report-dialog-section admin-report-evidence-section">
         <h3>${icon('photo_camera')} Evidencia registrada</h3>
         <ul class="admin-report-evidence-list">${evidenceItems}</ul>
+        <div class="admin-field-event-photos" id="admin-report-photos">Cargando fotos…</div>
       </section>
       <section class="admin-report-dialog-section admin-report-comments-section">
         <h3>${icon('chat')} Comentarios</h3>
@@ -117,14 +118,26 @@ export function updateReportList(ctx) {
 }
 
 /** Report table, detail dialog, "Ver todos" toggle and manual refresh. */
-export function attachReports(ctx, { refresh }) {
+export function attachReports(ctx, { refresh, fetchPhotos }) {
   const { container } = ctx;
   const reportDialog = container.querySelector('#admin-report-dialog');
 
-  ctx.openReport = (report) => {
+  ctx.openReport = async (report) => {
     if (!report || !reportDialog) return;
     container.querySelector('#admin-report-dialog-content').innerHTML = renderReportDialog(report);
     reportDialog.showModal();
+
+    const photosEl = container.querySelector('#admin-report-photos');
+    try {
+      const photos = await fetchPhotos(report.id);
+      // Fixed order (initial → final) and only images captured by the field app (inline or signed Storage URLs).
+      const items = Object.keys(evidenceLabels)
+        .filter((key) => typeof photos[key] === 'string' && /^(data:image\/|https?:\/\/)/.test(photos[key]))
+        .map((key) => `<img src="${escapeHtml(photos[key])}" alt="${escapeHtml(evidenceLabels[key])}" title="${escapeHtml(evidenceLabels[key])}">`);
+      photosEl.innerHTML = items.length ? items.join('') : 'Sin fotos guardadas.';
+    } catch (error) {
+      photosEl.textContent = `No se pudieron cargar las fotos: ${error.message}`;
+    }
   };
 
   container.querySelector('#admin-report-rows')?.addEventListener('click', (event) => {

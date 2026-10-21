@@ -30,7 +30,7 @@ function createInitialState() {
       startTime: '--:-- AM',
       startTimestamp: null,
       returning: false,
-      dashboardPhoto: null,
+      completionPhotos: [],
       dashboardPhotoPath: null,
       completedAt: null,
       completedPointIds: [],
@@ -73,6 +73,7 @@ function createInitialState() {
 const returnStationStop = (status) => ({ ...returnStation, status });
 
 export const fieldStateStorageKey = 'ruta-cero-field-state';
+export const maxCompletionPhotos = 3;
 // The day's progress, kept on the device so closing the app (or losing signal) doesn't lose it.
 const persistedKeys = [
   'currentScreen', 'assignment', 'route', 'stops', 'activeContainerId',
@@ -147,8 +148,8 @@ class TacticalStore {
 
   persist() {
     const saved = Object.fromEntries(persistedKeys.map((key) => [key, this.state[key]]));
-    // The return photo is a large data URL; after a restart it is simply taken again.
-    saved.route = { ...saved.route, dashboardPhoto: null };
+    // The closing photos are large data URLs; after a restart they are simply taken again.
+    saved.route = { ...saved.route, completionPhotos: [] };
     try {
       getStorage()?.setItem(fieldStateStorageKey, JSON.stringify(saved));
     } catch {
@@ -280,7 +281,7 @@ class TacticalStore {
           startTimestamp: null,
           startTime: '--:-- AM',
           returning: false,
-          dashboardPhoto: null,
+          completionPhotos: [],
           dashboardPhotoPath: null,
           completedAt: null
         }
@@ -338,7 +339,7 @@ class TacticalStore {
         startTimestamp: isSameRouteDay ? current.route.startTimestamp : null,
         startTime: isSameRouteDay ? current.route.startTime : '--:-- AM',
         returning,
-        dashboardPhoto: isSameRouteDay ? current.route.dashboardPhoto : null,
+        completionPhotos: isSameRouteDay ? current.route.completionPhotos : [],
         dashboardPhotoPath: route.dashboardPhotoPath || null,
         completedAt: route.completedAt || null
       }
@@ -363,7 +364,7 @@ class TacticalStore {
           completedCount: 0,
           completedPointIds: [],
           returning: false,
-          dashboardPhoto: null,
+          completionPhotos: [],
           startTimestamp,
           status: 'EN RUTA',
           startTime: formatClockTime(startTimestamp)
@@ -424,12 +425,13 @@ class TacticalStore {
     this.setState(nextState);
   }
 
-  setDashboardPhoto(photoDataUrl) {
-    this.setState(({ route }) => ({ route: { ...route, dashboardPhoto: photoDataUrl } }));
+  /** Replaces the closing evidence photos (JPEG data URLs, 1 to maxCompletionPhotos). */
+  setCompletionPhotos(photos) {
+    this.setState(({ route }) => ({ route: { ...route, completionPhotos: photos.slice(0, maxCompletionPhotos) } }));
   }
 
   completeRoute(dashboardPhotoPath) {
-    if (!this.state.route.returning || !this.state.route.dashboardPhoto) return false;
+    if (!this.state.route.returning || !this.state.route.completionPhotos?.length) return false;
     this.setState(({ stops, route }) => ({
       stops: stops.map((stop) => (stop.type === 'return-station' ? returnStationStop('completed') : stop)),
       route: {

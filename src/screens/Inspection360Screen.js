@@ -1,3 +1,4 @@
+import { fieldPhotoOptions } from '../components/FieldPhotos.js';
 import { openPhotoCapture } from '../components/PhotoCaptureOverlay.js';
 import { inspectionItems as checkItems } from '../data/inspectionItems.js';
 import { getInspectionProgress, getInspectionStatusLabel, requiresInspectionComment } from '../domain/inspection.js';
@@ -128,11 +129,12 @@ export function attachInspection360Events(container, store) {
   // Odometer photo evidence
   container.querySelector('#btn-odometer-photo')?.addEventListener('click', (event) => {
     openPhotoCapture(
-      () => {
-        store.updateInspectionItem('odometerPhotoEvidence', true);
+      (photo) => {
+        store.updateInspectionItem('odometerPhotoEvidence', photo);
         store.showToast('Foto del odómetro tomada correctamente.', 'success');
       },
-      (message) => store.showToast(message, 'info')
+      (message) => store.showToast(message, 'info'),
+      fieldPhotoOptions
     );
   });
 

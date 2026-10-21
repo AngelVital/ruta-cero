@@ -2,6 +2,8 @@
 
 // Compressed so a few photos fit in the offline queue (localStorage) and in Supabase rows.
 export const fieldPhotoOptions = { maxSize: 1024, quality: 0.6 };
+// Container reports carry 4 photos each and a route can queue several offline, so they go smaller.
+export const reportPhotoOptions = { maxSize: 720, quality: 0.5 };
 
 export function renderPhotoThumbnails(photos) {
   return `

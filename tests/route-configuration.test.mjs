@@ -155,7 +155,12 @@ test('todas las rutas existentes y nuevas regresan a estación y permiten finali
       assert.equal(store.state.route.status, 'EN RUTA', route.id);
       assert.equal(store.state.activeContainerId, 'ESTACION-01', route.id);
 
-      store.setDashboardPhoto('data:image/jpeg;base64,route-evidence');
+      store.setCompletionPhotos([]);
+      assert.equal(store.completeRoute(), false, `${route.id}: sin fotos`);
+      assert.match(renderRouteCompletionScreen(store.state), /CAPTURA AL MENOS 1 FOTO/, route.id);
+      store.setCompletionPhotos(['1', '2', '3', '4'].map((photo) => `data:image/jpeg;base64,${photo}`));
+      assert.equal(store.state.route.completionPhotos.length, 3, `${route.id}: máximo 3`);
+      store.setCompletionPhotos(['data:image/jpeg;base64,1']);
       assert.match(renderRouteCompletionScreen(store.state), /FINALIZAR RUTA/, route.id);
       assert.equal(store.completeRoute(), true, route.id);
       assert.equal(store.state.route.status, 'COMPLETADA', route.id);
@@ -172,7 +177,7 @@ test('todas las rutas existentes y nuevas regresan a estación y permiten finali
       assert.equal(store.state.stops.some((stop) => stop.type === 'return-station'), false, route.id);
     }
   } finally {
-    store.setDashboardPhoto(null);
+    store.setCompletionPhotos([]);
     store.applyConfiguredRoute(getConfiguredRoutes()[0], false);
   }
 });

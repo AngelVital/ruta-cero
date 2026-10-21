@@ -39,7 +39,9 @@ function createApi(respond) {
     insertContainerReport: call('report'),
     markRouteCompleted: call('complete'),
     insertIncidentReport: call('incident'),
-    insertFuelLoad: call('refuel')
+    insertFuelLoad: call('refuel'),
+    insertDispatchInspection: call('inspection'),
+    insertRouteCompletion: call('closure')
   };
   return { calls, loadApi: async () => api };
 }
@@ -117,6 +119,20 @@ test('incidencias y cargas viajan por la cola y se conservan si Supabase las rec
   assert.equal(getPendingSyncCount(), 0);
 });
 
+test('una foto rechazada por Storage conserva su registro sin detener la cola', async () => {
+  window.localStorage.removeItem(syncQueueStorageKey);
+  const offline = createApi(() => offlineError);
+  await queueFieldAction('closure', { routeId: 'R-70', photos: ['data:image/jpeg;base64,x'] }, offline.loadApi);
+  await queueFieldAction('inspection', { routeId: 'R-70', odometerPhoto: null }, offline.loadApi);
+  await flushFieldQueue(offline.loadApi);
+
+  const noBucket = createApi((type) => (type === 'closure' ? { code: 'STORAGE_404', message: 'Bucket not found' } : null));
+  await flushFieldQueue(noBucket.loadApi);
+  assert.deepEqual(noBucket.calls.map(([type]) => type), ['closure', 'inspection']);
+  const pending = JSON.parse(window.localStorage.getItem(syncQueueStorageKey));
+  assert.deepEqual(pending.map((item) => item.type), ['closure']);
+});
+
 test('sin Supabase configurado no se encola nada', async () => {
   window.localStorage.removeItem(syncQueueStorageKey);
   const local = async () => ({ isSupabaseConfigured: false });
@@ -135,7 +151,7 @@ test('el avance local no retrocede cuando el servidor aún no recibe la cola', (
   assert.equal(store.state.stops[0].status, 'completed');
 
   store.completeContainerReport('CONT-02', { fillLevel: 'low', collectedKg: 0 });
-  store.setDashboardPhoto('data:image/jpeg;base64,x');
+  store.setCompletionPhotos(['a', 'b', 'c'].map((photo) => `data:image/jpeg;base64,${photo}`));
   assert.equal(store.completeRoute(), true);
   store.applyConfiguredRoute({ ...route, status: 'active' }, false);
   assert.equal(store.state.route.status, 'COMPLETADA');
@@ -147,8 +163,8 @@ test('el avance del día se recupera al reabrir la app, sin la foto de regreso',
   store.applyConfiguredRoute({ ...route, id: 'R-71' }, false);
   store.startRoute();
   store.completeContainerReport('CONT-01', { fillLevel: 'low', collectedKg: 0 });
-  store.setDashboardPhoto('data:image/jpeg;base64,x');
-  assert.equal(JSON.parse(window.localStorage.getItem(fieldStateStorageKey)).route.dashboardPhoto, null);
+  store.setCompletionPhotos(['a', 'b', 'c'].map((photo) => `data:image/jpeg;base64,${photo}`));
+  assert.deepEqual(JSON.parse(window.localStorage.getItem(fieldStateStorageKey)).route.completionPhotos, []);
 
   const { store: reopened } = await import('../src/state/store.js?reopen');
   assert.equal(reopened.state.route.id, 'R-71');

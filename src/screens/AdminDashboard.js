@@ -58,11 +58,21 @@ function updateRoutes(ctx) {
  */
 async function loadFieldEvents() {
   try {
-    const { fetchAdminIncidentReports, fetchAdminFuelLoads } = await api();
-    const [incidents, fuelLoads] = await Promise.all([fetchAdminIncidentReports(), fetchAdminFuelLoads()]);
-    return { incidents, fuelLoads, fieldEventError: '' };
+    const {
+      fetchAdminIncidentReports, fetchAdminFuelLoads, fetchAdminDispatchInspections, fetchAdminRouteCompletions
+    } = await api();
+    const [incidents, fuelLoads, inspections, closures] = await Promise.all([
+      fetchAdminIncidentReports(), fetchAdminFuelLoads(), fetchAdminDispatchInspections(), fetchAdminRouteCompletions()
+    ]);
+    return { incidents, fuelLoads, inspections, closures, fieldEventError: '' };
   } catch (error) {
-    return { incidents: [], fuelLoads: [], fieldEventError: `No se pudieron cargar incidencias y combustible: ${error.message}` };
+    return {
+      incidents: [],
+      fuelLoads: [],
+      inspections: [],
+      closures: [],
+      fieldEventError: `No se pudieron cargar incidencias, combustible, inspecciones y cierres: ${error.message}`
+    };
   }
 }
 
@@ -74,7 +84,7 @@ async function loadFleet() {
   }
 }
 
-function createAdminContext(container, reports, { incidents, fuelLoads, fleet }) {
+function createAdminContext(container, reports, { incidents, fuelLoads, inspections, closures, fleet }) {
   const routeMessage = container.querySelector('#admin-route-message');
   const ctx = {
     container,
@@ -82,6 +92,8 @@ function createAdminContext(container, reports, { incidents, fuelLoads, fleet })
     reports,
     incidents,
     fuelLoads,
+    inspections,
+    closures,
     fleet,
     visibleReports: getReportsForDate(reports, getOperationalDate()),
     showAllReports: false,
@@ -135,6 +147,8 @@ function startAdminSync(ctx) {
         if (!fieldEvents.fieldEventError) {
           ctx.incidents = fieldEvents.incidents;
           ctx.fuelLoads = fieldEvents.fuelLoads;
+          ctx.inspections = fieldEvents.inspections;
+          ctx.closures = fieldEvents.closures;
           updateFieldEvents(ctx);
         }
         ctx.reports = latestReceivedAt ? mergeNewReports(ctx.reports, updatedReports) : updatedReports;
@@ -220,7 +234,10 @@ function attachAdminDashboardContentEvents(container, reports, fieldEvents) {
   updateRoutes(ctx);
 
   const { refresh, teardown } = startAdminSync(ctx);
-  attachReports(ctx, { refresh });
+  attachReports(ctx, {
+    refresh,
+    fetchPhotos: async (...args) => (await api()).fetchContainerReportPhotos(...args)
+  });
   attachSummary(ctx);
   attachFieldEvents(ctx, {
     fetchPhotos: async (...args) => (await api()).fetchFieldEventPhotos(...args)
