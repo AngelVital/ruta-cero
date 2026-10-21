@@ -4,7 +4,7 @@
  * el estado compartido del panel.
  */
 import { getLatestReportReceivedAt, mergeNewReports } from '../domain/report.js';
-import { applyReportProgress, getReportsForDate, getTodaySummary } from '../domain/route.js';
+import { getReportsForDate, getTodaySummary } from '../domain/route.js';
 import {
   getConfiguredRoutes,
   getOperationalDate,
@@ -138,10 +138,9 @@ function startAdminSync(ctx) {
           updateFieldEvents(ctx);
         }
         ctx.reports = latestReceivedAt ? mergeNewReports(ctx.reports, updatedReports) : updatedReports;
-        if (remoteRoutes.length > 0) {
-          ctx.routes = remoteRoutes;
-          saveConfiguredRoutes(remoteRoutes);
-        }
+        // An empty list is the real state (every route deleted), not a reason to keep the cache.
+        ctx.routes = remoteRoutes;
+        saveConfiguredRoutes(remoteRoutes);
 
         updateReportList(ctx);
         container.querySelector('#admin-points-rows').innerHTML = renderCollectionPointTable(ctx.reports);
@@ -269,21 +268,10 @@ function showAdminLogin(container, message = '', showSignOut = false) {
   });
 }
 
-/** Loads shared routes; seeds Supabase with the local routes the first time it has none. */
-async function loadSharedRoutes(reports) {
-  const { fetchRouteConfigurations, saveRouteConfigurations, saveRouteSchedule } = await api();
-  const remoteRoutes = await fetchRouteConfigurations();
-  if (remoteRoutes.length > 0) {
-    saveConfiguredRoutes(remoteRoutes);
-    return;
-  }
-
-  const seededRoutes = applyReportProgress(getConfiguredRoutes(), reports);
-  await saveRouteConfigurations(seededRoutes);
-  if (seededRoutes[0]?.scheduledDates?.includes(getOperationalDate())) {
-    await saveRouteSchedule(getOperationalDate(), seededRoutes[0].id);
-  }
-  saveConfiguredRoutes(seededRoutes);
+/** Loads shared routes; Supabase is the source of truth, even when it has none. */
+async function loadSharedRoutes() {
+  const { fetchRouteConfigurations } = await api();
+  saveConfiguredRoutes(await fetchRouteConfigurations());
 }
 
 async function mountAdminDashboard(container) {
@@ -317,7 +305,7 @@ async function mountAdminDashboard(container) {
     }
 
     try {
-      await loadSharedRoutes(reports);
+      await loadSharedRoutes();
     } catch (error) {
       routeError = `No se pudieron cargar las rutas compartidas: ${error.message}`;
     }

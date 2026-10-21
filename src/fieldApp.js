@@ -47,8 +47,6 @@ async function refreshFieldRouteConfiguration() {
       fetchFleetResources().catch(() => null)
     ]);
     if (fleet) store.setFleetResources(fleet);
-    if (routes.length === 0) return;
-
     saveConfiguredRoutes(routes);
     store.applyConfiguredRoute(routes.find((route) => route.scheduledDates?.includes(getOperationalDate())) || null);
   } catch {
