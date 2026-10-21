@@ -13,32 +13,8 @@ function createInitialState() {
   return {
     currentScreen: 'dispatch',
     screenTransition: null,
-    unit: {
-      id: 'U-01',
-      model: 'Freightliner M2 Econovo',
-      plates: 'LPZ-2099',
-      compactorCapacity: '12 Toneladas',
-      status: 'OPERATIVO'
-    },
-    operator: {
-      name: 'Carlos Mendoza #402',
-      license: 'B-883491 (Vigente)',
-      shift: 'Matutino • 06:00 - 14:00',
-      depot: 'Base Norte Pantaco'
-    },
-    dispatchOptions: {
-      units: [
-        { id: 'U-01', label: 'U-01' }
-      ],
-      drivers: [
-        { id: 'C-001', label: 'Carlos Mendoza' },
-        { id: 'C-002', label: 'Alejandro Torres' }
-      ],
-      assistants: [
-        { id: 'A-001', label: 'Ana López' },
-        { id: 'A-002', label: 'Jorge Ramírez' }
-      ]
-    },
+    // Registered by admins in Supabase (fleet_resources); cached so dispatch works offline.
+    dispatchOptions: toDispatchOptions(loadFleetCache()),
     assignment: {
       unitId: null,
       driverId: null,
@@ -85,6 +61,9 @@ function createInitialState() {
     },
     // In-progress container reports keyed by container id (fill level, materials, photos…).
     reportDrafts: {},
+    // In-progress incident and refuel forms. Kept in memory only: their photos are too large
+    // for localStorage next to the sync queue.
+    formDrafts: { incident: {}, refuel: {} },
     // Field actions saved on the device and not yet sent to Supabase (services/fieldSync.js).
     pendingSyncCount: 0,
     toast: null
@@ -106,6 +85,23 @@ function getStorage() {
   } catch {
     return null;
   }
+}
+
+export const fleetStorageKey = 'ruta-cero-fleet';
+
+function loadFleetCache() {
+  try {
+    return JSON.parse(getStorage()?.getItem(fleetStorageKey)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function toDispatchOptions(resources) {
+  const options = (kind) => resources
+    .filter((resource) => resource.kind === kind)
+    .map(({ id, name }) => ({ id, label: `${id} · ${name}` }));
+  return { units: options('unit'), drivers: options('driver'), assistants: options('assistant') };
 }
 
 function loadPersistedState() {
@@ -211,6 +207,19 @@ class TacticalStore {
     }), { notify: shouldNotify });
   }
 
+  /** Replaces the units, drivers and assistants listed at dispatch with the ones from Supabase. */
+  setFleetResources(resources) {
+    try {
+      getStorage()?.setItem(fleetStorageKey, JSON.stringify(resources));
+    } catch {
+      // Storage full or blocked: the list stays in memory.
+    }
+    const dispatchOptions = toDispatchOptions(resources);
+    if (JSON.stringify(dispatchOptions) === JSON.stringify(this.state.dispatchOptions)) return;
+    // Only the dispatch screen shows them; re-rendering others would reload the map or camera.
+    this.setState({ dispatchOptions }, { notify: this.state.currentScreen === 'dispatch' });
+  }
+
   setDispatchAssignment(field, value, shouldNotify = true) {
     if (!Object.prototype.hasOwnProperty.call(this.state.assignment, field)) return;
     this.setState(({ assignment }) => ({
@@ -223,6 +232,17 @@ class TacticalStore {
     this.setState(({ reportDrafts }) => ({
       reportDrafts: { ...reportDrafts, [containerId]: { ...reportDrafts[containerId], ...patch } }
     }), { notify: false });
+  }
+
+  /** Merges `patch` into the incident or refuel form; re-renders only when asked (new photo). */
+  updateFormDraft(form, patch, shouldNotify = false) {
+    this.setState(({ formDrafts }) => ({
+      formDrafts: { ...formDrafts, [form]: { ...formDrafts[form], ...patch } }
+    }), { notify: shouldNotify });
+  }
+
+  clearFormDraft(form) {
+    this.setState(({ formDrafts }) => ({ formDrafts: { ...formDrafts, [form]: {} } }), { notify: false });
   }
 
   applyConfiguredRoute(route, shouldNotify = true) {
@@ -327,7 +347,8 @@ class TacticalStore {
 
   /** Starts a new run of the scheduled route; the caller navigates to the map right after. */
   startRoute() {
-    if (!this.state.route.id) return null;
+    // Only one route per day: a closed route is never restarted (it would wipe its record).
+    if (!this.state.route.id || this.state.route.status === 'COMPLETADA') return null;
     const startTimestamp = Date.now();
     this.setState(({ stops, route }) => {
       const nextStops = stops

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { store } from '../src/state/store.js';
+import { renderRouteSummaryScreen } from '../src/screens/RouteSummaryScreen.js';
 
 const route = {
   id: 'R-50',
@@ -36,6 +37,13 @@ test('las acciones crean un estado nuevo sin modificar el anterior', () => {
     assert.equal(JSON.stringify(previous), previousJson, `${action} modified the previous state`);
   }
   assert.equal(store.state.route.status, 'COMPLETADA');
+
+  // One route per day: the closed route cannot be restarted and its summary keeps the record.
+  assert.equal(store.startRoute(), null);
+  assert.equal(store.state.route.completedCount, 2);
+  const summary = renderRouteSummaryScreen(store.state);
+  assert.match(summary, /2 \/ 2/);
+  assert.match(summary, /40 kg/);
 });
 
 test('el borrador del reporte se conserva por contenedor y se limpia al guardar o iniciar ruta', () => {
@@ -72,4 +80,17 @@ test('updateReportDraft y los cambios en la misma pantalla no vuelven a dibujarl
   } finally {
     unsubscribe();
   }
+});
+
+test('setFleetResources agrupa unidades, operadores y auxiliares para el despacho', () => {
+  store.setFleetResources([
+    { id: 'U-007', kind: 'unit', name: 'Freightliner LPZ-2099' },
+    { id: 'OP-001', kind: 'driver', name: 'Luis Peña' },
+    { id: 'AUX-001', kind: 'assistant', name: 'Eva Ruiz' }
+  ]);
+  assert.deepEqual(store.state.dispatchOptions, {
+    units: [{ id: 'U-007', label: 'U-007 · Freightliner LPZ-2099' }],
+    drivers: [{ id: 'OP-001', label: 'OP-001 · Luis Peña' }],
+    assistants: [{ id: 'AUX-001', label: 'AUX-001 · Eva Ruiz' }]
+  });
 });

@@ -6,7 +6,11 @@ function stopStream(video) {
   }
 }
 
-export async function openPhotoCapture(onCaptured, onError) {
+/**
+ * Opens the camera and returns the photo as a JPEG data URL. `maxSize` limits the longest
+ * side in pixels; smaller photos weigh less in the offline queue and in Supabase.
+ */
+export async function openPhotoCapture(onCaptured, onError, { maxSize = Infinity, quality = 0.85 } = {}) {
   const existingOverlay = document.querySelector('.photo-capture-overlay');
   if (existingOverlay) {
     return;
@@ -65,11 +69,12 @@ export async function openPhotoCapture(onCaptured, onError) {
   shutterButton.addEventListener('click', () => {
     if (closed || shutterButton.disabled || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
 
+    const scale = Math.min(1, maxSize / Math.max(video.videoWidth, video.videoHeight));
     const frame = document.createElement('canvas');
-    frame.width = video.videoWidth;
-    frame.height = video.videoHeight;
+    frame.width = Math.round(video.videoWidth * scale);
+    frame.height = Math.round(video.videoHeight * scale);
     frame.getContext('2d')?.drawImage(video, 0, 0, frame.width, frame.height);
-    const photoDataUrl = frame.toDataURL('image/jpeg', 0.85);
+    const photoDataUrl = frame.toDataURL('image/jpeg', quality);
     close();
     onCaptured?.(photoDataUrl);
   });

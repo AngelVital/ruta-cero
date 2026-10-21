@@ -24,25 +24,36 @@ function writeQueue(queue) {
 }
 
 const senders = {
-  start: (api, { payload, at }) => api.markRouteStarted(payload.routeId, at),
-  report: (api, { id, payload, at }) => api.insertContainerReport(payload.routeId, payload.containerId, payload.report, {
+  start: (api, { payload, at, crew }) => api.markRouteStarted(payload.routeId, at, crew),
+  report: (api, { id, payload, at, crew }) => api.insertContainerReport(payload.routeId, payload.containerId, payload.report, {
     id,
-    createdAt: at
+    createdAt: at,
+    crew
   }),
-  complete: (api, { payload, at }) => api.markRouteCompleted(payload.routeId, at)
+  complete: (api, { payload, at, crew }) => api.markRouteCompleted(payload.routeId, at, crew),
+  incident: (api, { id, payload, at, crew }) => api.insertIncidentReport(payload, { id, createdAt: at, crew }),
+  refuel: (api, { id, payload, at, crew }) => api.insertFuelLoad(payload, { id, createdAt: at, crew })
 };
 
-function getReportSaveErrorMessage(error) {
+// Records kept in the queue when Supabase rejects them: usually a schema problem the admin
+// can fix, and dropping them would lose field data. Each entry names the record and its table.
+const keptOnRejection = {
+  report: ({ containerId }) => [`Reporte de ${containerId}`, 'container_reports'],
+  incident: () => ['Incidencia', 'incident_reports'],
+  refuel: () => ['Carga de combustible', 'fuel_loads']
+};
+
+function getReportSaveErrorMessage(error, table = 'container_reports') {
   if (error?.code === '22P02' && /"(low|medium|full)"/.test(error.message || '')) {
     return 'La columna fill_level de Supabase sigue siendo INTEGER. Ejecuta supabase/schema.sql en el SQL Editor de ese proyecto.';
   }
 
   if (error?.code === '42501') {
-    return 'Supabase rechazó la inserción por permisos o RLS. Ejecuta supabase/schema.sql y verifica el privilegio INSERT y la política de container_reports.';
+    return `Supabase rechazó la inserción por permisos o RLS. Ejecuta supabase/schema.sql y verifica el privilegio INSERT y la política de ${table}.`;
   }
 
   if (error?.code === '42P01' || error?.code === 'PGRST205') {
-    return 'No se encuentra la tabla container_reports. Ejecuta supabase/schema.sql en tu proyecto de Supabase.';
+    return `No se encuentra la tabla ${table}. Ejecuta supabase/schema.sql en tu proyecto de Supabase.`;
   }
 
   const code = error?.code ? ` (${error.code})` : '';
@@ -57,7 +68,9 @@ export async function queueFieldAction(type, payload, loadApi = loadSupabase) {
   const { isSupabaseConfigured } = await loadApi();
   if (!isSupabaseConfigured) return false;
 
-  writeQueue([...readQueue(), { id: crypto.randomUUID(), type, payload, at: new Date().toISOString() }]);
+  // The crew is captured now: by the time it syncs the dispatch assignment may have changed.
+  const crew = { ...store.state.assignment };
+  writeQueue([...readQueue(), { id: crypto.randomUUID(), type, payload, crew, at: new Date().toISOString() }]);
   flushFieldQueue(loadApi);
   return true;
 }
@@ -86,12 +99,12 @@ async function sendQueue(loadApi) {
         wentOffline = true;
         return;
       }
-      if (item.type === 'report' && error.code !== '23505') {
-        // Kept: a rejected report is usually a schema problem the admin can fix, and dropping it loses data.
-        store.showToast(`Reporte de ${item.payload.containerId} pendiente: ${getReportSaveErrorMessage(error)}`, 'info', 8000);
+      if (keptOnRejection[item.type] && error.code !== '23505') {
+        const [label, table] = keptOnRejection[item.type](item.payload);
+        store.showToast(`${label} pendiente: ${getReportSaveErrorMessage(error, table)}`, 'info', 8000);
         continue;
       }
-      // 23505: the report already arrived in an earlier attempt. Rejected route RPCs won't succeed on retry.
+      // 23505: the record already arrived in an earlier attempt. Rejected route RPCs won't succeed on retry.
       if (error.code !== '23505') {
         store.showToast(`No se sincronizó ${item.payload.routeId}: ${error.message}`, 'info', 8000);
       }

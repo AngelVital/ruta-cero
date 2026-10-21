@@ -15,9 +15,11 @@ function addHoursToTime(timeStr, hoursToAdd) {
   return `${String(resultHours).padStart(2, '0')}:${String(resultMinutes).padStart(2, '0')}`;
 }
 
+// Names are typed by admins, so they are escaped.
 function renderAssignmentOptions(options, selectedId) {
-  return options.map(option => `
-    <option value="${option.id}" ${option.id === selectedId ? 'selected' : ''}>${option.label}</option>
+  const placeholder = options.length ? 'Selecciona…' : 'Sin registros: pide a administración que los agregue';
+  return `<option value="">${placeholder}</option>` + options.map(option => `
+    <option value="${escapeHtml(option.id)}" ${option.id === selectedId ? 'selected' : ''}>${escapeHtml(option.label)}</option>
   `).join('');
 }
 
@@ -179,6 +181,13 @@ export function attachDispatchScreenEvents(container, store) {
   });
 
   container.querySelector('#btn-start-route')?.addEventListener('click', async (event) => {
+    const { assignment, dispatchOptions } = store.state;
+    const isListed = (options, id) => options.some((option) => option.id === id);
+    if (!isListed(dispatchOptions.units, assignment.unitId) || !isListed(dispatchOptions.drivers, assignment.driverId)) {
+      store.showToast('Selecciona la unidad y el operador antes de iniciar la ruta.', 'info');
+      return;
+    }
+
     if (!store.state.fuelLevel.preset) {
       store.showToast('Registra el nivel de combustible antes de iniciar la ruta.', 'info');
       return;

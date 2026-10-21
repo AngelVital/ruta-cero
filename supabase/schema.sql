@@ -122,7 +122,11 @@ alter table public.route_schedules
   add column if not exists stops_done integer not null default 0,
   add column if not exists completed_point_ids text[] not null default '{}',
   add column if not exists started_at timestamptz,
-  add column if not exists completed_at timestamptz;
+  add column if not exists completed_at timestamptz,
+  -- Crew that ran the route (fleet_resources ids; foreign keys are added with that table).
+  add column if not exists unit_id text,
+  add column if not exists driver_id text,
+  add column if not exists assistant_id text;
 
 do $$
 begin
@@ -359,11 +363,36 @@ $$;
 revoke all on function public.set_route_schedule(date, text) from public, anon;
 grant execute on function public.set_route_schedule(date, text) to authenticated;
 
--- The single-argument versions are replaced by ones that accept the device time.
+-- Earlier versions are replaced by ones that accept the device time and the crew.
 drop function if exists public.start_route_configuration(text);
 drop function if exists public.complete_route_configuration(text);
+drop function if exists public.start_route_configuration(text, timestamptz);
+drop function if exists public.complete_route_configuration(text, timestamptz);
 
-create or replace function public.start_route_configuration(p_route_id text, p_at timestamptz default now())
+-- Returns p_id when it is a registered fleet resource of that kind, otherwise null, so an
+-- unknown crew id never makes the field app lose a route start or a report.
+create or replace function public.known_fleet_resource_id(p_id text, p_kind text)
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  -- plpgsql resolves the table at run time; fleet_resources is created further down this file.
+  return (select id from public.fleet_resources where id = p_id and kind = p_kind);
+end;
+$$;
+
+revoke all on function public.known_fleet_resource_id(text, text) from public, anon, authenticated;
+
+create or replace function public.start_route_configuration(
+  p_route_id text,
+  p_at timestamptz default now(),
+  p_unit_id text default null,
+  p_driver_id text default null,
+  p_assistant_id text default null
+)
 returns void
 language plpgsql
 security definer
@@ -378,7 +407,10 @@ begin
       stops_done = 0,
       completed_point_ids = '{}',
       started_at = v_at,
-      completed_at = null
+      completed_at = null,
+      unit_id = public.known_fleet_resource_id(p_unit_id, 'unit'),
+      driver_id = public.known_fleet_resource_id(p_driver_id, 'driver'),
+      assistant_id = public.known_fleet_resource_id(p_assistant_id, 'assistant')
   where route_id = p_route_id
     and scheduled_for = (v_at at time zone 'America/Mazatlan')::date
     and status <> 'completed';
@@ -396,10 +428,16 @@ begin
 end;
 $$;
 
-revoke all on function public.start_route_configuration(text, timestamptz) from public;
-grant execute on function public.start_route_configuration(text, timestamptz) to anon, authenticated;
+revoke all on function public.start_route_configuration(text, timestamptz, text, text, text) from public;
+grant execute on function public.start_route_configuration(text, timestamptz, text, text, text) to anon, authenticated;
 
-create or replace function public.complete_route_configuration(p_route_id text, p_at timestamptz default now())
+create or replace function public.complete_route_configuration(
+  p_route_id text,
+  p_at timestamptz default now(),
+  p_unit_id text default null,
+  p_driver_id text default null,
+  p_assistant_id text default null
+)
 returns void
 language plpgsql
 security definer
@@ -448,15 +486,19 @@ begin
   set status = 'completed',
       stops_done = completed_points,
       completed_point_ids = completed_ids,
-      completed_at = v_at
+      completed_at = v_at,
+      -- The crew that started keeps the credit; the closing crew fills in a start without one.
+      unit_id = coalesce(schedule.unit_id, public.known_fleet_resource_id(p_unit_id, 'unit')),
+      driver_id = coalesce(schedule.driver_id, public.known_fleet_resource_id(p_driver_id, 'driver')),
+      assistant_id = coalesce(schedule.assistant_id, public.known_fleet_resource_id(p_assistant_id, 'assistant'))
   where schedule.route_id = p_route_id
     and schedule.scheduled_for = (v_at at time zone 'America/Mazatlan')::date
     and schedule.status <> 'completed';
 end;
 $$;
 
-revoke all on function public.complete_route_configuration(text, timestamptz) from public;
-grant execute on function public.complete_route_configuration(text, timestamptz) to anon, authenticated;
+revoke all on function public.complete_route_configuration(text, timestamptz, text, text, text) from public;
+grant execute on function public.complete_route_configuration(text, timestamptz, text, text, text) to anon, authenticated;
 
 create or replace function public.update_route_progress_from_report()
 returns trigger
@@ -541,6 +583,10 @@ begin
   -- Reports captured offline keep their device time, but never a future one.
   new.created_at := least(coalesce(new.created_at, now()), now());
   new.received_at := now();
+  -- Unknown crew ids are dropped instead of rejecting the report (and stranding it in the queue).
+  new.unit_id := public.known_fleet_resource_id(new.unit_id, 'unit');
+  new.driver_id := public.known_fleet_resource_id(new.driver_id, 'driver');
+  new.assistant_id := public.known_fleet_resource_id(new.assistant_id, 'assistant');
   return new;
 end;
 $$;
@@ -596,3 +642,266 @@ set stops_done = progress.stops_done,
 from route_progress progress
 where schedule.route_id = progress.route_id
   and schedule.scheduled_for = progress.scheduled_for;
+-- Field events that don't stop the route: incidents (crash, breakdown…) and fuel loads.
+-- Photos are compressed JPEG data URLs captured by the field app.
+create table if not exists public.incident_reports (
+  id uuid primary key default gen_random_uuid(),
+  route_id text not null default '',
+  unit_id text not null default '',
+  stop_id text,
+  incident_type text not null
+    check (incident_type in ('collision', 'injuries', 'mechanical', 'flat_tire', 'road_block', 'other')),
+  severity text not null check (severity in ('low', 'medium', 'high')),
+  description text not null default '',
+  photos text[] not null default '{}',
+  latitude double precision,
+  longitude double precision,
+  created_at timestamptz not null default now(),
+  received_at timestamptz not null default now()
+);
+
+create table if not exists public.fuel_loads (
+  id uuid primary key default gen_random_uuid(),
+  route_id text not null default '',
+  unit_id text not null default '',
+  liters numeric not null check (liters > 0),
+  amount numeric check (amount >= 0),
+  odometer_km numeric check (odometer_km >= 0),
+  ticket_photo text,
+  latitude double precision,
+  longitude double precision,
+  created_at timestamptz not null default now(),
+  received_at timestamptz not null default now()
+);
+
+create index if not exists incident_reports_created_at_idx
+  on public.incident_reports (created_at desc);
+
+create index if not exists fuel_loads_created_at_idx
+  on public.fuel_loads (created_at desc);
+
+do $$
+declare
+  field_table text;
+begin
+  foreach field_table in array array['incident_reports', 'fuel_loads'] loop
+    execute format('alter table public.%I enable row level security', field_table);
+    execute format('grant insert on public.%I to anon, authenticated', field_table);
+    execute format('grant select on public.%I to authenticated', field_table);
+
+    execute format('drop policy if exists "Field app can insert" on public.%I', field_table);
+    execute format(
+      'create policy "Field app can insert" on public.%I for insert to anon, authenticated with check (true)',
+      field_table
+    );
+
+    execute format('drop policy if exists "Admins can read" on public.%I', field_table);
+    execute format(
+      'create policy "Admins can read" on public.%I for select to authenticated
+         using (exists (select 1 from public.admin_users where user_id = auth.uid()))',
+      field_table
+    );
+
+    -- Same device-time handling as container reports (never a future created_at).
+    execute format('drop trigger if exists %I on public.%I', field_table || '_prepare', field_table);
+    execute format(
+      'create trigger %I before insert on public.%I for each row execute function public.prepare_container_report()',
+      field_table || '_prepare', field_table
+    );
+
+    if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+      and not exists (
+        select 1 from pg_publication_tables
+        where pubname = 'supabase_realtime'
+          and schemaname = 'public'
+          and tablename = field_table
+      ) then
+      execute format('alter publication supabase_realtime add table public.%I', field_table);
+    end if;
+  end loop;
+end $$;
+
+-- Units, drivers and assistants registered by admins; the field app lists the active ones at
+-- dispatch. The database gives each one an id (U-001, OP-001, AUX-001) that is never reused and
+-- that field reports store. Deleting only archives (active = false) so old reports keep resolving.
+create table if not exists public.fleet_resources (
+  id text primary key,
+  kind text not null check (kind in ('unit', 'driver', 'assistant')),
+  name text not null check (btrim(name) <> ''),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create sequence if not exists public.fleet_unit_id_seq;
+create sequence if not exists public.fleet_driver_id_seq;
+create sequence if not exists public.fleet_assistant_id_seq;
+
+create or replace function public.next_fleet_resource_id(p_kind text)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select case p_kind when 'unit' then 'U-' when 'driver' then 'OP-' else 'AUX-' end
+    || lpad(nextval(format('public.fleet_%s_id_seq', p_kind)::regclass)::text, 3, '0');
+$$;
+
+revoke all on function public.next_fleet_resource_id(text) from public, anon, authenticated;
+
+-- An earlier version of this table had no id and used (kind, name) as its key.
+alter table public.fleet_resources
+  add column if not exists id text,
+  add column if not exists active boolean not null default true;
+
+update public.fleet_resources
+set id = public.next_fleet_resource_id(kind)
+where id is null;
+
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.key_column_usage
+    where table_schema = 'public'
+      and table_name = 'fleet_resources'
+      and constraint_name = 'fleet_resources_pkey'
+      and column_name = 'id'
+  ) then
+    alter table public.fleet_resources drop constraint if exists fleet_resources_pkey;
+    alter table public.fleet_resources add primary key (id);
+  end if;
+end $$;
+
+create or replace function public.assign_fleet_resource_id()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Ids always come from the database, never from the client.
+  new.id := public.next_fleet_resource_id(new.kind);
+  return new;
+end;
+$$;
+
+revoke all on function public.assign_fleet_resource_id() from public, anon, authenticated;
+
+drop trigger if exists fleet_resource_assign_id on public.fleet_resources;
+create trigger fleet_resource_assign_id
+  before insert on public.fleet_resources
+  for each row
+  execute function public.assign_fleet_resource_id();
+
+alter table public.fleet_resources enable row level security;
+revoke delete on public.fleet_resources from authenticated;
+grant select on public.fleet_resources to anon, authenticated;
+grant insert (kind, name) on public.fleet_resources to authenticated;
+grant update (active) on public.fleet_resources to authenticated;
+
+drop policy if exists "Field app can read fleet resources" on public.fleet_resources;
+create policy "Field app can read fleet resources"
+  on public.fleet_resources
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "Admins can add fleet resources" on public.fleet_resources;
+create policy "Admins can add fleet resources"
+  on public.fleet_resources
+  for insert
+  to authenticated
+  with check (exists (select 1 from public.admin_users where user_id = auth.uid()));
+
+drop policy if exists "Admins can delete fleet resources" on public.fleet_resources;
+drop policy if exists "Admins can archive fleet resources" on public.fleet_resources;
+create policy "Admins can archive fleet resources"
+  on public.fleet_resources
+  for update
+  to authenticated
+  using (exists (select 1 from public.admin_users where user_id = auth.uid()))
+  with check (exists (select 1 from public.admin_users where user_id = auth.uid()));
+
+-- Crew chosen at dispatch (fleet_resources ids) on every field report and route run; null
+-- means none. The foreign keys are NOT VALID so older rows that stored a name are kept.
+do $$
+declare
+  crew_table text;
+  crew_column text;
+begin
+  foreach crew_table in array array['container_reports', 'incident_reports', 'fuel_loads', 'route_schedules'] loop
+    foreach crew_column in array array['unit_id', 'driver_id', 'assistant_id'] loop
+      execute format('alter table public.%I add column if not exists %I text', crew_table, crew_column);
+      execute format('alter table public.%I alter column %I drop not null, alter column %I drop default',
+        crew_table, crew_column, crew_column);
+      execute format('update public.%I set %I = null where %I = %L', crew_table, crew_column, crew_column, '');
+
+      if not exists (
+        select 1 from pg_constraint
+        where conname = crew_table || '_' || crew_column || '_fkey'
+          and conrelid = format('public.%I', crew_table)::regclass
+      ) then
+        execute format(
+          'alter table public.%I add constraint %I foreign key (%I) references public.fleet_resources (id) not valid',
+          crew_table, crew_table || '_' || crew_column || '_fkey', crew_column
+        );
+      end if;
+    end loop;
+  end loop;
+
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+    and not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public'
+        and tablename = 'fleet_resources'
+    ) then
+    alter publication supabase_realtime add table public.fleet_resources;
+  end if;
+end $$;
+
+-- Route ids (R-01, R-02…) come from the database and are never reused: a new route never takes
+-- the id of a deleted one, whose reports would otherwise be credited to it.
+create sequence if not exists public.route_id_seq;
+
+create or replace function public.next_route_id()
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  highest bigint;
+  next_number bigint;
+begin
+  if not exists (
+    select 1 from public.admin_users where user_id = auth.uid()
+  ) then
+    raise exception 'Solo un administrador puede crear rutas.';
+  end if;
+
+  -- Two admins creating routes at the same time get different ids.
+  perform pg_advisory_xact_lock(hashtext('public.next_route_id'));
+
+  -- Skips every id already used anywhere, including routes created before this sequence existed.
+  select coalesce(max(substring(used.id from '^R-([0-9]+)$')::bigint), 0)
+  into highest
+  from (
+    select id from public.route_configurations
+    union all select route_id from public.route_schedules
+    union all select route_id from public.container_reports
+    union all select route_id from public.incident_reports
+    union all select route_id from public.fuel_loads
+  ) used(id);
+
+  next_number := nextval('public.route_id_seq');
+  if next_number <= highest then
+    next_number := highest + 1;
+    perform setval('public.route_id_seq', next_number);
+  end if;
+
+  return 'R-' || lpad(next_number::text, 2, '0');
+end;
+$$;
+
+revoke all on function public.next_route_id() from public, anon;
+grant execute on function public.next_route_id() to authenticated;

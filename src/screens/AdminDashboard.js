@@ -17,6 +17,8 @@ import { attachAdminLogin, renderAdminLogin } from './admin/AdminLogin.js';
 import { renderAdminOperations } from './admin/AdminLayout.js';
 import { renderCollectionPointTable } from './admin/CollectionPoints.js';
 import { formatReportDate, parseDateKey } from './admin/format.js';
+import { attachFieldEvents, updateFieldEvents } from './admin/FieldEvents.js';
+import { attachFleet } from './admin/Fleet.js';
 import { attachReports, updateReportList } from './admin/Reports.js';
 import { attachRouteTable, updateRouteRows } from './admin/RouteTable.js';
 import { attachScheduleCalendar, renderRouteScheduleCalendar } from './admin/ScheduleCalendar.js';
@@ -49,12 +51,37 @@ function updateRoutes(ctx) {
   ctx.updateCalendar();
 }
 
-function createAdminContext(container, reports) {
+/**
+ * Incidents and fuel loads, loaded apart from container reports so a project that has not
+ * run the new part of schema.sql yet still shows everything else.
+ */
+async function loadFieldEvents() {
+  try {
+    const { fetchAdminIncidentReports, fetchAdminFuelLoads } = await api();
+    const [incidents, fuelLoads] = await Promise.all([fetchAdminIncidentReports(), fetchAdminFuelLoads()]);
+    return { incidents, fuelLoads, fieldEventError: '' };
+  } catch (error) {
+    return { incidents: [], fuelLoads: [], fieldEventError: `No se pudieron cargar incidencias y combustible: ${error.message}` };
+  }
+}
+
+async function loadFleet() {
+  try {
+    return { fleet: await (await api()).fetchFleetResources(), fleetError: '' };
+  } catch (error) {
+    return { fleet: [], fleetError: `No se pudieron cargar unidades y personal: ${error.message}` };
+  }
+}
+
+function createAdminContext(container, reports, { incidents, fuelLoads, fleet }) {
   const routeMessage = container.querySelector('#admin-route-message');
   const ctx = {
     container,
     routes: [],
     reports,
+    incidents,
+    fuelLoads,
+    fleet,
     visibleReports: getReportsForDate(reports, getOperationalDate()),
     showAllReports: false,
     selectedScheduleDate: getOperationalDate(),
@@ -99,10 +126,16 @@ function startAdminSync(ctx) {
       try {
         const { fetchAdminContainerReports, fetchRouteConfigurations } = await api();
         const latestReceivedAt = announce ? null : getLatestReportReceivedAt(ctx.reports);
-        const [updatedReports, remoteRoutes] = await Promise.all([
+        const [updatedReports, remoteRoutes, fieldEvents] = await Promise.all([
           fetchAdminContainerReports({ since: latestReceivedAt }),
-          fetchRouteConfigurations()
+          fetchRouteConfigurations(),
+          loadFieldEvents()
         ]);
+        if (!fieldEvents.fieldEventError) {
+          ctx.incidents = fieldEvents.incidents;
+          ctx.fuelLoads = fieldEvents.fuelLoads;
+          updateFieldEvents(ctx);
+        }
         ctx.reports = latestReceivedAt ? mergeNewReports(ctx.reports, updatedReports) : updatedReports;
         if (remoteRoutes.length > 0) {
           ctx.routes = remoteRoutes;
@@ -182,17 +215,25 @@ function startAdminSync(ctx) {
   return { refresh, teardown };
 }
 
-function attachAdminDashboardContentEvents(container, reports) {
-  const ctx = createAdminContext(container, reports);
+function attachAdminDashboardContentEvents(container, reports, fieldEvents) {
+  const ctx = createAdminContext(container, reports, fieldEvents);
   updateRoutes(ctx);
 
   const { refresh, teardown } = startAdminSync(ctx);
   attachReports(ctx, { refresh });
+  attachFieldEvents(ctx, {
+    fetchPhotos: async (...args) => (await api()).fetchFieldEventPhotos(...args)
+  });
   attachScheduleCalendar(ctx, {
     saveRouteSchedule: async (...args) => (await api()).saveRouteSchedule(...args)
   });
   attachRouteTable(ctx, {
-    saveRouteConfigurations: async (...args) => (await api()).saveRouteConfigurations(...args)
+    saveRouteConfigurations: async (...args) => (await api()).saveRouteConfigurations(...args),
+    fetchNextRouteId: async () => (await api()).fetchNextRouteId()
+  });
+  attachFleet(ctx, {
+    addFleetResource: async (...args) => (await api()).addFleetResource(...args),
+    archiveFleetResource: async (...args) => (await api()).archiveFleetResource(...args)
   });
 
   container.querySelectorAll('.admin-nav-link').forEach((link) => {
@@ -279,15 +320,18 @@ async function mountAdminDashboard(container) {
       routeError = `No se pudieron cargar las rutas compartidas: ${error.message}`;
     }
 
+    const [fieldEvents, fleet] = await Promise.all([loadFieldEvents(), loadFleet()]);
     container.innerHTML = renderAdminOperations({
       user: session.user,
       routes: getConfiguredRoutes(),
       scheduledRoute: getScheduledRoute(),
       reports,
       reportError,
-      routeError
+      routeError,
+      ...fieldEvents,
+      ...fleet
     });
-    attachAdminDashboardContentEvents(container, reports);
+    attachAdminDashboardContentEvents(container, reports, { ...fieldEvents, ...fleet });
   } catch (error) {
     showAdminLogin(container, error.message, true);
   }

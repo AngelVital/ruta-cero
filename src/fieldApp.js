@@ -16,8 +16,11 @@ import { renderInspection360Screen, attachInspection360Events } from './screens/
 import { renderFuelLevelScreen, attachFuelLevelEvents } from './screens/FuelLevelScreen.js';
 import { renderRouteMapScreen, attachRouteMapEvents } from './screens/RouteMapScreen.js';
 import { renderRouteCompletionScreen, attachRouteCompletionEvents } from './screens/RouteCompletionScreen.js';
+import { renderRouteSummaryScreen, attachRouteSummaryEvents } from './screens/RouteSummaryScreen.js';
 import { renderQRScannerScreen, attachQRScannerEvents } from './screens/QRScannerScreen.js';
 import { renderContainerReportScreen, attachContainerReportEvents } from './screens/ContainerReportScreen.js';
+import { renderIncidentScreen, attachIncidentEvents } from './screens/IncidentScreen.js';
+import { renderRefuelScreen, attachRefuelEvents } from './screens/RefuelScreen.js';
 
 const screens = {
   dispatch: [renderDispatchScreen, attachDispatchScreenEvents],
@@ -25,8 +28,11 @@ const screens = {
   fuel: [renderFuelLevelScreen, attachFuelLevelEvents],
   map: [renderRouteMapScreen, attachRouteMapEvents],
   'route-completion': [renderRouteCompletionScreen, attachRouteCompletionEvents],
+  'route-summary': [renderRouteSummaryScreen, attachRouteSummaryEvents],
   scanner: [renderQRScannerScreen, attachQRScannerEvents],
-  report: [renderContainerReportScreen, attachContainerReportEvents]
+  report: [renderContainerReportScreen, attachContainerReportEvents],
+  incident: [renderIncidentScreen, attachIncidentEvents],
+  refuel: [renderRefuelScreen, attachRefuelEvents]
 };
 
 async function refreshFieldRouteConfiguration() {
@@ -34,8 +40,13 @@ async function refreshFieldRouteConfiguration() {
   try {
     // Send pending actions first so the server state already includes them.
     await flushFieldQueue();
-    const { fetchRouteConfigurations } = await import('./services/supabase.js');
-    const routes = await fetchRouteConfigurations();
+    const { fetchRouteConfigurations, fetchFleetResources } = await import('./services/supabase.js');
+    const [routes, fleet] = await Promise.all([
+      fetchRouteConfigurations(),
+      // A project that has not run the fleet part of schema.sql yet keeps the cached list.
+      fetchFleetResources().catch(() => null)
+    ]);
+    if (fleet) store.setFleetResources(fleet);
     if (routes.length === 0) return;
 
     saveConfiguredRoutes(routes);
@@ -83,8 +94,10 @@ export function startFieldApp(appEl) {
 
   function renderApp() {
     const state = store.state;
+    // One route per day: once it is closed (here or reported by the server) only the summary is shown.
+    const screenName = state.route.status === 'COMPLETADA' ? 'route-summary' : state.currentScreen;
     const oldViewport = document.getElementById('screen-viewport-root');
-    const screenChanged = previousScreen !== null && previousScreen !== state.currentScreen;
+    const screenChanged = previousScreen !== null && previousScreen !== screenName;
     const savedScrollTop = (!screenChanged && oldViewport) ? oldViewport.scrollTop : 0;
 
     cleanupScreen?.();
@@ -99,10 +112,10 @@ export function startFieldApp(appEl) {
       });
     }
 
-    previousScreen = state.currentScreen;
+    previousScreen = screenName;
     const screenTransition = store.consumeScreenTransition();
 
-    const [renderScreen, attachEvents] = screens[state.currentScreen] || screens.dispatch;
+    const [renderScreen, attachEvents] = screens[screenName] || screens.dispatch;
 
     // Master Shell Layout
     appEl.innerHTML = `

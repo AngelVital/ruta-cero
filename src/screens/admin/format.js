@@ -1,3 +1,5 @@
+import { escapeHtml, icon } from '../../utils/html.js';
+
 // Intl formatters are created once per module instead of once per row or calendar cell.
 const shortDateFormatter = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 const reportDateFormatter = new Intl.DateTimeFormat('es-MX', {
@@ -65,4 +67,13 @@ export function parseDateKey(dateKey) {
 
 export function toDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/** Unit, driver and assistant ids a field report was sent with, for the detail dialogs. */
+export function renderCrewMeta(record) {
+  return [
+    ['local_shipping', record.unit_id, 'Sin unidad'],
+    ['badge', record.driver_id, 'Sin operador'],
+    ['group', record.assistant_id, 'Sin auxiliar']
+  ].map(([name, id, empty]) => `<span>${icon(name)} ${escapeHtml(id || empty)}</span>`).join('');
 }

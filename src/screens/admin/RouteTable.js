@@ -1,6 +1,5 @@
 import { collectionPoints } from '../../data/collectionPoints.js';
 import { buildRoutesCsv, filterRoutes, upsertRoute } from '../../domain/route.js';
-import { createRouteId } from '../../services/routeConfiguration.js';
 import { formatElapsedTime } from '../../utils/format.js';
 import { escapeHtml, icon } from '../../utils/html.js';
 
@@ -87,7 +86,7 @@ export function updateRouteRows(ctx) {
 }
 
 /** Search, filter, create/edit dialog, delete and CSV export. */
-export function attachRouteTable(ctx, { saveRouteConfigurations }) {
+export function attachRouteTable(ctx, { saveRouteConfigurations, fetchNextRouteId }) {
   const { container } = ctx;
   const rows = container.querySelector('#admin-route-rows');
   const routeDialog = container.querySelector('#admin-route-dialog');
@@ -125,16 +124,15 @@ export function attachRouteTable(ctx, { saveRouteConfigurations }) {
       return;
     }
 
-    const nextRoutes = upsertRoute(ctx.routes, {
-      routeId: String(formData.get('routeId') || createRouteId(ctx.routes)),
-      zone: String(formData.get('zone')).trim(),
-      pointIds
-    });
-
     const submitButton = routeForm.querySelector('button[type="submit"]');
     submitButton.disabled = true;
     routeFormError.textContent = '';
     try {
+      const nextRoutes = upsertRoute(ctx.routes, {
+        routeId: String(formData.get('routeId') || await fetchNextRouteId()),
+        zone: String(formData.get('zone')).trim(),
+        pointIds
+      });
       await saveRouteConfigurations(nextRoutes);
       routeDialog.close();
       ctx.saveRoutesLocally(nextRoutes);

@@ -51,6 +51,14 @@ export function renderRouteMapScreen(state) {
           <span class="material-symbols-outlined icon-16">directions</span>
           <span>CÓMO LLEGAR</span>
         </a>
+        <button type="button" class="btn-tactical btn-tactical-sm" id="btn-open-refuel">
+          <span class="material-symbols-outlined icon-16">local_gas_station</span>
+          <span>COMBUSTIBLE</span>
+        </button>
+        <button type="button" class="btn-tactical btn-tactical-sm btn-report-incident" id="btn-open-incident">
+          <span class="material-symbols-outlined icon-16">report</span>
+          <span>INCIDENCIA</span>
+        </button>
       </div>
     </div>
 
@@ -154,6 +162,9 @@ export function attachRouteMapEvents(container, store) {
       }
     });
   });
+
+  container.querySelector('#btn-open-refuel')?.addEventListener('click', () => store.setScreen('refuel'));
+  container.querySelector('#btn-open-incident')?.addEventListener('click', () => store.setScreen('incident'));
 
   container.querySelector('.btn-finish-route')?.addEventListener('click', () => {
     store.setScreen('route-completion');

@@ -37,7 +37,9 @@ function createApi(respond) {
     isSupabaseConfigured: true,
     markRouteStarted: call('start'),
     insertContainerReport: call('report'),
-    markRouteCompleted: call('complete')
+    markRouteCompleted: call('complete'),
+    insertIncidentReport: call('incident'),
+    insertFuelLoad: call('refuel')
   };
   return { calls, loadApi: async () => api };
 }
@@ -84,6 +86,35 @@ test('un reporte duplicado cuenta como enviado y uno rechazado se conserva', asy
 
   const pending = JSON.parse(window.localStorage.getItem(syncQueueStorageKey));
   assert.deepEqual(pending.map((item) => item.payload.containerId), ['CONT-02']);
+});
+
+test('incidencias y cargas viajan por la cola y se conservan si Supabase las rechaza', async () => {
+  window.localStorage.removeItem(syncQueueStorageKey);
+  const offline = createApi(() => offlineError);
+  store.setDispatchAssignment('unitId', 'U-001', false);
+  store.setDispatchAssignment('driverId', 'OP-002', false);
+  await queueFieldAction('incident', { routeId: 'R-70', type: 'collision', severity: 'high' }, offline.loadApi);
+  await queueFieldAction('refuel', { routeId: 'R-70', liters: 80 }, offline.loadApi);
+  // A later dispatch change must not alter the crew of records already captured.
+  store.setDispatchAssignment('unitId', 'U-009', false);
+  await flushFieldQueue(offline.loadApi);
+  assert.equal(getPendingSyncCount(), 2);
+
+  // Table not created yet: nothing is lost.
+  const missingTable = createApi(() => ({ code: '42P01', message: 'relation does not exist' }));
+  await flushFieldQueue(missingTable.loadApi);
+  assert.equal(getPendingSyncCount(), 2);
+
+  const online = createApi(() => null);
+  await flushFieldQueue(online.loadApi);
+  assert.deepEqual(online.calls.map(([type]) => type), ['incident', 'refuel']);
+  const [, payload, { id, createdAt, crew }] = online.calls[0];
+  assert.equal(payload.type, 'collision');
+  assert.equal(crew.unitId, 'U-001');
+  assert.equal(crew.driverId, 'OP-002');
+  assert.match(id, /^[0-9a-f-]{36}$/);
+  assert.ok(createdAt);
+  assert.equal(getPendingSyncCount(), 0);
 });
 
 test('sin Supabase configurado no se encola nada', async () => {

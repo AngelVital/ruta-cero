@@ -357,7 +357,15 @@
 
 .screen-viewport .route-active-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+}
+
+.screen-viewport .route-active-bar { flex-wrap: wrap; }
+
+.screen-viewport .btn-report-incident {
+  color: #b91c1c;
+  border-color: #b91c1c;
 }
 
 .screen-viewport .route-directions-link { text-decoration: none; }
@@ -472,6 +480,15 @@
   object-fit: contain;
   background: #0f172a;
 }
+
+.screen-viewport .summary-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.screen-viewport .summary-stats dd { margin: 2px 0 0; }
 
 /* ---------- Escáner ---------- */
 
@@ -787,4 +804,118 @@
   border: 2px solid #cbd5e1;
   font: inherit;
   color: #0f172a;
+}
+
+/* ---------- Incidencia y carga de combustible ---------- */
+
+.screen-viewport .field-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.screen-viewport .field-choice {
+  min-height: 64px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.screen-viewport .field-severity-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.screen-viewport .field-severity { min-height: 48px; font-weight: 800; }
+.screen-viewport .field-severity.severity-low.active { background: #ecfdf5; color: #047857; border-color: #047857; }
+.screen-viewport .field-severity.severity-medium.active { background: #fffbeb; color: #b45309; border-color: #b45309; }
+.screen-viewport .field-severity.severity-high.active { background: #fef2f2; color: #b91c1c; border-color: #b91c1c; }
+
+.screen-viewport .field-emergency-call {
+  margin-top: 10px;
+  text-decoration: none;
+  background-color: #b91c1c;
+  border-color: #7f1d1d;
+}
+
+.screen-viewport .field-photo-thumbs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.screen-viewport .field-photo-thumbs:empty { display: none; }
+
+.screen-viewport .field-photo-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  background: #0f172a;
+}
+
+.screen-viewport .field-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.screen-viewport .field-photo-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: rgba(15, 23, 42, 0.8);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.screen-viewport .field-number-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.screen-viewport .field-number {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.screen-viewport .field-number-input {
+  display: flex;
+  align-items: center;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+}
+
+.screen-viewport .field-number-input:focus-within { border-color: var(--color-primary); }
+
+.screen-viewport .field-number-input input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 0;
+  outline: none;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.screen-viewport .field-number-unit {
+  padding: 0 12px;
+  font-weight: 800;
+  color: #64748b;
 }

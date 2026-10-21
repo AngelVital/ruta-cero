@@ -3,7 +3,7 @@ import { getActiveIncidents } from '../../domain/report.js';
 import { getReportsForDate } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
-import { formatIncidentLabel, formatReportDate, formatReportLabel, formatReportWeight } from './format.js';
+import { formatIncidentLabel, formatReportDate, formatReportLabel, formatReportWeight, renderCrewMeta } from './format.js';
 
 const evidenceLabels = {
   initialExterior: 'Exterior inicial',
@@ -65,6 +65,7 @@ export function renderReportDialog(report) {
     <div class="admin-report-dialog-meta">
       <span>${icon('inventory_2')} ${escapeHtml(report.container_id)}</span>
       <span>${icon('alt_route')} ${escapeHtml(report.route_id)}</span>
+      ${renderCrewMeta(report)}
       <time>${escapeHtml(formatReportDate(report.created_at))}</time>
     </div>
     <div class="admin-report-dialog-metrics">

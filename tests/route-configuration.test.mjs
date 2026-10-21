@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assignRouteToDate, createRouteId, getConfiguredRoutes, getOperationalDate, getScheduledRoute, saveConfiguredRoutes } from '../src/services/routeConfiguration.js';
+import { assignRouteToDate, getConfiguredRoutes, getOperationalDate, getScheduledRoute, saveConfiguredRoutes } from '../src/services/routeConfiguration.js';
 import { renderDispatchScreen } from '../src/screens/DispatchScreen.js';
 import { renderRouteMapScreen } from '../src/screens/RouteMapScreen.js';
 import { renderRouteCompletionScreen } from '../src/screens/RouteCompletionScreen.js';
@@ -53,7 +53,7 @@ test('la ruta programada para hoy aparece automáticamente en despacho y mapa', 
 
   try {
     const route = {
-      id: createRouteId(defaultRoutes),
+      id: 'R-04',
       zone: 'Ruta Sur',
       pointIds: ['CONT-06', 'CONT-08'],
       scheduledDates: [getOperationalDate()],
@@ -117,9 +117,6 @@ test('no selecciona una ruta cuando la fecha no tiene programación', () => {
   }
 });
 
-test('el identificador nuevo avanza desde el número más alto existente', () => {
-  assert.equal(createRouteId([{ id: 'R-03' }, { id: 'R-12' }]), 'R-13');
-});
 
 test('todas las rutas existentes y nuevas regresan a estación y permiten finalizar', () => {
   const routes = [

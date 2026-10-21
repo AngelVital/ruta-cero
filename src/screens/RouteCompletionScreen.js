@@ -58,7 +58,7 @@ export function attachRouteCompletionEvents(container, store) {
       return;
     }
 
-    store.setScreen('dispatch');
+    store.setScreen('route-summary');
     try {
       await queueFieldAction('complete', { routeId });
       store.showToast(`Ruta ${routeId} finalizada correctamente.`);

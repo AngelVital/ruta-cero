@@ -3,13 +3,18 @@ import { getReportsForDate } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
 import { renderCollectionPointTable } from './CollectionPoints.js';
+import { renderFieldEventDialogShell, renderFuelRows, renderIncidentRows } from './FieldEvents.js';
+import { renderFleetSection } from './Fleet.js';
 import { formatLongDate, parseDateKey } from './format.js';
 import { renderReportDialogShell, renderReportRows } from './Reports.js';
 import { renderRouteEditorDialog, renderRouteTable } from './RouteTable.js';
 import { renderRouteScheduleCalendar } from './ScheduleCalendar.js';
 
 /** Full admin panel: sidebar, KPIs, reports, calendar, routes, incidents and points. */
-export function renderAdminOperations({ user, routes, scheduledRoute, reports, reportError = '', routeError = '' }) {
+export function renderAdminOperations({
+  user, routes, scheduledRoute, reports, incidents = [], fuelLoads = [], fleet = [],
+  reportError = '', routeError = '', fieldEventError = '', fleetError = ''
+}) {
   const today = getOperationalDate();
   const todaysReports = getReportsForDate(reports, today);
   const email = escapeHtml(user.email || 'Administrador');
@@ -27,7 +32,9 @@ export function renderAdminOperations({ user, routes, scheduledRoute, reports, r
           <a class="admin-nav-link is-active" href="#overview" aria-current="page">${icon('space_dashboard')}<span>Resumen</span></a>
           <a class="admin-nav-link" href="#schedule">${icon('calendar_month')}<span>Programar rutas</span></a>
           <a class="admin-nav-link" href="#routes">${icon('alt_route')}<span>Rutas</span><span class="admin-nav-count" id="admin-route-nav-count">${routes.length}</span></a>
-          <a class="admin-nav-link" href="#alerts">${icon('notifications_active')}<span>Incidencias</span><span class="admin-nav-count nav-count-alert">1</span></a>
+          <a class="admin-nav-link" href="#fleet">${icon('groups')}<span>Personal y unidades</span></a>
+          <a class="admin-nav-link" href="#alerts">${icon('notifications_active')}<span>Incidencias</span><span class="admin-nav-count nav-count-alert" data-incident-count>${incidents.length}</span></a>
+          <a class="admin-nav-link" href="#fuel">${icon('local_gas_station')}<span>Combustible</span></a>
           <a class="admin-nav-link" href="#points">${icon('location_on')}<span>Puntos</span><span class="admin-nav-count">${collectionPoints.length}</span></a>
         </nav>
 
@@ -107,6 +114,20 @@ export function renderAdminOperations({ user, routes, scheduledRoute, reports, r
           </section>
 
           ${renderReportDialogShell()}
+          ${renderFieldEventDialogShell()}
+
+          <section class="admin-section admin-reports-section" id="fuel">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">CARGAS EN GASOLINERÍA · ÚLTIMAS 100</div><h2>Combustible <span class="admin-heading-count" id="admin-fuel-count">${fuelLoads.length}</span></h2></div>
+            </div>
+            ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
+            <div class="admin-points-table-wrap admin-reports-table-wrap">
+              <table class="admin-points-table admin-reports-table">
+                <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">LITROS</th><th scope="col">IMPORTE</th><th scope="col">ODÓMETRO</th><th scope="col">TICKET</th></tr></thead>
+                <tbody id="admin-fuel-rows">${renderFuelRows(fuelLoads)}</tbody>
+              </table>
+            </div>
+          </section>
 
           <section class="admin-section admin-schedule-section" id="schedule">
             <div class="admin-section-heading">
@@ -136,17 +157,15 @@ export function renderAdminOperations({ user, routes, scheduledRoute, reports, r
             ${renderRouteEditorDialog()}
           </section>
 
+          ${renderFleetSection(fleet, fleetError)}
+
           <div class="admin-bottom-grid">
             <section class="admin-section admin-alerts-section" id="alerts">
               <div class="admin-section-heading">
-                <div><div class="admin-section-kicker">REQUIERE ATENCIÓN</div><h2>Incidencias <span class="admin-heading-count alert-count">1</span></h2></div>
-                <a class="admin-text-link" href="#alerts">Ver actividad ${icon('arrow_forward')}</a>
+                <div><div class="admin-section-kicker">REQUIERE ATENCIÓN · <span id="admin-incident-critical-count">${incidents.filter((incident) => incident.severity === 'high').length}</span> DE GRAVEDAD ALTA</div><h2>Incidencias <span class="admin-heading-count alert-count" data-incident-count>${incidents.length}</span></h2></div>
               </div>
-              <article class="admin-alert-row alert-row-sync">
-                <span class="admin-alert-icon">${icon('cloud_off')}</span>
-                <div class="admin-alert-copy"><strong>Sincronización pendiente</strong><p>U-01 · 1 registro guardado localmente</p></div>
-                <time>09:42</time>
-              </article>
+              ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
+              <div class="admin-incident-list" id="admin-incident-rows">${renderIncidentRows(incidents)}</div>
             </section>
 
             <section class="admin-section admin-points-section" id="points">

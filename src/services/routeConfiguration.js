@@ -149,10 +149,3 @@ export function saveConfiguredRoutes(routes) {
   return true;
 }
 
-export function createRouteId(routes = getConfiguredRoutes()) {
-  const highestId = routes.reduce((highest, route) => {
-    const match = /^R-(\d+)$/.exec(route.id);
-    return match ? Math.max(highest, Number(match[1])) : highest;
-  }, 0);
-  return `R-${String(highestId + 1).padStart(2, '0')}`;
-}

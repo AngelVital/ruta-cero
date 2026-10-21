@@ -51,10 +51,10 @@ export function renderInspection360Screen(state) {
         <div class="inspection-unit-head">
           <div>
             <span class="font-label-sm text-muted">UNIDAD BAJO INSPECCIÓN</span>
-            <div class="font-headline-sm text-ink">${state.unit.id} • ${state.unit.plates}</div>
+            <div class="font-headline-sm text-ink">${escapeHtml(state.dispatchOptions.units.find((unit) => unit.id === state.assignment.unitId)?.label || 'SIN UNIDAD ASIGNADA')}</div>
           </div>
           <span class="status-pill status-pill-optimal status-pill-xs">
-            ${state.unit.status || 'OPERATIVO'}
+            OPERATIVO
           </span>
         </div>
 

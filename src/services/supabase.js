@@ -61,7 +61,7 @@ export async function fetchAdminContainerReports({ since = null } = {}) {
   while (true) {
     let query = client
       .from('container_reports')
-      .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, created_at, received_at');
+      .select('id, route_id, container_id, fill_level, collected_kg, materials, material_weights, photo_evidence, incidents, incident_comments, unit_id, driver_id, assistant_id, created_at, received_at');
     if (since) query = query.gte('received_at', since);
     const { data, error } = await query
       .order('created_at', { ascending: false })
@@ -149,20 +149,36 @@ export async function saveRouteSchedule(scheduledFor, routeId) {
   if (error) throw error;
 }
 
+/** The database assigns route ids so a deleted route's id is never reused. */
+export async function fetchNextRouteId() {
+  const { data, error } = await requireSupabase().rpc('next_route_id');
+  if (error) throw error;
+  return data;
+}
+
+// RPC parameters for the crew chosen at dispatch.
+const crewParams = (crew = {}) => ({
+  p_unit_id: crew.unitId || null,
+  p_driver_id: crew.driverId || null,
+  p_assistant_id: crew.assistantId || null
+});
+
 /** `at` is when the route started on the device; it may be earlier than the sync time. */
-export async function markRouteStarted(routeId, at) {
+export async function markRouteStarted(routeId, at, crew) {
   const { error } = await requireSupabase().rpc('start_route_configuration', {
     p_route_id: routeId,
-    p_at: at
+    p_at: at,
+    ...crewParams(crew)
   });
 
   if (error) throw error;
 }
 
-export async function markRouteCompleted(routeId, at) {
+export async function markRouteCompleted(routeId, at, crew) {
   const { error } = await requireSupabase().rpc('complete_route_configuration', {
     p_route_id: routeId,
-    p_at: at
+    p_at: at,
+    ...crewParams(crew)
   });
 
   if (error) throw error;
@@ -185,19 +201,55 @@ function subscribeToTables(channelName, tables, onChange) {
 }
 
 export function subscribeToRouteConfigurations(onChange) {
-  return subscribeToTables('route-configurations', ['route_configurations', 'route_schedules'], onChange);
+  return subscribeToTables('route-configurations', ['route_configurations', 'route_schedules', 'fleet_resources'], onChange);
 }
 
-export function subscribeToAdminUpdates(onChange) {
-  return subscribeToTables('admin-field-updates', [
-    'route_configurations',
-    'route_schedules',
-    'container_reports'
-  ], onChange);
+/** Active units, drivers and assistants as [{ id, kind: 'unit' | 'driver' | 'assistant', name }]. */
+export async function fetchFleetResources() {
+  const { data, error } = await requireSupabase()
+    .from('fleet_resources')
+    .select('id, kind, name')
+    .eq('active', true)
+    .order('name');
+
+  if (error) throw error;
+  return data;
 }
+
+/** The database assigns the id (U-001, OP-001, AUX-001); returns the created record. */
+export async function addFleetResource(kind, name) {
+  const { data, error } = await requireSupabase()
+    .from('fleet_resources')
+    .insert({ kind, name })
+    .select('id, kind, name')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/** Archives instead of deleting, so reports that store the id still know who it was. */
+export async function archiveFleetResource(id) {
+  const { data, error } = await requireSupabase()
+    .from('fleet_resources')
+    .update({ active: false })
+    .eq('id', id)
+    .select('id');
+
+  if (error) throw error;
+  // RLS hides a rejected update as zero rows instead of an error.
+  if (data.length === 0) throw new Error('No se encontró el registro o no tienes permiso para modificarlo.');
+}
+
+// Crew chosen at dispatch, stored on every field report.
+const crewColumns = (crew = {}) => ({
+  unit_id: crew.unitId || null,
+  driver_id: crew.driverId || null,
+  assistant_id: crew.assistantId || null
+});
 
 /** `id` and `createdAt` come from the device, so a retried insert is detected as a duplicate (23505). */
-export async function insertContainerReport(routeId, containerId, report, { id, createdAt } = {}) {
+export async function insertContainerReport(routeId, containerId, report, { id, createdAt, crew } = {}) {
   if (!supabase) {
     return false;
   }
@@ -215,7 +267,8 @@ export async function insertContainerReport(routeId, containerId, report, { id, 
       material_weights: report.materialWeights,
       photo_evidence: report.photoEvidence,
       incidents: report.incidents,
-      incident_comments: report.incidentComments
+      incident_comments: report.incidentComments,
+      ...crewColumns(crew)
     });
 
   if (error) {
@@ -223,4 +276,82 @@ export async function insertContainerReport(routeId, containerId, report, { id, 
   }
 
   return true;
+}
+
+/** `id` and `createdAt` come from the device, so a retried insert is detected as a duplicate (23505). */
+export async function insertIncidentReport(incident, { id, createdAt, crew } = {}) {
+  const { error } = await requireSupabase()
+    .from('incident_reports')
+    .insert({
+      id,
+      created_at: createdAt,
+      route_id: incident.routeId || '',
+      ...crewColumns(crew),
+      stop_id: incident.stopId || null,
+      incident_type: incident.type,
+      severity: incident.severity,
+      description: incident.description,
+      photos: incident.photos,
+      latitude: incident.latitude,
+      longitude: incident.longitude
+    });
+
+  if (error) throw error;
+}
+
+export async function insertFuelLoad(fuelLoad, { id, createdAt, crew } = {}) {
+  const { error } = await requireSupabase()
+    .from('fuel_loads')
+    .insert({
+      id,
+      created_at: createdAt,
+      route_id: fuelLoad.routeId || '',
+      ...crewColumns(crew),
+      liters: fuelLoad.liters,
+      amount: fuelLoad.amount,
+      odometer_km: fuelLoad.odometerKm,
+      ticket_photo: fuelLoad.ticketPhoto,
+      latitude: fuelLoad.latitude,
+      longitude: fuelLoad.longitude
+    });
+
+  if (error) throw error;
+}
+
+// Admin lists leave the photos out (they weigh ~100 KB each); fetchFieldEventPhotos loads them on demand.
+const recentFieldEventLimit = 100;
+
+export async function fetchAdminIncidentReports() {
+  const { data, error } = await requireSupabase()
+    .from('incident_reports')
+    .select('id, route_id, unit_id, driver_id, assistant_id, stop_id, incident_type, severity, description, latitude, longitude, created_at')
+    .order('created_at', { ascending: false })
+    .limit(recentFieldEventLimit);
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchAdminFuelLoads() {
+  const { data, error } = await requireSupabase()
+    .from('fuel_loads')
+    .select('id, route_id, unit_id, driver_id, assistant_id, liters, amount, odometer_km, latitude, longitude, created_at')
+    .order('created_at', { ascending: false })
+    .limit(recentFieldEventLimit);
+
+  if (error) throw error;
+  return data;
+}
+
+/** Photos of one incident (`incident_reports`) or fuel load (`fuel_loads`) as data URLs. */
+export async function fetchFieldEventPhotos(table, id) {
+  const column = table === 'fuel_loads' ? 'ticket_photo' : 'photos';
+  const { data, error } = await requireSupabase()
+    .from(table)
+    .select(column)
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return [data[column]].flat().filter(Boolean);
 }
