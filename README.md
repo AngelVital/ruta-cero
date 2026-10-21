@@ -115,7 +115,7 @@ En el plan gratuito, Storage tiene 1 GB, aparte de los 500 MB de la base de dato
 
 Borra de forma permanente reportes, fotos, rutas, calendario y personal. El plan gratuito de Supabase no tiene respaldos restaurables: si necesitas conservar algo, exporta antes las tablas a CSV desde el **Table Editor**.
 
-1. **Vacía la cola de los teléfonos.** Antes de borrar, confirma que ningún teléfono tenga envíos pendientes (el contador de la parte superior en 0). Lo que quede en una cola se volvería a subir después del reinicio. Para dejar un teléfono limpio, borra los datos de la app (**Ajustes → Apps → Ruta Cero → Almacenamiento → Borrar datos**) o, en la versión web, los datos del sitio.
+1. **Vacía la cola de los teléfonos.** Antes de borrar, confirma que ningún teléfono tenga envíos pendientes (el contador de la parte superior en 0). Lo que quede en una cola se volvería a subir después del reinicio. Para dejar un teléfono limpio, borra los datos de la app (**Ajustes → Apps → Ruta Cero → Almacenamiento → Borrar datos**) o, en la versión web, los datos del sitio. En iPhone, elimina el ícono de la pantalla de inicio y vuelve a agregarlo desde Safari.
 2. **Borra los datos.** En el SQL Editor ejecuta:
 
   ```sql
@@ -149,6 +149,21 @@ Para borrar solo los registros de campo y conservar rutas y personal, deja en el
 En el proyecto de Vercel, abre **Settings → Environment Variables** y define `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` con los valores de **Project URL** y la clave publishable/anon del proyecto correcto de Supabase. Añádelas para cada entorno que uses (Production, Preview o Development) y vuelve a desplegar: Vite incorpora estas variables durante la compilación. No uses la clave `service_role` en el frontend.
 
 Antes de guardar reportes, ejecuta `supabase/schema.sql` en el SQL Editor de ese mismo proyecto de Supabase. Si el guardado falla, el aviso de la aplicación muestra el código o mensaje devuelto por Supabase para distinguir errores de tabla, permisos y conexión.
+
+## Instalar en iPhone (Safari)
+
+En iPhone no hay APK: el panel de campo se instala desde Safari como app web, con su ícono en la pantalla de inicio y abriendo a pantalla completa.
+
+1. En Safari, abre la dirección publicada en Vercel con `/?mode=field` al final (por ejemplo, `https://tu-proyecto.vercel.app/?mode=field`). Hazlo con señal, para que la app quede guardada y luego abra sin conexión.
+2. Toca **Compartir** (el cuadro con una flecha hacia arriba). En iOS 26, primero toca **⋯** en la barra y luego **Compartir**.
+3. Desliza hacia abajo y elige **Agregar a inicio**.
+4. Deja activado **Abrir como app web** si aparece, revisa que el nombre sea **Ruta Cero** y toca **Agregar**.
+5. Abre la app desde el nuevo ícono, no desde Safari. La primera vez que tomes una foto o escanees un código, permite el acceso a la cámara.
+
+- Se necesita HTTPS (Vercel ya lo usa); desde una dirección `http://` por IP la cámara no funciona.
+- La app instalada guarda sus datos aparte de Safari: el avance del día y los envíos pendientes están en la app, no en las pestañas del navegador.
+- **No elimines el ícono mientras haya envíos pendientes**: al quitarlo, iOS borra los datos de la app, incluida la cola de envíos.
+- Las actualizaciones se aplican solas al abrir la app con señal; si no aparece un cambio, ciérrala por completo y ábrela de nuevo.
 
 ## Comandos disponibles
 
