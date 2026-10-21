@@ -21,6 +21,7 @@ import { attachFieldEvents, updateFieldEvents } from './admin/FieldEvents.js';
 import { attachFleet } from './admin/Fleet.js';
 import { attachReports, updateReportList } from './admin/Reports.js';
 import { attachRouteTable, updateRouteRows } from './admin/RouteTable.js';
+import { attachSummary } from './admin/Summary.js';
 import { attachScheduleCalendar, renderRouteScheduleCalendar } from './admin/ScheduleCalendar.js';
 
 const api = () => import('../services/supabase.js');
@@ -221,6 +222,7 @@ function attachAdminDashboardContentEvents(container, reports, fieldEvents) {
 
   const { refresh, teardown } = startAdminSync(ctx);
   attachReports(ctx, { refresh });
+  attachSummary(ctx);
   attachFieldEvents(ctx, {
     fetchPhotos: async (...args) => (await api()).fetchFieldEventPhotos(...args)
   });

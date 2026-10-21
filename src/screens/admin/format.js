@@ -14,6 +14,8 @@ const longDateFormatter = new Intl.DateTimeFormat('es-MX', {
 });
 const weightFormatter = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 2 });
 
+const materialLabels = { plastico: 'Plástico', carton: 'Cartón', papel: 'Papel' };
+
 const incidentLabels = {
   damaged: 'Contenedor dañado',
   graffiti: 'Grafiti / vandalismo',
@@ -54,6 +56,8 @@ export function formatReportLabel(value) {
     .replace(/[_-]+/g, ' ')
     .replace(/^./, (first) => first.toLocaleUpperCase('es-MX'));
 }
+
+export const formatMaterialLabel = (value) => materialLabels[value] || formatReportLabel(value);
 
 export function formatIncidentLabel(value) {
   return incidentLabels[value] || formatReportLabel(value);

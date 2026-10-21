@@ -1,5 +1,5 @@
 import { collectionPoints } from '../../data/collectionPoints.js';
-import { buildRoutesCsv, filterRoutes, upsertRoute } from '../../domain/route.js';
+import { filterRoutes, upsertRoute } from '../../domain/route.js';
 import { formatElapsedTime } from '../../utils/format.js';
 import { escapeHtml, icon } from '../../utils/html.js';
 
@@ -170,15 +170,5 @@ export function attachRouteTable(ctx, { saveRouteConfigurations, fetchNextRouteI
         button.disabled = false;
       }
     }
-  });
-
-  container.querySelector('#btn-export-routes')?.addEventListener('click', () => {
-    const file = new Blob(['﻿', buildRoutesCsv(ctx.routes)], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(file);
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = 'ruta-cero-rutas-demo.csv';
-    downloadLink.click();
-    URL.revokeObjectURL(url);
   });
 }

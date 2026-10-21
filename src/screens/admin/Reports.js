@@ -3,7 +3,7 @@ import { getActiveIncidents } from '../../domain/report.js';
 import { getReportsForDate } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
-import { formatIncidentLabel, formatReportDate, formatReportLabel, formatReportWeight, renderCrewMeta } from './format.js';
+import { formatIncidentLabel, formatMaterialLabel, formatReportDate, formatReportLabel, formatReportWeight, renderCrewMeta } from './format.js';
 
 const evidenceLabels = {
   initialExterior: 'Exterior inicial',
@@ -18,7 +18,7 @@ export function renderReportRows(reports) {
   }
 
   return reports.map((report, index) => {
-    const materials = Array.isArray(report.materials) ? report.materials.join(', ') : '';
+    const materials = Array.isArray(report.materials) ? report.materials.map(formatMaterialLabel).join(', ') : '';
     const fillLevel = normalizeFillLevel(report.fill_level);
     const incidents = getActiveIncidents(report.incidents).map(formatIncidentLabel);
 
@@ -45,7 +45,7 @@ export function renderReportDialog(report) {
     : {};
   const materialItems = materials.length
     ? materials.map((material) => `
-        <li><span>${escapeHtml(formatReportLabel(material))}</span><strong>${escapeHtml(formatReportWeight(materialWeights[material]))}</strong></li>
+        <li><span>${escapeHtml(formatMaterialLabel(material))}</span><strong>${escapeHtml(formatReportWeight(materialWeights[material]))}</strong></li>
       `).join('')
     : '<li class="admin-report-empty-item">Sin materiales registrados</li>';
   const incidents = getActiveIncidents(report.incidents).map(formatIncidentLabel);

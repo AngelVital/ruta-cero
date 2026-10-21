@@ -110,10 +110,40 @@ export function upsertRoute(routes, { routeId, zone, pointIds }) {
     : route);
 }
 
-export function buildRoutesCsv(routes) {
-  const csvRows = [
-    ['Ruta', 'Zona', 'Puntos incluidos', 'Puntos atendidos', 'Total de puntos', 'Estado', 'Última actualización', 'Sincronización'],
-    ...routes.map((route) => [route.id, route.zone, route.pointIds.join(' '), route.stopsDone, route.stopsTotal, route.statusLabel, route.lastUpdate, route.syncLabel])
-  ];
-  return csvRows.map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\r\n');
+/** First and last 'YYYY-MM-DD' of the day, Monday–Sunday week or month that contains dateKey. */
+export function getPeriodRange(period, dateKey) {
+  if (period === 'month') {
+    const [year, month] = dateKey.split('-').map(Number);
+    return [`${dateKey.slice(0, 7)}-01`, new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10)];
+  }
+  if (period === 'week') {
+    const day = new Date(`${dateKey}T12:00:00Z`);
+    day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+    const start = day.toISOString().slice(0, 10);
+    day.setUTCDate(day.getUTCDate() + 6);
+    return [start, day.toISOString().slice(0, 10)];
+  }
+  return [dateKey, dateKey];
+}
+
+/** Reports between two 'YYYY-MM-DD' keys (inclusive), total collected kg and kg per material. */
+export function summarizeReports(reports, start, end) {
+  const periodReports = reports.filter((report) => {
+    const date = getOperationalDate(new Date(report.created_at));
+    return date >= start && date <= end;
+  });
+  const materials = {};
+  periodReports.forEach((report) => {
+    (Array.isArray(report.materials) ? report.materials : []).forEach((material) => {
+      materials[material] = (materials[material] || 0) + (Number(report.material_weights?.[material]) || 0);
+    });
+  });
+  return {
+    start,
+    end,
+    reports: periodReports,
+    totalKg: periodReports.reduce((sum, report) => sum + (Number(report.collected_kg) || 0), 0),
+    containers: new Set(periodReports.map((report) => report.container_id)).size,
+    materials
+  };
 }

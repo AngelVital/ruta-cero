@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getInspectionProgress, getInspectionStatusLabel } from '../src/domain/inspection.js';
 import { getActiveIncidents, getMissingReportPhotos, getTotalMaterialWeight, isContainerReportReady } from '../src/domain/report.js';
-import { buildRoutesCsv, filterRoutes, getTodaySummary, upsertRoute } from '../src/domain/route.js';
+import { filterRoutes, getPeriodRange, getTodaySummary, summarizeReports, upsertRoute } from '../src/domain/route.js';
 import { inspectionKeys } from '../src/data/inspectionItems.js';
 
 const allGood = Object.fromEntries(inspectionKeys.map((key) => [key, 'BIEN']));
@@ -74,9 +74,19 @@ test('el resumen del día cuenta puntos atendidos por reportes de la ruta progra
   assert.equal(summary.completedPoints, 2);
 });
 
-test('el CSV de rutas escapa comillas y usa una fila por ruta', () => {
-  const csv = buildRoutesCsv([{ ...routes[0], zone: 'Centro "A"' }]);
-  const [header, row] = csv.split('\r\n');
-  assert.match(header, /^"Ruta","Zona"/);
-  assert.equal(row.split('","')[1], 'Centro ""A""');
+test('el resumen agrupa el peso por material dentro del periodo', () => {
+  assert.deepEqual(getPeriodRange('week', '2026-10-21'), ['2026-10-19', '2026-10-25']);
+  assert.deepEqual(getPeriodRange('month', '2026-10-21'), ['2026-10-01', '2026-10-31']);
+  const reports = [
+    { created_at: '2026-10-21T18:00:00Z', container_id: 'CONT-01', collected_kg: 5, materials: ['papel', 'carton'], material_weights: { papel: 2, carton: 3 } },
+    { created_at: '2026-10-20T18:00:00Z', container_id: 'CONT-02', collected_kg: 4, materials: ['papel'], material_weights: { papel: 4 } },
+    { created_at: '2026-09-30T18:00:00Z', container_id: 'CONT-01', collected_kg: 9, materials: ['papel'], material_weights: { papel: 9 } }
+  ];
+  const day = summarizeReports(reports, '2026-10-21', '2026-10-21');
+  assert.equal(day.reports.length, 1);
+  const week = summarizeReports(reports, ...getPeriodRange('week', '2026-10-21'));
+  assert.deepEqual(week.materials, { papel: 6, carton: 3 });
+  assert.equal(week.totalKg, 9);
+  assert.equal(week.containers, 2);
+  assert.equal(summarizeReports(reports, '2026-09-30', '2026-10-20').totalKg, 13);
 });

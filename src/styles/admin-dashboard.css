@@ -2636,3 +2636,26 @@ button.admin-alert-row:hover { background: #f6f8f6; }
   color: #1f3027;
   font-size: 13px;
 }
+
+.admin-search[hidden] { display: none; }
+
+@media print {
+  body.is-printing-summary * { visibility: hidden; }
+  /* The modal dialog lives in the top layer, so collapsing the panel doesn't clip it but avoids blank pages. */
+  body.is-printing-summary .admin-shell { height: 0; overflow: hidden; }
+  body.is-printing-summary #admin-summary-dialog,
+  body.is-printing-summary #admin-summary-dialog * { visibility: visible; }
+  body.is-printing-summary #admin-summary-dialog {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    box-shadow: none;
+  }
+  body.is-printing-summary #admin-summary-dialog::backdrop { background: none; }
+  body.is-printing-summary #admin-summary-content { max-height: none; overflow: visible; }
+  body.is-printing-summary #admin-summary-dialog .admin-report-actions,
+  body.is-printing-summary #admin-summary-dialog .admin-table-toolbar { display: none; }
+}

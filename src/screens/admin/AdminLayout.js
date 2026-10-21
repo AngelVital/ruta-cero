@@ -7,6 +7,7 @@ import { renderFieldEventDialogShell, renderFuelRows, renderIncidentRows } from 
 import { renderFleetSection } from './Fleet.js';
 import { formatLongDate, parseDateKey } from './format.js';
 import { renderReportDialogShell, renderReportRows } from './Reports.js';
+import { renderSummaryDialogShell } from './Summary.js';
 import { renderRouteEditorDialog, renderRouteTable } from './RouteTable.js';
 import { renderRouteScheduleCalendar } from './ScheduleCalendar.js';
 
@@ -65,7 +66,7 @@ export function renderAdminOperations({
             </div>
             <div class="admin-heading-actions">
               <label class="admin-date-filter">${icon('calendar_today')}<span>Hoy</span><span class="admin-date-caret">${icon('expand_more')}</span></label>
-              <button type="button" class="admin-button admin-button-dark" id="btn-export-routes">${icon('download')}<span>Exportar rutas</span></button>
+              <button type="button" class="admin-button admin-button-dark" id="btn-generate-summary">${icon('summarize')}<span>Generar resumen</span></button>
             </div>
           </section>
 
@@ -114,6 +115,7 @@ export function renderAdminOperations({
           </section>
 
           ${renderReportDialogShell()}
+          ${renderSummaryDialogShell()}
           ${renderFieldEventDialogShell()}
 
           <section class="admin-section admin-reports-section" id="fuel">
