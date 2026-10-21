@@ -154,3 +154,25 @@ export function summarizeReports(reports, start, end) {
     byContainer
   };
 }
+
+/** Same reports narrowed to one material: collected_kg becomes that material's weight, so summarizeReports totals only it. */
+export function filterReportsByMaterial(reports, material) {
+  return reports
+    .filter((report) => Array.isArray(report.materials) && report.materials.includes(material))
+    .map((report) => ({ ...report, materials: [material], collected_kg: Number(report.material_weights?.[material]) || 0 }));
+}
+
+/** [['YYYY-MM-DD', kg], ...] for every day from start to end (inclusive), zero on days without reports. */
+export function getKgByDay(reports, start, end) {
+  const kg = {};
+  reports.forEach((report) => {
+    const date = getOperationalDate(new Date(report.created_at));
+    kg[date] = (kg[date] || 0) + (Number(report.collected_kg) || 0);
+  });
+  const days = [];
+  for (const day = new Date(`${start}T12:00:00Z`); day.toISOString().slice(0, 10) <= end; day.setUTCDate(day.getUTCDate() + 1)) {
+    const key = day.toISOString().slice(0, 10);
+    days.push([key, kg[key] || 0]);
+  }
+  return days;
+}

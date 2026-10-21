@@ -1,5 +1,5 @@
 import { collectionPoints } from '../../data/collectionPoints.js';
-import { getPeriodRange, summarizeReports } from '../../domain/route.js';
+import { filterReportsByMaterial, getKgByDay, getPeriodRange, summarizeReports } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
 import { formatMaterialLabel, formatMonthTitle, formatReportWeight, formatScheduledDate, parseDateKey } from './format.js';
@@ -83,12 +83,93 @@ export function renderSummary(reports, start, end, period = 'range') {
   `;
 }
 
+const percentOf = (value, max) => (max ? (value / max) * 100 : 0);
+
+/** Interactive view of the same period: KPI tiles, kg per day and kg per container; a material bar filters the rest. */
+export function renderSummaryBoard(reports, start, end, period = 'range', material = '') {
+  const all = summarizeReports(reports, start, end);
+  const summary = material ? summarizeReports(filterReportsByMaterial(all.reports, material), start, end) : all;
+  const range = all.start === all.end
+    ? formatScheduledDate(all.start)
+    : `${formatScheduledDate(all.start)} – ${formatScheduledDate(all.end)}`;
+  const days = getKgByDay(summary.reports, start, end);
+  const maxDayKg = Math.max(0, ...days.map(([, kg]) => kg));
+  const materials = Object.entries(all.materials).sort(([, a], [, b]) => b - a);
+  const materialKg = materials.reduce((sum, [, kg]) => sum + kg, 0);
+  const containers = Object.entries(summary.byContainer).sort(([, a], [, b]) => b.kg - a.kg);
+  const maxContainerKg = containers[0]?.[1].kg || 0;
+  const average = summary.reports.length ? summary.totalKg / summary.reports.length : 0;
+  const kpis = [
+    ['scale', material ? `${formatMaterialLabel(material)} recolectado` : 'Material recolectado', formatReportWeight(summary.totalKg)],
+    ['description', 'Reportes', summary.reports.length],
+    ['delete', 'Contenedores', summary.containers],
+    ['route', 'Rutas con actividad', summary.routes],
+    ['event_available', 'Días con recolección', summary.days],
+    ['functions', 'Promedio por reporte', formatReportWeight(average)]
+  ];
+
+  const dayBars = days.map(([day, kg]) => `
+    <div class="board-col" tabindex="0" role="img" aria-label="${escapeHtml(`${formatScheduledDate(day)}: ${formatReportWeight(kg)}`)}" data-tip="${escapeHtml(`${formatScheduledDate(day)} · ${formatReportWeight(kg)}`)}">
+      <span style="height: ${percentOf(kg, maxDayKg)}%"></span>
+    </div>
+  `).join('');
+  const materialRows = materials.map(([name, kg]) => `
+    <button type="button" class="board-row${name === material ? ' is-selected' : ''}" data-board-material="${escapeHtml(name)}" aria-pressed="${name === material}">
+      <span class="board-row-label">${escapeHtml(formatMaterialLabel(name))}</span>
+      <span class="board-track"><span style="width: ${percentOf(kg, materials[0][1])}%"></span></span>
+      <span class="board-row-value">${escapeHtml(formatReportWeight(kg))} · ${materialKg ? percentFormatter.format(kg / materialKg) : '—'}</span>
+    </button>
+  `).join('') || '<p class="board-empty">Sin materiales registrados en este periodo.</p>';
+  const containerRows = containers.map(([id, { reports: count, kg }]) => `
+    <div class="board-row">
+      <span class="board-row-label"><strong>${escapeHtml(id)}</strong> ${escapeHtml(pointNames[id] || '')}</span>
+      <span class="board-track"><span style="width: ${percentOf(kg, maxContainerKg)}%"></span></span>
+      <span class="board-row-value">${escapeHtml(formatReportWeight(kg))} · ${count} ${count === 1 ? 'reporte' : 'reportes'}</span>
+    </div>
+  `).join('') || '<p class="board-empty">Sin contenedores atendidos en este periodo.</p>';
+
+  return `
+    <section class="summary-board">
+      <header class="summary-board-header">
+        <div>
+          <h1 class="summary-doc-title">Tablero de recolección</h1>
+          <p class="summary-doc-period">${escapeHtml(periodTitles[period](range, all.start))}</p>
+        </div>
+        ${material ? `<button type="button" class="board-filter-chip" data-board-material="">${escapeHtml(formatMaterialLabel(material))}${icon('close')}<span class="sr-only">Quitar filtro</span></button>` : ''}
+      </header>
+
+      <div class="board-kpis">
+        ${kpis.map(([name, label, value]) => `<div class="board-kpi">${icon(name)}<span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>`).join('')}
+      </div>
+
+      <div class="board-card board-card-wide">
+        <h2>Kilos por día</h2>
+        <div class="board-columns" style="--days: ${days.length}">${dayBars}</div>
+        <div class="board-axis"><span>${escapeHtml(formatScheduledDate(start))}</span><span>Máximo: ${escapeHtml(formatReportWeight(maxDayKg))}</span><span>${escapeHtml(formatScheduledDate(end))}</span></div>
+      </div>
+
+      <div class="board-grid">
+        <div class="board-card">
+          <h2>Peso por material</h2>
+          <p class="board-hint">Selecciona un material para filtrar el tablero.</p>
+          ${materialRows}
+        </div>
+        <div class="board-card">
+          <h2>Contenedores</h2>
+          <div class="board-scroll">${containerRows}</div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 export function renderSummaryDialogShell() {
   return `
     <dialog class="admin-report-dialog" id="admin-summary-dialog" aria-labelledby="admin-summary-dialog-title">
       <header class="admin-report-dialog-header">
         <div><div class="admin-section-kicker">REPORTES DE CONTENEDORES</div><h2 id="admin-summary-dialog-title">Resumen de recolección</h2></div>
         <div class="admin-report-actions">
+          <button class="admin-button" type="button" id="admin-summary-board-toggle" aria-pressed="false">${icon('dashboard')}<span>Tablero interactivo</span></button>
           <button class="admin-button" type="button" id="admin-summary-pdf">${icon('picture_as_pdf')}<span>Exportar PDF</span></button>
           <button class="admin-report-dialog-close" type="button" aria-label="Cerrar resumen">${icon('close')}</button>
         </div>
@@ -111,6 +192,10 @@ export function attachSummary(ctx) {
   const date = container.querySelector('#admin-summary-date');
   const endDate = container.querySelector('#admin-summary-end');
   if (!dialog) return;
+  const content = container.querySelector('#admin-summary-content');
+  const boardToggle = container.querySelector('#admin-summary-board-toggle');
+  let showBoard = false;
+  let material = '';
 
   const update = () => {
     const isRange = period.value === 'range';
@@ -121,8 +206,25 @@ export function attachSummary(ctx) {
     const [start, end] = isRange
       ? [dateKey, endDate.value || dateKey].sort()
       : getPeriodRange(period.value, dateKey);
-    container.querySelector('#admin-summary-content').innerHTML = renderSummary(ctx.reports, start, end, period.value);
+    content.innerHTML = showBoard
+      ? renderSummaryBoard(ctx.reports, start, end, period.value, material)
+      : renderSummary(ctx.reports, start, end, period.value);
+    boardToggle.setAttribute('aria-pressed', String(showBoard));
+    boardToggle.innerHTML = showBoard
+      ? `${icon('description')}<span>Ver documento</span>`
+      : `${icon('dashboard')}<span>Tablero interactivo</span>`;
   };
+
+  boardToggle.addEventListener('click', () => {
+    showBoard = !showBoard;
+    update();
+  });
+  content.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-board-material]');
+    if (!button) return;
+    material = button.dataset.boardMaterial === material ? '' : button.dataset.boardMaterial;
+    update();
+  });
 
   container.querySelector('#btn-generate-summary')?.addEventListener('click', () => {
     if (!date.value) date.value = getOperationalDate();
@@ -135,6 +237,11 @@ export function attachSummary(ctx) {
   endDate.addEventListener('change', update);
   // The print dialog's "Guardar como PDF" produces the file; print CSS hides everything but the summary.
   container.querySelector('#admin-summary-pdf').addEventListener('click', () => {
+    // The PDF is always the document, even when the board is on screen.
+    if (showBoard) {
+      showBoard = false;
+      update();
+    }
     const pageTitle = document.title;
     document.title = `Resumen Ruta Cero ${container.querySelector('[data-summary-title]').textContent}`;
     document.body.classList.add('is-printing-summary');

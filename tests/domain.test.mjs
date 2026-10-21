@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDispatchInspection, getInspectionProgress, getInspectionStatusLabel } from '../src/domain/inspection.js';
 import { getActiveIncidents, getMissingReportPhotos, getTotalMaterialWeight, isContainerReportReady } from '../src/domain/report.js';
-import { filterRoutes, getPeriodRange, getTodaySummary, summarizeReports, upsertRoute } from '../src/domain/route.js';
+import { filterReportsByMaterial, filterRoutes, getKgByDay, getPeriodRange, getTodaySummary, summarizeReports, upsertRoute } from '../src/domain/route.js';
 import { inspectionKeys } from '../src/data/inspectionItems.js';
 
 const allGood = Object.fromEntries(inspectionKeys.map((key) => [key, 'BIEN']));
@@ -107,4 +107,8 @@ test('el resumen agrupa el peso por material dentro del periodo', () => {
   assert.equal(week.containers, 2);
   assert.deepEqual(week.byContainer['CONT-01'], { reports: 1, kg: 5 });
   assert.equal(summarizeReports(reports, '2026-09-30', '2026-10-20').totalKg, 13);
+
+  const carton = filterReportsByMaterial(reports, 'carton');
+  assert.equal(summarizeReports(carton, '2026-10-19', '2026-10-25').totalKg, 3);
+  assert.deepEqual(getKgByDay(reports, '2026-10-19', '2026-10-21'), [['2026-10-19', 0], ['2026-10-20', 4], ['2026-10-21', 5]]);
 });
