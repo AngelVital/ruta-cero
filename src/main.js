@@ -17,8 +17,9 @@ const isFieldOnlyBuild = import.meta.env.MODE === 'android';
 const mode = isFieldOnlyBuild ? 'field' : new URLSearchParams(window.location.search).get('mode');
 
 async function startApp() {
-  // The APK fills the phone screen instead of showing the framed phone used on desktop.
-  if (isFieldOnlyBuild) document.documentElement.classList.add('is-native-app');
+  // The APK and the installed PWA fill the phone screen instead of showing the framed phone used on desktop.
+  const isInstalledPwa = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (isFieldOnlyBuild || isInstalledPwa) document.documentElement.classList.add('is-native-app');
 
   if (!isFieldOnlyBuild && mode === 'admin') {
     const [{ renderAdminDashboard, attachAdminDashboardEvents }] = await Promise.all([

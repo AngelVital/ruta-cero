@@ -12,7 +12,8 @@
     "test": "node --test \"tests/*.mjs\""
   },
   "devDependencies": {
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vite-plugin-pwa": "^2.0.0"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

@@ -347,7 +347,7 @@
 
 .sync-status[hidden] { display: none; }
 
-/* APK (npm run build:android): the app uses the whole screen, below the system bars. */
+/* APK (npm run build:android) and installed PWA: the app uses the whole screen, below the system bars. */
 .is-native-app .hud-canvas {
   padding: 0;
   background: #f6f9f6;
