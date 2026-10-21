@@ -827,6 +827,8 @@
   text-align: center;
 }
 
+.screen-viewport .field-choice.active { background-color: var(--color-primary-container); color: #ffffff; }
+
 .screen-viewport .field-severity-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
