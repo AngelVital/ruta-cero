@@ -1,3 +1,4 @@
+import { collectionPoints } from '../../data/collectionPoints.js';
 import { getPeriodRange, summarizeReports } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
@@ -10,31 +11,75 @@ const periodTitles = {
   range: (range) => range
 };
 
+const issuedFormatter = new Intl.DateTimeFormat('es-MX', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Mazatlan' });
+const percentFormatter = new Intl.NumberFormat('es-MX', { style: 'percent', maximumFractionDigits: 1 });
+const pointNames = Object.fromEntries(collectionPoints.map((point) => [point.id, point.name]));
+
 export function renderSummary(reports, start, end, period = 'range') {
   const summary = summarizeReports(reports, start, end);
   const range = summary.start === summary.end
     ? formatScheduledDate(summary.start)
     : `${formatScheduledDate(summary.start)} – ${formatScheduledDate(summary.end)}`;
   const title = periodTitles[period](range, summary.start);
-  const materialItems = Object.entries(summary.materials)
-    .sort(([, a], [, b]) => b - a)
-    .map(([material, kg]) => `
-      <li><span>${escapeHtml(formatMaterialLabel(material))}</span><strong>${escapeHtml(formatReportWeight(kg))}</strong></li>
-    `).join('') || '<li class="admin-report-empty-item">Sin materiales registrados en este periodo</li>';
+  const materials = Object.entries(summary.materials).sort(([, a], [, b]) => b - a);
+  const materialKg = materials.reduce((sum, [, kg]) => sum + kg, 0);
+  const materialRows = materials.map(([material, kg]) => `
+      <tr><td>${escapeHtml(formatMaterialLabel(material))}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td><td class="num">${percentFormatter.format(kg / materialKg)}</td></tr>
+    `).join('') || '<tr><td colspan="3">Sin materiales registrados en este periodo.</td></tr>';
+  const containerRows = Object.entries(summary.byContainer)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, { reports: count, kg }]) => `
+      <tr><td>${escapeHtml(id)}</td><td>${escapeHtml(pointNames[id] || '—')}</td><td class="num">${count}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
+    `).join('') || '<tr><td colspan="4">Sin contenedores atendidos en este periodo.</td></tr>';
 
   return `
-    <div class="admin-report-dialog-meta"><span>${icon('date_range')} ${escapeHtml(title)}</span>${period === 'month' ? `<span>${escapeHtml(range)}</span>` : ''}</div>
-    <div class="admin-report-dialog-metrics">
-      <div><span>Material recolectado</span><strong>${escapeHtml(formatReportWeight(summary.totalKg))}</strong></div>
-      <div><span>Reportes</span><strong>${summary.reports.length}</strong></div>
-      <div><span>Contenedores atendidos</span><strong>${summary.containers}</strong></div>
-    </div>
-    <div class="admin-report-dialog-sections">
-      <section class="admin-report-dialog-section">
-        <h3>${icon('recycling')} Peso por material</h3>
-        <ul class="admin-report-material-list">${materialItems}</ul>
+    <article class="summary-doc">
+      <header class="summary-doc-header">
+        <div><strong>RUTA CERO</strong><span>Coordinación de recolección de residuos reciclables</span></div>
+        <div class="summary-doc-issued"><span>Fecha de emisión</span><strong>${escapeHtml(issuedFormatter.format(new Date()))}</strong></div>
+      </header>
+
+      <h1 class="summary-doc-title">Resumen de recolección</h1>
+      <p class="summary-doc-period" data-summary-title>${escapeHtml(title)}</p>
+      <p class="summary-doc-range">Periodo: ${escapeHtml(range)}</p>
+
+      <section>
+        <h2>1. Indicadores generales</h2>
+        <table class="summary-doc-table">
+          <tbody>
+            <tr><th scope="row">Material recolectado</th><td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr>
+            <tr><th scope="row">Reportes registrados</th><td class="num">${summary.reports.length}</td></tr>
+            <tr><th scope="row">Contenedores atendidos</th><td class="num">${summary.containers}</td></tr>
+            <tr><th scope="row">Rutas con actividad</th><td class="num">${summary.routes}</td></tr>
+            <tr><th scope="row">Días con recolección</th><td class="num">${summary.days}</td></tr>
+          </tbody>
+        </table>
       </section>
-    </div>
+
+      <section>
+        <h2>2. Peso por material</h2>
+        <table class="summary-doc-table">
+          <thead><tr><th scope="col">Material</th><th scope="col" class="num">Peso</th><th scope="col" class="num">% del total</th></tr></thead>
+          <tbody>${materialRows}</tbody>
+          <tfoot><tr><th scope="row">Total</th><td class="num">${escapeHtml(formatReportWeight(materialKg))}</td><td class="num">${materialKg ? percentFormatter.format(1) : '—'}</td></tr></tfoot>
+        </table>
+      </section>
+
+      <section>
+        <h2>3. Recolección por contenedor</h2>
+        <table class="summary-doc-table">
+          <thead><tr><th scope="col">Contenedor</th><th scope="col">Punto</th><th scope="col" class="num">Reportes</th><th scope="col" class="num">Peso</th></tr></thead>
+          <tbody>${containerRows}</tbody>
+          <tfoot><tr><th scope="row" colspan="2">Total</th><td class="num">${summary.reports.length}</td><td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr></tfoot>
+        </table>
+      </section>
+
+      <footer class="summary-doc-signatures">
+        <div><span></span>Elaboró</div>
+        <div><span></span>Revisó</div>
+      </footer>
+      <p class="summary-doc-note">Datos obtenidos de los reportes de contenedores registrados por el equipo de campo.</p>
+    </article>
   `;
 }
 
@@ -91,7 +136,7 @@ export function attachSummary(ctx) {
   // The print dialog's "Guardar como PDF" produces the file; print CSS hides everything but the summary.
   container.querySelector('#admin-summary-pdf').addEventListener('click', () => {
     const pageTitle = document.title;
-    document.title = `Resumen Ruta Cero ${container.querySelector('#admin-summary-content .admin-report-dialog-meta span').textContent.trim()}`;
+    document.title = `Resumen Ruta Cero ${container.querySelector('[data-summary-title]').textContent}`;
     document.body.classList.add('is-printing-summary');
     window.addEventListener('afterprint', () => {
       document.body.classList.remove('is-printing-summary');

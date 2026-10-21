@@ -2659,3 +2659,49 @@ button.admin-alert-row:hover { background: #f6f8f6; }
   body.is-printing-summary #admin-summary-dialog .admin-report-actions,
   body.is-printing-summary #admin-summary-dialog .admin-table-toolbar { display: none; }
 }
+
+/* Summary laid out as an office document; the same markup is used on screen and in the PDF. */
+#admin-summary-dialog { width: min(760px, calc(100vw - 32px)); overflow-y: auto; }
+#admin-summary-content { max-height: none; overflow: visible; }
+
+.summary-doc { color: #1a2d24; font-size: 13px; }
+.summary-doc-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--admin-green);
+}
+.summary-doc-header > div { display: grid; gap: 2px; }
+.summary-doc-header strong { font-family: var(--font-headline); font-size: 16px; letter-spacing: 0.04em; }
+.summary-doc-header span { color: #5b6b62; font-size: 11px; }
+.summary-doc-issued { text-align: right; }
+.summary-doc-title { margin: 18px 0 2px; font-family: var(--font-headline); font-size: 20px; font-weight: 800; }
+.summary-doc-period { margin: 0; font-size: 15px; font-weight: 700; color: var(--admin-green); }
+.summary-doc-range { margin: 2px 0 0; color: #5b6b62; font-size: 12px; }
+.summary-doc section { margin-top: 20px; break-inside: avoid; }
+.summary-doc h2 { margin: 0 0 8px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.summary-doc-table { width: 100%; border-collapse: collapse; }
+.summary-doc-table th,
+.summary-doc-table td { padding: 7px 10px; border: 1px solid #d2ddd5; text-align: left; font-weight: 400; }
+.summary-doc-table thead th { background: #eef4f0; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.summary-doc-table tbody th { width: 60%; }
+.summary-doc-table tfoot th,
+.summary-doc-table tfoot td { background: #f6f9f7; font-weight: 800; }
+.summary-doc-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.summary-doc-signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 56px; break-inside: avoid; }
+.summary-doc-signatures div { display: grid; gap: 6px; text-align: center; font-size: 12px; color: #5b6b62; }
+.summary-doc-signatures span { border-top: 1px solid #1a2d24; }
+.summary-doc-note { margin-top: 24px; color: #8a978f; font-size: 10px; }
+
+@media print {
+  @page { size: letter; margin: 18mm 16mm; }
+  body.is-printing-summary .summary-doc { font-size: 11pt; }
+  body.is-printing-summary .summary-doc-table thead th,
+  body.is-printing-summary .summary-doc-table tfoot th,
+  body.is-printing-summary .summary-doc-table tfoot td { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  body.is-printing-summary #admin-summary-dialog .admin-report-dialog-header { display: none; }
+  body.is-printing-summary #admin-summary-content { padding: 0; }
+}

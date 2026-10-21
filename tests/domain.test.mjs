@@ -88,5 +88,6 @@ test('el resumen agrupa el peso por material dentro del periodo', () => {
   assert.deepEqual(week.materials, { papel: 6, carton: 3 });
   assert.equal(week.totalKg, 9);
   assert.equal(week.containers, 2);
+  assert.deepEqual(week.byContainer['CONT-01'], { reports: 1, kg: 5 });
   assert.equal(summarizeReports(reports, '2026-09-30', '2026-10-20').totalKg, 13);
 });
