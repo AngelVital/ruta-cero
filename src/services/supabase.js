@@ -14,7 +14,7 @@ export const isSupabaseConfigured = Boolean(supabase);
 
 function requireSupabase() {
   if (!supabase) {
-    throw new Error('Configura VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY para usar Supabase.');
+    throw new Error('La base de datos no está configurada (faltan VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY).');
   }
 
   return supabase;

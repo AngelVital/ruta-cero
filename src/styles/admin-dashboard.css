@@ -8,7 +8,6 @@
   --c-f8faf8: #f8faf8;
   --c-f7faf8: #f7faf8;
   --c-fff8e8: #fff8e8;
-  --c-fff8e7: #fff8e7;
   --c-f6f9f7: #f6f9f7;
   --c-fff6f2: #fff6f2;
   --c-f2faf5: #f2faf5;
@@ -79,7 +78,6 @@
   --c-a3ada6: #a3ada6;
   --c-d89a20: #d89a20;
   --c-9eaaa2: #9eaaa2;
-  --c-d49b22: #d49b22;
   --c-d39a27: #d39a27;
   --c-d09a2b: #d09a2b;
   --c-d19725: #d19725;
@@ -102,7 +100,6 @@
   --c-77847b: #77847b;
   --c-76847b: #76847b;
   --c-76837a: #76837a;
-  --c-a87313: #a87313;
   --c-3189b1: #3189b1;
   --c-758279: #758279;
   --c-758178: #758178;
@@ -149,7 +146,6 @@
   --c-526158: #526158;
   --c-795411: #795411;
   --c-315f8a: #315f8a;
-  --c-725719: #725719;
   --c-226846: #226846;
   --c-4c5e52: #4c5e52;
   --c-4c5c52: #4c5c52;
@@ -188,7 +184,6 @@
     --c-f8faf8: #242624;
     --c-f7faf8: #242625;
     --c-fff8e8: #2b2519;
-    --c-fff8e7: #2b2519;
     --c-f6f9f7: #252725;
     --c-fff6f2: #2b2522;
     --c-f2faf5: #222824;
@@ -259,7 +254,6 @@
     --c-a3ada6: #59625c;
     --c-d89a20: #815904;
     --c-9eaaa2: #5a655e;
-    --c-d49b22: #805b04;
     --c-d39a27: #825b02;
     --c-d09a2b: #825c01;
     --c-d19725: #855d04;
@@ -282,7 +276,6 @@
     --c-77847b: #7a877e;
     --c-76847b: #79877e;
     --c-76837a: #7b887f;
-    --c-a87313: #ae781c;
     --c-3189b1: #388fb7;
     --c-758279: #7c8980;
     --c-758178: #7d8980;
@@ -329,7 +322,6 @@
     --c-526158: #99aaa0;
     --c-795411: #c69e61;
     --c-315f8a: #7babda;
-    --c-725719: #bfa266;
     --c-226846: #76ba94;
     --c-4c5e52: #9bafa1;
     --c-4c5c52: #9eafa4;
@@ -786,24 +778,6 @@
 }
 
 .admin-button .material-symbols-outlined {
-  font-size: 18px !important;
-}
-
-.admin-demo-notice {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 42px;
-  margin-bottom: 18px;
-  padding: 8px 12px;
-  border-left: 3px solid var(--c-d49b22);
-  background: var(--c-fff8e7);
-  color: var(--c-725719);
-  font-size: 12px;
-}
-
-.admin-demo-notice > .material-symbols-outlined {
-  color: var(--c-a87313);
   font-size: 18px !important;
 }
 
@@ -1987,12 +1961,6 @@ button.admin-alert-row:hover { background: var(--c-f6f8f6); }
     flex: 1;
   }
 
-  .admin-demo-notice {
-    align-items: flex-start;
-    min-height: 0;
-    font-size: 11px;
-  }
-
   .admin-kpi-grid {
     margin-bottom: 16px;
   }
@@ -2229,10 +2197,6 @@ button.admin-alert-row:hover { background: var(--c-f6f8f6); }
   border-color: var(--c-d8e1da);
   border-radius: var(--radius-lg) !important;
   box-shadow: 0 2px 10px rgba(27, 54, 39, 0.045);
-}
-
-#admin-root .admin-demo-notice {
-  border-radius: var(--radius-sm) !important;
 }
 
 #admin-root .admin-route-points {

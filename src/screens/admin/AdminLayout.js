@@ -42,7 +42,7 @@ export function renderAdminOperations({
         </nav>
 
         <div class="admin-sidebar-foot">
-          <div class="admin-network-state"><span class="network-indicator"></span><span><strong>Supabase conectado</strong><small>Acceso administrativo</small></span></div>
+          <div class="admin-network-state"><span class="network-indicator"></span><span><strong>Base de datos conectada</strong><small>Acceso administrativo</small></span></div>
           <a class="admin-field-link" href="/?mode=field">${icon('open_in_new')}<span>Abrir vista de campo</span></a>
         </div>
       </aside>
@@ -92,17 +92,13 @@ export function renderAdminOperations({
             <article class="admin-kpi kpi-sync">
               <div class="admin-kpi-top"><span>REPORTES DE HOY</span>${icon('cloud_upload')}</div>
               <div class="admin-kpi-value" id="admin-reports-today-count">0</div>
-              <div class="admin-kpi-foot"><span class="kpi-positive-dot"></span> Guardados en Supabase</div>
+              <div class="admin-kpi-foot"><span class="kpi-positive-dot"></span> Guardados en la base de datos</div>
             </article>
           </section>
 
-          <div class="admin-demo-notice" role="status">
-            ${icon('info')}<span>Los reportes y las rutas se comparten desde Supabase entre administración y campo.</span>
-          </div>
-
           <section class="admin-section admin-reports-section" id="reports">
             <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN SUPABASE</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${todaysReports.length}</span></h2></div>
+              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN LA BASE DE DATOS</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${todaysReports.length}</span></h2></div>
               <div class="admin-report-actions">
                 <button type="button" class="admin-button" id="admin-toggle-all-reports">${icon('list')}<span>Ver todos</span></button>
                 <button type="button" class="admin-button" id="admin-refresh-reports">${icon('refresh')}<span>Actualizar</span></button>
@@ -214,7 +210,7 @@ export function renderAdminOperations({
             </section>
           </div>
 
-          <footer class="admin-footer"><span>RUTA CERO <span>·</span> PANEL ADMINISTRATIVO</span><span>Reportes conectados a Supabase</span></footer>
+          <footer class="admin-footer"><span>RUTA CERO <span>·</span> PANEL ADMINISTRATIVO</span><span>Reportes conectados a la base de datos</span></footer>
         </main>
       </div>
     </div>

@@ -49,23 +49,23 @@ const keptOnRejection = {
 
 function getReportSaveErrorMessage(error, table = 'container_reports') {
   if (error?.code === '22P02' && /"(low|medium|full)"/.test(error.message || '')) {
-    return 'La columna fill_level de Supabase sigue siendo INTEGER. Ejecuta supabase/schema.sql en el SQL Editor de ese proyecto.';
+    return 'La columna fill_level de la base de datos sigue siendo INTEGER. Ejecuta el script schema.sql en la base de datos.';
   }
 
   if (String(error?.code).startsWith('STORAGE_')) {
-    return `Supabase Storage rechazó la foto (${error.code}): ${error.message}. Ejecuta supabase/schema.sql para crear el bucket field-photos y sus permisos.`;
+    return `El almacenamiento de fotos rechazó la foto (${error.code}): ${error.message}. Ejecuta el script schema.sql para crear el bucket field-photos y sus permisos.`;
   }
 
   if (error?.code === '42501') {
-    return `Supabase rechazó la inserción por permisos o RLS. Ejecuta supabase/schema.sql y verifica el privilegio INSERT y la política de ${table}.`;
+    return `La base de datos rechazó la inserción por permisos o RLS. Ejecuta el script schema.sql y verifica el privilegio INSERT y la política de ${table}.`;
   }
 
   if (error?.code === '42P01' || error?.code === 'PGRST205') {
-    return `No se encuentra la tabla ${table}. Ejecuta supabase/schema.sql en tu proyecto de Supabase.`;
+    return `No se encuentra la tabla ${table}. Ejecuta el script schema.sql en la base de datos.`;
   }
 
   const code = error?.code ? ` (${error.code})` : '';
-  return `Error de Supabase${code}: ${error?.message || 'No se pudo completar la solicitud.'}`;
+  return `Error de la base de datos${code}: ${error?.message || 'No se pudo completar la solicitud.'}`;
 }
 
 /**
@@ -123,7 +123,7 @@ async function sendQueue(loadApi) {
 
   if (wentOffline && sent > 0 && readQueue().length === 0) {
     wentOffline = false;
-    store.showToast('Registros pendientes sincronizados con Supabase.');
+    store.showToast('Registros pendientes guardados en la base de datos.');
   }
 }
 
