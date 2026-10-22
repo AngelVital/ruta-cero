@@ -55,6 +55,7 @@ export function renderAdminOperations({
             <div class="admin-profile" aria-label="Sesión de ${email}">
               <span class="admin-avatar">${escapeHtml((user.email || 'AD').slice(0, 2).toUpperCase())}</span><span class="admin-profile-name">${email}</span>
             </div>
+            <button type="button" class="admin-button admin-theme-toggle" id="admin-theme-toggle" aria-pressed="false">${icon('dark_mode')}<span>Modo oscuro</span></button>
             <button type="button" class="admin-button" id="admin-signout">Cerrar sesión</button>
           </div>
         </header>

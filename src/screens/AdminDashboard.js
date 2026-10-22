@@ -13,6 +13,7 @@ import {
   saveConfiguredRoutes
 } from '../services/routeConfiguration.js';
 import { formatElapsedTime } from '../utils/format.js';
+import { icon } from '../utils/html.js';
 import { attachAdminLogin, renderAdminLogin } from './admin/AdminLogin.js';
 import { renderAdminOperations } from './admin/AdminLayout.js';
 import { renderCollectionPointTable } from './admin/CollectionPoints.js';
@@ -263,6 +264,13 @@ function attachAdminDashboardContentEvents(container, reports, fieldEvents) {
     });
   });
 
+  const themeToggle = container.querySelector('#admin-theme-toggle');
+  syncThemeToggle(container, themeToggle);
+  themeToggle?.addEventListener('click', () => {
+    setAdminTheme(container, container.dataset.theme === 'dark' ? 'light' : 'dark');
+    syncThemeToggle(container, themeToggle);
+  });
+
   container.querySelector('#admin-signout')?.addEventListener('click', async () => {
     try {
       await (await api()).signOutAdmin();
@@ -348,6 +356,36 @@ export function renderAdminDashboard() {
   return renderAdminLogin();
 }
 
+const THEME_KEY = 'ruta-cero-admin-theme';
+
+/** Dark mode for the admin panel only: data-theme on #admin-root switches its color tokens (admin-dashboard.css). */
+function setAdminTheme(container, theme) {
+  container.dataset.theme = theme;
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    // Storage blocked (private mode): the choice lasts for this visit only.
+  }
+}
+
+function syncThemeToggle(container, button) {
+  if (!button) return;
+  const isDark = container.dataset.theme === 'dark';
+  button.setAttribute('aria-pressed', String(isDark));
+  // A toggle keeps one name and reports its state with aria-pressed; narrow screens hide the text, so the name is also in aria-label.
+  button.setAttribute('aria-label', 'Modo oscuro');
+  button.title = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+  button.innerHTML = `${icon(isDark ? 'light_mode' : 'dark_mode')}<span>Modo oscuro</span>`;
+}
+
 export function attachAdminDashboardEvents(container) {
+  let saved = null;
+  try {
+    saved = localStorage.getItem(THEME_KEY);
+  } catch {
+    // Storage blocked: fall back to the system setting.
+  }
+  // Without a saved choice, follow the system setting.
+  container.dataset.theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   mountAdminDashboard(container);
 }
