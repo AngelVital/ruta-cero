@@ -135,11 +135,13 @@ export function summarizeReports(reports, start, end) {
   const materials = {};
   const byContainer = {};
   periodReports.forEach((report) => {
-    const container = byContainer[report.container_id] ||= { reports: 0, kg: 0 };
+    const container = byContainer[report.container_id] ||= { reports: 0, kg: 0, materials: {} };
     container.reports += 1;
     container.kg += Number(report.collected_kg) || 0;
     (Array.isArray(report.materials) ? report.materials : []).forEach((material) => {
-      materials[material] = (materials[material] || 0) + (Number(report.material_weights?.[material]) || 0);
+      const kg = Number(report.material_weights?.[material]) || 0;
+      materials[material] = (materials[material] || 0) + kg;
+      container.materials[material] = (container.materials[material] || 0) + kg;
     });
   });
   return {
@@ -162,17 +164,22 @@ export function filterReportsByMaterial(reports, material) {
     .map((report) => ({ ...report, materials: [material], collected_kg: Number(report.material_weights?.[material]) || 0 }));
 }
 
-/** [['YYYY-MM-DD', kg], ...] for every day from start to end (inclusive), zero on days without reports. */
+/** [['YYYY-MM-DD', kg, { material: kg }], ...] for every day from start to end (inclusive), zero on days without reports. */
 export function getKgByDay(reports, start, end) {
   const kg = {};
+  const materials = {};
   reports.forEach((report) => {
     const date = getOperationalDate(new Date(report.created_at));
     kg[date] = (kg[date] || 0) + (Number(report.collected_kg) || 0);
+    const dayMaterials = materials[date] ||= {};
+    (Array.isArray(report.materials) ? report.materials : []).forEach((material) => {
+      dayMaterials[material] = (dayMaterials[material] || 0) + (Number(report.material_weights?.[material]) || 0);
+    });
   });
   const days = [];
   for (const day = new Date(`${start}T12:00:00Z`); day.toISOString().slice(0, 10) <= end; day.setUTCDate(day.getUTCDate() + 1)) {
     const key = day.toISOString().slice(0, 10);
-    days.push([key, kg[key] || 0]);
+    days.push([key, kg[key] || 0, materials[key] || {}]);
   }
   return days;
 }

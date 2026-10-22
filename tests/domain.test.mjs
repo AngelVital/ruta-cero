@@ -105,10 +105,14 @@ test('el resumen agrupa el peso por material dentro del periodo', () => {
   assert.deepEqual(week.materials, { papel: 6, carton: 3 });
   assert.equal(week.totalKg, 9);
   assert.equal(week.containers, 2);
-  assert.deepEqual(week.byContainer['CONT-01'], { reports: 1, kg: 5 });
+  assert.deepEqual(week.byContainer['CONT-01'], { reports: 1, kg: 5, materials: { papel: 2, carton: 3 } });
   assert.equal(summarizeReports(reports, '2026-09-30', '2026-10-20').totalKg, 13);
 
   const carton = filterReportsByMaterial(reports, 'carton');
   assert.equal(summarizeReports(carton, '2026-10-19', '2026-10-25').totalKg, 3);
-  assert.deepEqual(getKgByDay(reports, '2026-10-19', '2026-10-21'), [['2026-10-19', 0], ['2026-10-20', 4], ['2026-10-21', 5]]);
+  assert.deepEqual(getKgByDay(reports, '2026-10-19', '2026-10-21'), [
+    ['2026-10-19', 0, {}],
+    ['2026-10-20', 4, { papel: 4 }],
+    ['2026-10-21', 5, { papel: 2, carton: 3 }]
+  ]);
 });
