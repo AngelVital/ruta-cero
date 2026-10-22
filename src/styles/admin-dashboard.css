@@ -2658,6 +2658,9 @@ button.admin-alert-row:hover { background: #f6f8f6; }
   body.is-printing-summary #admin-summary-content { max-height: none; overflow: visible; }
   body.is-printing-summary #admin-summary-dialog .admin-report-actions,
   body.is-printing-summary #admin-summary-dialog .admin-table-toolbar { display: none; }
+  /* The app's dark canvas would print under the document on pages it doesn't fill. */
+  html:has(> body.is-printing-summary),
+  body.is-printing-summary { background: #fff; }
 }
 
 /* Summary laid out as an office document; the same markup is used on screen and in the PDF. */
@@ -2774,13 +2777,22 @@ button.board-row { cursor: pointer; }
 .summary-doc, .summary-board { --mat-1: #2a78d6; --mat-2: #eb6834; --mat-3: #1baf7a; --mat-4: #eda100; }
 .summary-doc-chart { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
 .summary-doc-chart .summary-doc-table { flex: 1 1 300px; width: auto; }
-.summary-doc-chart .board-donut { flex-basis: 150px; width: 150px; height: 150px; }
 .summary-doc .donut-slice { cursor: default; }
 .summary-doc .donut-slice:hover { stroke-width: 16; }
 /* Inherited: keeps every chart color (swatches, slices, bar segments) when printing to PDF. */
 .summary-doc { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 .summary-doc .summary-doc-bar { width: 30%; }
 .summary-doc .board-col { cursor: default; }
+.summary-doc-chart .board-donut { flex-basis: 190px; width: 190px; height: 190px; }
+
+/* Value labels on the document's charts. Dark ink reads on all three material colors (>= 4.5:1). */
+.donut-label { fill: #3d4a43; font-size: 9px; font-weight: 700; dominant-baseline: central; }
+.board-columns.has-labels { padding-top: 16px; }
+.board-col-total { position: absolute; left: 0; right: 0; margin-bottom: 2px; color: var(--admin-ink); font-size: 10px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.board-columns.is-dense .board-col-total { font-size: 7px; }
+.board-col-stack span,
+.summary-doc .board-stack span { display: flex; align-items: center; justify-content: center; overflow: hidden; color: #10201a; font-size: 9px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.summary-doc .board-track { height: 16px; }
 .board-donut-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 .board-donut { position: relative; flex: 0 0 180px; width: 180px; height: 180px; }
 .board-donut svg { display: block; width: 100%; height: 100%; }

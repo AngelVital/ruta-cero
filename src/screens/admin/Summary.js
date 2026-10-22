@@ -30,7 +30,7 @@ export function renderSummary(reports, start, end, period = 'range') {
   const containers = Object.entries(summary.byContainer).sort(([a], [b]) => a.localeCompare(b));
   const maxContainerKg = Math.max(0, ...containers.map(([, { kg }]) => kg));
   const containerRows = containers.map(([id, { reports: count, kg, materials: kgs }]) => `
-      <tr><td>${escapeHtml(id)}</td><td>${escapeHtml(pointNames[id] || '—')}</td><td class="summary-doc-bar">${renderMaterialBar(kgs, maxContainerKg)}</td><td class="num">${count}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
+      <tr><td>${escapeHtml(id)}</td><td>${escapeHtml(pointNames[id] || '—')}</td><td class="summary-doc-bar">${renderMaterialBar(kgs, maxContainerKg, true)}</td><td class="num">${count}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
     `).join('') || '<tr><td colspan="5">Sin contenedores atendidos en este periodo.</td></tr>';
   // A one-day period has a single column, so the day chart is left out; sections are numbered as rendered.
   const showDays = summary.start !== summary.end && summary.reports.length > 0;
@@ -66,7 +66,7 @@ export function renderSummary(reports, start, end, period = 'range') {
         <div class="summary-doc-chart">
         ${materialKg ? `
           <div class="board-donut">
-            ${renderDonutSvg(materials.filter(([, kg]) => kg > 0), materialKg)}
+            ${renderDonutSvg(materials.filter(([, kg]) => kg > 0), materialKg, '', false, true)}
             <div class="board-donut-center"><span>Total</span><strong>${escapeHtml(formatReportWeight(materialKg))}</strong></div>
           </div>` : ''}
         <table class="summary-doc-table">
@@ -81,7 +81,7 @@ export function renderSummary(reports, start, end, period = 'range') {
       <section>
         ${heading('Kilos por día')}
         ${renderMaterialLegend(summary.materials)}
-        ${renderDayChart(getKgByDay(summary.reports, summary.start, summary.end), summary.start, summary.end)}
+        ${renderDayChart(getKgByDay(summary.reports, summary.start, summary.end), summary.start, summary.end, true)}
       </section>` : ''}
 
       <section>
@@ -157,36 +157,55 @@ function renderMaterialLegend(kgByMaterial) {
     : '';
 }
 
-/** Horizontal bar split by material, its length relative to maxKg. */
-function renderMaterialBar(kgs, maxKg) {
+// Value labels printed on the document's charts; the unit is in the chart's heading or axis.
+const kgNumber = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 1 });
+// A segment gets its own number only when it spans this share of the chart's max, so the text fits inside it.
+const LABEL_MIN_SHARE = 0.12;
+
+/** Horizontal bar split by material, its length relative to maxKg; with labels, wide segments show their kg. */
+function renderMaterialBar(kgs, maxKg, labels = false) {
   return `<span class="board-track board-stack">${stackSegments(kgs).map(([name, value]) => `<span
-    style="width: ${percentOf(value, maxKg)}%; background: var(--mat-${materialSlot(name)})" title="${escapeHtml(`${formatMaterialLabel(name)}: ${formatReportWeight(value)}`)}"></span>`).join('')}</span>`;
+    style="width: ${percentOf(value, maxKg)}%; background: var(--mat-${materialSlot(name)})" title="${escapeHtml(`${formatMaterialLabel(name)}: ${formatReportWeight(value)}`)}">${labels && value / maxKg >= LABEL_MIN_SHARE ? kgNumber.format(value) : ''}</span>`).join('')}</span>`;
 }
 
-/** One column per day (from getKgByDay), stacked by material, with the date axis below. */
-function renderDayChart(days, start, end) {
+/** One column per day (from getKgByDay), stacked by material, with the date axis below; with labels, totals on top and kg inside tall segments. */
+function renderDayChart(days, start, end, labels = false) {
   const maxDayKg = Math.max(0, ...days.map(([, kg]) => kg));
+  // Past two weeks the columns are too narrow for per-segment numbers; the totals stay.
+  const segmentLabels = labels && days.length <= 14;
   const columns = days.map(([day, kg, kgs]) => {
     const segments = stackSegments(kgs);
     const tip = `${formatScheduledDate(day)} · ${formatReportWeight(kg)}${segments.length > 1 ? ` (${segments.map(([name, value]) => `${formatMaterialLabel(name)} ${formatReportWeight(value)}`).join(', ')})` : ''}`;
     // Segments share the column's height in proportion to their kg (flex-grow); the column keeps its height per day.
     return `
     <div class="board-col" tabindex="0" role="img" aria-label="${escapeHtml(tip)}" data-tip="${escapeHtml(tip)}">
-      <span class="board-col-stack" style="height: ${percentOf(kg, maxDayKg)}%">${segments.map(([name, value]) => `<span style="flex-grow: ${value}; background: var(--mat-${materialSlot(name)})"></span>`).join('')}</span>
+      <span class="board-col-stack" style="height: ${percentOf(kg, maxDayKg)}%">${segments.map(([name, value]) => `<span style="flex-grow: ${value}; background: var(--mat-${materialSlot(name)})">${segmentLabels && segments.length > 1 && value / maxDayKg >= LABEL_MIN_SHARE ? kgNumber.format(value) : ''}</span>`).join('')}</span>
+      ${labels && kg > 0 ? `<span class="board-col-total" style="bottom: ${percentOf(kg, maxDayKg)}%">${kgNumber.format(kg)}</span>` : ''}
     </div>
   `;
   }).join('');
   return `
-    <div class="board-columns" style="--days: ${days.length}">${columns}</div>
-    <div class="board-axis"><span>${escapeHtml(formatScheduledDate(start))}</span><span>Máximo: ${escapeHtml(formatReportWeight(maxDayKg))}</span><span>${escapeHtml(formatScheduledDate(end))}</span></div>
+    <div class="board-columns${labels ? ' has-labels' : ''}${labels && days.length > 14 ? ' is-dense' : ''}" style="--days: ${days.length}">${columns}</div>
+    <div class="board-axis"><span>${escapeHtml(formatScheduledDate(start))}</span><span>${labels ? 'Valores en kg · ' : ''}Máximo: ${escapeHtml(formatReportWeight(maxDayKg))}</span><span>${escapeHtml(formatScheduledDate(end))}</span></div>
   `;
 }
 
 /** Donut slices as SVG; only the board's copy is interactive (the document's would change the board filter on click). */
-function renderDonutSvg(materials, total, selected = '', interactive = false) {
+function renderDonutSvg(materials, total, selected = '', interactive = false, labels = false) {
   const radius = 48;
   const circumference = 2 * Math.PI * radius;
   const gap = materials.length > 1 ? 1.5 : 0;
+  // Percentages sit outside the ring, at each slice's middle angle (clockwise from 12 o'clock); slivers under 4% are left to the table.
+  let labelOffset = 0;
+  const percentLabels = labels ? materials.map(([, kg]) => {
+    const share = kg / total;
+    const angle = (labelOffset + share / 2) * 2 * Math.PI - Math.PI / 2;
+    labelOffset += share;
+    const [x, y] = [Math.cos(angle), Math.sin(angle)];
+    // Text grows away from the ring: left-aligned on the right side, right-aligned on the left.
+    const anchor = x > 0.3 ? 'start' : x < -0.3 ? 'end' : 'middle';
+    return share < 0.04 ? '' : `<text class="donut-label" text-anchor="${anchor}" x="${(60 + 62 * x).toFixed(1)}" y="${(60 + 64 * y).toFixed(1)}">${percentFormatter.format(share)}</text>`;
+  }).join('') : '';
   let offset = 0;
   const slices = materials.map(([name, kg]) => {
     const length = (kg / total) * circumference;
@@ -198,7 +217,8 @@ function renderDonutSvg(materials, total, selected = '', interactive = false) {
     offset += length;
     return slice;
   }).join('');
-  return `<svg viewBox="0 0 120 120" aria-hidden="true"><g transform="rotate(-90 60 60)">${slices}</g></svg>`;
+  // With labels the viewBox grows around the ring to make room for the percentages.
+  return `<svg viewBox="${labels ? '-30 -30 180 180' : '0 0 120 120'}" aria-hidden="true"><g transform="rotate(-90 60 60)">${slices}</g>${percentLabels}</svg>`;
 }
 
 /** Donut of kg per material; each slice and legend row filters the board, hover shows the slice in the center. */
