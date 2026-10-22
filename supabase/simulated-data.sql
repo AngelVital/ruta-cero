@@ -20,11 +20,15 @@ insert into public.route_configurations (id, zone, point_ids) values
   ('SIM-R1', 'Simulada · Norte', '{CONT-02,CONT-03,CONT-04,CONT-07}'),
   ('SIM-R2', 'Simulada · Sur', '{CONT-01,CONT-05,CONT-06,CONT-08}');
 
--- Últimos 60 días (sin hoy ni domingos), alternando las rutas.
+-- Últimos 60 días (sin hoy ni domingos), alternando las rutas. Cada día tiene su propio volumen
+-- (los lunes llega lo acumulado del fin de semana) y su propia proporción de cartón y papel.
 drop table if exists pg_temp.sim_days;
 create temp table sim_days as
 select d::date as day,
-       case when extract(doy from d)::int % 2 = 0 then 'SIM-R1' else 'SIM-R2' end as route_id
+       case when extract(doy from d)::int % 2 = 0 then 'SIM-R1' else 'SIM-R2' end as route_id,
+       (0.45 + random() * 1.1) * case extract(isodow from d) when 1 then 1.4 when 6 then 0.7 else 1 end as volume,
+       0.4 + random() * 1.4 as carton_mix,
+       0.4 + random() * 1.4 as paper_mix
 from generate_series(
   (now() at time zone 'America/Mazatlan')::date - 60,
   (now() at time zone 'America/Mazatlan')::date - 1,
@@ -41,10 +45,29 @@ from sim_days s
 join public.route_configurations r on r.id = s.route_id
 on conflict (scheduled_for) do nothing;
 
--- Un reporte por contenedor y día. "0 * p.i" obliga a recalcular random() en cada fila.
+-- Un reporte por contenedor y día. Los random() van en la lista de columnas (se evalúan por fila):
+-- dentro de un LATERAL que solo depende de p.i, Postgres reutilizaba el resultado y repetía los kg cada día.
+with base as materialized (
+  select s.day, s.route_id, s.volume, s.carton_mix, s.paper_mix, p.container_id, p.i,
+         random() as x, random() as r1, random() as r2, random() as r3, random() as r4, random() as r5, random() as r6, random() as minutes
+  from sim_days s
+  join public.route_configurations r on r.id = s.route_id
+  cross join lateral unnest(r.point_ids) with ordinality as p(container_id, i)
+), f as (
+  select *,
+         case when x < 0.2 then 'low' when x < 0.6 then 'medium' else 'full' end as fill,
+         (case when x < 0.2 then 3 when x < 0.6 then 10 else 22 end) * volume as scale
+  from base
+), w as (
+  select *,
+         case when fill <> 'low' or r1 < 0.5 then round((scale * (0.4 + r2))::numeric, 1) else 0 end as plastico,
+         case when r3 < 0.7 then round((scale * carton_mix * (0.2 + r4 * 0.8))::numeric, 1) else 0 end as carton,
+         case when r5 < 0.6 then round((scale * paper_mix * (0.1 + r6 * 0.6))::numeric, 1) else 0 end as papel
+  from f
+)
 insert into public.container_reports
   (route_id, container_id, fill_level, collected_kg, materials, material_weights, incidents, incident_comments, created_at)
-select s.route_id, p.container_id, f.fill,
+select w.route_id, w.container_id, w.fill,
        w.plastico + w.carton + w.papel,
        array_remove(array[
          case when w.plastico > 0 then 'plastico' end,
@@ -57,27 +80,14 @@ select s.route_id, p.container_id, f.fill,
          'papel', nullif(w.papel, 0)
        )),
        case
-         when f.x < 0.05 then '{"damaged": true}'
-         when f.x > 0.95 then '{"outsideWaste": true, "mixedWaste": true}'
+         when w.x < 0.05 then '{"damaged": true}'
+         when w.x > 0.95 then '{"outsideWaste": true, "mixedWaste": true}'
          else '{}'
        end::jsonb,
-       case when f.x < 0.05 or f.x > 0.95 then 'Incidencia simulada' else '' end,
-       (s.day + time '08:30' + (p.i - 1) * interval '50 minutes' + (random() * 20) * interval '1 minute')
+       case when w.x < 0.05 or w.x > 0.95 then 'Incidencia simulada' else '' end,
+       (w.day + time '08:30' + (w.i - 1) * interval '50 minutes' + (w.minutes * 20) * interval '1 minute')
          at time zone 'America/Mazatlan'
-from sim_days s
-join public.route_configurations r on r.id = s.route_id
-cross join lateral unnest(r.point_ids) with ordinality as p(container_id, i)
-cross join lateral (
-  select x,
-         case when x < 0.2 then 'low' when x < 0.6 then 'medium' else 'full' end as fill,
-         case when x < 0.2 then 3 when x < 0.6 then 10 else 22 end as scale
-  from (select random() + 0 * p.i as x) q
-) f
-cross join lateral (
-  select case when f.fill <> 'low' or random() + 0 * p.i < 0.5 then round((f.scale * (0.4 + random()))::numeric, 1) else 0 end as plastico,
-         case when random() + 0 * p.i < 0.7 then round((f.scale * (0.2 + random() * 0.8))::numeric, 1) else 0 end as carton,
-         case when random() + 0 * p.i < 0.6 then round((f.scale * (0.1 + random() * 0.6))::numeric, 1) else 0 end as papel
-) w;
+from w;
 
 -- Los reportes marcan la ruta "En ruta" (trigger); se deja como programada.
 update public.route_configurations
