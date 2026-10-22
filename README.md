@@ -65,9 +65,27 @@ Abre `/?mode=admin` o elige **Administración** en la pantalla inicial. Se requi
 3. **Configurar rutas:** crea una ruta con nombre o zona y uno o más puntos, o edita/elimina una ruta existente. La tabla permite buscar por ruta, zona o punto, filtrar por estado y exportar las rutas a CSV.
 4. **Programar rutas:** en **Programar rutas**, navega el calendario, selecciona un día para consultar los reportes de esa fecha o asigna una ruta. Las asignaciones solo se pueden editar para hoy o fechas futuras; cada día admite una ruta y una ruta puede repetirse en varios días. El panel de campo recibe la asignación automáticamente.
 5. **Revisar visitas:** la tabla de puntos usa el reporte más reciente de cada contenedor para mostrar su última visita. Los reportes se sincronizan automáticamente; pulsa **Actualizar** para forzar una consulta.
-6. **Cerrar sesión:** usa **Cerrar sesión** en la barra superior para salir del panel.
+6. **Generar resumen:** **Generar resumen** totaliza los reportes de un periodo diario, semanal (lunes a domingo), mensual o personalizado. Ver [Resumen de recolección](#resumen-de-recolección).
+7. **Cerrar sesión:** usa **Cerrar sesión** en la barra superior para salir del panel.
 
 Las rutas se almacenan en `public.route_configurations`; las asignaciones por día, en `public.route_schedules`. El campo ya no permite elegir una ruta manualmente: usa la ruta asignada al día operativo de La Paz (`America/Mazatlan`) y no permite iniciar si no existe una. El panel descarga el historial completo una vez y después solo pide los reportes nuevos (por Realtime, cada 30 s o con **Actualizar**); al cerrar sesión se detienen esas sincronizaciones. Los reportes que llegan tarde desde un teléfono sin señal se detectan por `received_at` (hora de llegada) y se muestran según su hora de captura (`created_at`).
+
+### Resumen de recolección
+
+El resumen se calcula en el navegador con el historial ya cargado; no hace consultas extra a Supabase. Tiene dos vistas y dos exportaciones:
+
+- **Documento:** indicadores generales, peso por material (gráfica de dona y tabla), kilos por día (columnas por material; no aparece en el resumen diario) y recolección por contenedor (tabla con barra por material). Incluye espacio para las firmas de quien elaboró y revisó.
+- **Tablero interactivo:** los mismos datos con indicadores, kilos por día, la dona de materiales y la lista de contenedores. Al pasar el mouse por una columna o un segmento se ven sus kilos; al elegir un material en la dona o en su lista, todo el tablero se filtra por ese material.
+- **Exportar PDF:** abre el diálogo de impresión con el documento (aunque el tablero esté en pantalla); elige **Guardar como PDF**. Los colores de las gráficas se conservan.
+- **Exportar CSV:** descarga `ruta-cero-reportes-<inicio>_<fin>.csv`, listo para Power BI, Excel o herramientas similares.
+
+Cada material tiene siempre el mismo color en todas las gráficas: plástico azul, cartón naranja y papel verde. Un material nuevo usaría amarillo; agrégalo a `materialOrder` en `src/screens/admin/Summary.js` para darle su propio color.
+
+El CSV tiene **una fila por material de cada reporte**, con las columnas `reporte_id, fecha, fecha_hora, contenedor, punto, ruta, unidad, operador, auxiliar, nivel_llenado, material, kg, incidencias, comentarios`:
+
+- Suma `kg` para obtener los totales; para contar reportes usa el **recuento distinto** de `reporte_id`, porque un reporte con varios materiales ocupa varias filas. Un reporte sin materiales aparece en una sola fila con `material` vacío.
+- Las fechas van como `2026-10-20` y `2026-10-20 11:00:00` (hora de La Paz) y los kilos con punto decimal. Si Power BI está en una configuración regional con coma decimal, al importar elige **Inglés (Estados Unidos)**.
+- El archivo es UTF-8 con BOM para que Excel muestre bien los acentos. Los textos que empiezan con `=`, `+`, `-` o `@` llevan un `'` delante para que la hoja de cálculo no los ejecute como fórmula.
 
 ## Requisitos
 
@@ -104,6 +122,14 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
 En **Rutas configuradas**, crea o edita las rutas y sus puntos. En **Programar rutas**, usa el calendario para asignar una ruta a cada fecha; la ruta de hoy aparece automáticamente en despacho y el mapa de campo. Ejecuta de nuevo `supabase/schema.sql` para crear la tabla de calendario, actualizar las funciones RPC (que ahora aceptan la hora del dispositivo), agregar la columna `received_at` y habilitar las notificaciones Realtime de los reportes; las asignaciones anteriores se migran cuando es posible.
 
 La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Los reportes solo se pueden leer con una sesión cuya cuenta esté registrada en `admin_users`; la inserción de reportes anónimos sigue habilitada para pruebas. Sin variables configuradas, la aplicación sigue funcionando en modo local.
+
+### Datos simulados
+
+Para probar el resumen, el tablero, el calendario y los eventos de campo sin salir a ruta, ejecuta `supabase/simulated-data.sql` en el SQL Editor (después de `schema.sql`). Crea dos rutas (`SIM-R1` y `SIM-R2`) y, para los últimos 60 días sin contar hoy ni los domingos, un reporte por contenedor (sin fotos), inspecciones, cierres, cargas de combustible y algunas incidencias. Los kilos cambian cada día (más los lunes, menos los sábados) y la proporción de cartón y papel también, para que las gráficas muestren variación.
+
+- Se puede volver a ejecutar: primero borra la simulación anterior y genera datos nuevos.
+- En el calendario solo ocupa días libres, así que no reemplaza asignaciones reales.
+- Todo lo simulado usa ids que empiezan con `SIM-`. Para quitarlo, ejecuta solo el bloque **Limpieza** del final del archivo.
 
 ### Fotos en Storage
 
@@ -204,7 +230,7 @@ El APK contiene únicamente el panel de campo: `npm run build:android` compila c
 │   ├── utils/           # HTML, íconos y formato de horas
 │   ├── fieldApp.js      # Shell y ciclo de renderizado del modo campo
 │   └── main.js          # Entrada: elige el modo y carga su código
-├── supabase/            # Esquema SQL (tablas, funciones, permisos y bucket de fotos)
+├── supabase/            # Esquema SQL (tablas, funciones, permisos y bucket de fotos) y datos simulados
 ├── tests/               # Pruebas (node --test)
 ├── index.html
 ├── package.json
