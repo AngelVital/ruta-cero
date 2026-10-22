@@ -154,12 +154,14 @@ function renderMaterialBar(kgs, maxKg) {
 /** One column per day (from getKgByDay), stacked by material, with the date axis below. */
 function renderDayChart(days, start, end) {
   const maxDayKg = Math.max(0, ...days.map(([, kg]) => kg));
-  const columns = days.map(([day, kg, kgs]) => {
+  const columns = days.map(([day, kg, kgs], index) => {
     const segments = stackSegments(kgs);
     const tip = `${formatScheduledDate(day)} · ${formatReportWeight(kg)}${segments.length > 1 ? ` (${segments.map(([name, value]) => `${formatMaterialLabel(name)} ${formatReportWeight(value)}`).join(', ')})` : ''}`;
+    // Tooltips near the chart's edges grow inward so the dialog doesn't clip them.
+    const align = index < days.length / 3 ? 'start' : index >= (days.length * 2) / 3 ? 'end' : 'center';
     // Segments share the column's height in proportion to their kg (flex-grow); the column keeps its height per day.
     return `
-    <div class="board-col" tabindex="0" role="img" aria-label="${escapeHtml(tip)}" data-tip="${escapeHtml(tip)}">
+    <div class="board-col" tabindex="0" role="img" aria-label="${escapeHtml(tip)}" data-tip="${escapeHtml(tip)}" data-tip-align="${align}">
       <span class="board-col-stack" style="height: ${percentOf(kg, maxDayKg)}%">${segments.map(([name, value]) => `<span style="flex-grow: ${value}; background: var(--mat-${materialSlot(name)})"></span>`).join('')}</span>
     </div>
   `;

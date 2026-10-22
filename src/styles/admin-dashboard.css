@@ -2820,4 +2820,8 @@ button.board-row { cursor: pointer; }
   white-space: nowrap;
   pointer-events: none;
 }
+[data-tip-align="start"]:hover::after,
+[data-tip-align="start"]:focus-visible::after { left: 0; transform: none; }
+[data-tip-align="end"]:hover::after,
+[data-tip-align="end"]:focus-visible::after { left: auto; right: 0; transform: none; }
 .board-empty-period { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--admin-muted); }
