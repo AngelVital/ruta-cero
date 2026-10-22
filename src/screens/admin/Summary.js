@@ -1,8 +1,9 @@
 import { collectionPoints } from '../../data/collectionPoints.js';
+import { getActiveIncidents } from '../../domain/report.js';
 import { filterReportsByMaterial, getKgByDay, getPeriodRange, summarizeReports } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
-import { formatMaterialLabel, formatMonthTitle, formatReportWeight, formatScheduledDate, parseDateKey } from './format.js';
+import { formatIncidentLabel, formatMaterialLabel, formatMonthTitle, formatReportWeight, formatScheduledDate, parseDateKey } from './format.js';
 
 const periodTitles = {
   day: (range) => `Resumen del ${range}`,
@@ -83,6 +84,41 @@ export function renderSummary(reports, start, end, period = 'range') {
   `;
 }
 
+// 'sv-SE' formats as "YYYY-MM-DD HH:mm:ss", which Power BI and Excel parse as a datetime.
+const csvDateTimeFormatter = new Intl.DateTimeFormat('sv-SE', { dateStyle: 'short', timeStyle: 'medium', timeZone: 'America/Mazatlan' });
+const csvCell = (value) => {
+  // A leading = + - @ makes spreadsheets run the text as a formula.
+  const text = typeof value === 'string' ? value.replace(/^[=+\-@]/, "'$&") : String(value ?? '');
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+/** Flat table for Power BI and similar tools: one row per material of each report in the period, kg in plain numbers. */
+export function buildSummaryCsv(reports, start, end) {
+  const header = ['reporte_id', 'fecha', 'fecha_hora', 'contenedor', 'punto', 'ruta', 'unidad', 'operador', 'auxiliar', 'nivel_llenado', 'material', 'kg', 'incidencias', 'comentarios'];
+  const rows = summarizeReports(reports, start, end).reports.flatMap((report) => {
+    const base = [
+      report.id,
+      getOperationalDate(new Date(report.created_at)),
+      csvDateTimeFormatter.format(new Date(report.created_at)),
+      report.container_id,
+      pointNames[report.container_id] || '',
+      report.route_id,
+      report.unit_id,
+      report.driver_id,
+      report.assistant_id,
+      report.fill_level
+    ];
+    const tail = [getActiveIncidents(report.incidents).map(formatIncidentLabel).join('; '), report.incident_comments];
+    const materials = Array.isArray(report.materials) ? report.materials : [];
+    // A report without materials keeps one row so report counts and its kg still add up.
+    return materials.length
+      ? materials.map((material) => [...base, formatMaterialLabel(material), Number(report.material_weights?.[material]) || 0, ...tail])
+      : [[...base, '', Number(report.collected_kg) || 0, ...tail]];
+  });
+  // The BOM makes Excel read the file as UTF-8 (accents).
+  return `﻿${[header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n')}\r\n`;
+}
+
 const percentOf = (value, max) => (max ? (value / max) * 100 : 0);
 
 /** Interactive view of the same period: KPI tiles, kg per day and kg per container; a material bar filters the rest. */
@@ -138,6 +174,8 @@ export function renderSummaryBoard(reports, start, end, period = 'range', materi
         ${material ? `<button type="button" class="board-filter-chip" data-board-material="">${escapeHtml(formatMaterialLabel(material))}${icon('close')}<span class="sr-only">Quitar filtro</span></button>` : ''}
       </header>
 
+      ${all.reports.length ? '' : `<p class="board-card board-empty-period">${icon('info')}No hay reportes en este periodo. Elige otra fecha o un periodo semanal o mensual.</p>`}
+
       <div class="board-kpis">
         ${kpis.map(([name, label, value]) => `<div class="board-kpi">${icon(name)}<span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>`).join('')}
       </div>
@@ -171,6 +209,7 @@ export function renderSummaryDialogShell() {
         <div class="admin-report-actions">
           <button class="admin-button" type="button" id="admin-summary-board-toggle" aria-pressed="false">${icon('dashboard')}<span>Tablero interactivo</span></button>
           <button class="admin-button" type="button" id="admin-summary-pdf">${icon('picture_as_pdf')}<span>Exportar PDF</span></button>
+          <button class="admin-button" type="button" id="admin-summary-csv">${icon('table_view')}<span>Exportar CSV</span></button>
           <button class="admin-report-dialog-close" type="button" aria-label="Cerrar resumen">${icon('close')}</button>
         </div>
       </header>
@@ -197,15 +236,19 @@ export function attachSummary(ctx) {
   let showBoard = false;
   let material = '';
 
+  const getRange = () => {
+    const dateKey = date.value || getOperationalDate();
+    // ISO date keys compare as strings; sort so a reversed selection still works.
+    return period.value === 'range'
+      ? [dateKey, endDate.value || dateKey].sort()
+      : getPeriodRange(period.value, dateKey);
+  };
+
   const update = () => {
     const isRange = period.value === 'range';
     container.querySelector('#admin-summary-end-wrap').hidden = !isRange;
     container.querySelector('#admin-summary-date-label').textContent = isRange ? 'Inicio' : 'Fecha';
-    const dateKey = date.value || getOperationalDate();
-    // ISO date keys compare as strings; sort so a reversed selection still works.
-    const [start, end] = isRange
-      ? [dateKey, endDate.value || dateKey].sort()
-      : getPeriodRange(period.value, dateKey);
+    const [start, end] = getRange();
     content.innerHTML = showBoard
       ? renderSummaryBoard(ctx.reports, start, end, period.value, material)
       : renderSummary(ctx.reports, start, end, period.value);
@@ -250,6 +293,14 @@ export function attachSummary(ctx) {
       document.title = pageTitle;
     }, { once: true });
     window.print();
+  });
+  container.querySelector('#admin-summary-csv').addEventListener('click', () => {
+    const [start, end] = getRange();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([buildSummaryCsv(ctx.reports, start, end)], { type: 'text/csv;charset=utf-8' }));
+    link.download = `ruta-cero-reportes-${start}_${end}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 0);
   });
   dialog.querySelector('.admin-report-dialog-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (event) => {

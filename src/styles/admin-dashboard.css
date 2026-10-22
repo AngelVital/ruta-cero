@@ -2785,3 +2785,4 @@ button.board-row { cursor: pointer; }
   white-space: nowrap;
   pointer-events: none;
 }
+.board-empty-period { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--admin-muted); }
