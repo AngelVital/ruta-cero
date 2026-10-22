@@ -326,6 +326,104 @@ export function renderSummaryBoard(reports, start, end, period = 'range', materi
   `;
 }
 
+/**
+ * Hover and focus behavior of the board: the donut's center shows the slice or legend row under the pointer, and the
+ * container rows' tooltips are placed. Self-contained (DOM only) because the exported board embeds its source.
+ */
+function attachBoardHover(content) {
+  const showDonutTip = (event) => {
+    const donut = content.querySelector('.board-donut');
+    if (!donut) return;
+    const tip = event.type === 'mouseout' || event.type === 'focusout' ? null : event.target.closest('[data-donut-tip]');
+    const [label, value] = (tip?.dataset.donutTip || donut.dataset.donutDefault).split('|');
+    donut.querySelector('.board-donut-center span').textContent = label;
+    donut.querySelector('.board-donut-center strong').textContent = value;
+  };
+  ['mouseover', 'mouseout', 'focusin', 'focusout'].forEach((type) => content.addEventListener(type, showDonutTip));
+  // Container rows sit in a scrolling list that would clip a normal tooltip, so theirs is fixed to the viewport at the row's top center.
+  const placeRowTip = (event) => {
+    const row = event.target.closest('.board-scroll [data-tip]');
+    if (!row) return;
+    const rect = row.getBoundingClientRect();
+    row.style.setProperty('--tip-x', `${rect.left + rect.width / 2}px`);
+    row.style.setProperty('--tip-y', `${rect.top}px`);
+  };
+  content.addEventListener('mouseover', placeRowTip);
+  content.addEventListener('focusin', placeRowTip);
+}
+
+function downloadFile(content, type, name) {
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([content], { type }));
+  link.download = name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 0);
+}
+
+/**
+ * Standalone HTML of the board for the period, to send to someone without panel access. Holds only that period's
+ * totals: the unfiltered board plus one pre-rendered copy per material, swapped on click, so no report data is embedded.
+ */
+export function buildBoardExport(reports, start, end, period, css, fontLinks = '') {
+  const materials = Object.keys(summarizeReports(reports, start, end).materials);
+  const variants = ['', ...materials].map((material) => [material, renderSummaryBoard(reports, start, end, period, material)]);
+  const title = `Tablero de recolección ${start === end ? start : `${start} – ${end}`}`;
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)}</title>
+${fontLinks}
+<style>${css}
+.board-export { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+.board-export-bar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.board-export-note { margin: 16px 0 0; color: var(--admin-muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="admin-root" data-theme="light">
+  <main class="board-export">
+    <div class="board-export-bar">
+      <button type="button" class="admin-button admin-theme-toggle" id="theme-toggle">${icon('dark_mode')}<span>Modo oscuro</span></button>
+    </div>
+    <div id="board">${variants[0][1]}</div>
+    <p class="board-export-note">Ruta Cero · Exportado el ${escapeHtml(issuedFormatter.format(new Date()))} · Es una copia de los datos de ese momento: no se actualiza.</p>
+  </main>
+</div>
+${variants.map(([material, html]) => `<template data-material="${escapeHtml(material)}">${html}</template>`).join('\n')}
+<script>
+const attachBoardHover = ${attachBoardHover.toString()};
+const root = document.getElementById('admin-root');
+const themeToggle = document.getElementById('theme-toggle');
+// Starts with the system setting; the button switches it for this viewing.
+const setTheme = (theme) => {
+  root.dataset.theme = theme;
+  // The label names the mode the button switches to.
+  const label = theme === 'dark' ? 'Modo claro' : 'Modo oscuro';
+  themeToggle.title = 'Cambiar a ' + label.toLowerCase();
+  themeToggle.querySelector('.material-symbols-outlined').textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+  themeToggle.querySelector('.material-symbols-outlined + span').textContent = label;
+};
+setTheme(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+themeToggle.addEventListener('click', () => setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
+const board = document.getElementById('board');
+const variants = {};
+document.querySelectorAll('template[data-material]').forEach((template) => { variants[template.dataset.material] = template.innerHTML; });
+let material = '';
+board.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-board-material]');
+  if (!button) return;
+  material = button.dataset.boardMaterial === material ? '' : button.dataset.boardMaterial;
+  board.innerHTML = variants[material];
+});
+attachBoardHover(board);
+</script>
+</body>
+</html>
+`;
+}
+
 export function renderSummaryDialogShell() {
   return `
     <dialog class="admin-report-dialog" id="admin-summary-dialog" aria-labelledby="admin-summary-dialog-title">
@@ -335,6 +433,7 @@ export function renderSummaryDialogShell() {
           <button class="admin-button" type="button" id="admin-summary-board-toggle" aria-pressed="false">${icon('dashboard')}<span>Tablero interactivo</span></button>
           <button class="admin-button" type="button" id="admin-summary-pdf">${icon('picture_as_pdf')}<span>Exportar PDF</span></button>
           <button class="admin-button" type="button" id="admin-summary-csv">${icon('table_view')}<span>Exportar CSV</span></button>
+          <button class="admin-button" type="button" id="admin-summary-board-export">${icon('download')}<span>Exportar tablero</span></button>
           <button class="admin-report-dialog-close" type="button" aria-label="Cerrar resumen">${icon('close')}</button>
         </div>
       </header>
@@ -393,26 +492,7 @@ export function attachSummary(ctx) {
     material = button.dataset.boardMaterial === material ? '' : button.dataset.boardMaterial;
     update();
   });
-  // Hovering or focusing a slice or legend row shows its kg and share in the donut's center.
-  const showDonutTip = (event) => {
-    const donut = content.querySelector('.board-donut');
-    if (!donut) return;
-    const tip = event.type === 'mouseout' || event.type === 'focusout' ? null : event.target.closest('[data-donut-tip]');
-    const [label, value] = (tip?.dataset.donutTip || donut.dataset.donutDefault).split('|');
-    donut.querySelector('.board-donut-center span').textContent = label;
-    donut.querySelector('.board-donut-center strong').textContent = value;
-  };
-  ['mouseover', 'mouseout', 'focusin', 'focusout'].forEach((type) => content.addEventListener(type, showDonutTip));
-  // Container rows sit in a scrolling list that would clip a normal tooltip, so theirs is fixed to the viewport at the row's top center.
-  const placeRowTip = (event) => {
-    const row = event.target.closest('.board-scroll [data-tip]');
-    if (!row) return;
-    const rect = row.getBoundingClientRect();
-    row.style.setProperty('--tip-x', `${rect.left + rect.width / 2}px`);
-    row.style.setProperty('--tip-y', `${rect.top}px`);
-  };
-  content.addEventListener('mouseover', placeRowTip);
-  content.addEventListener('focusin', placeRowTip);
+  attachBoardHover(content);
 
   container.querySelector('#btn-generate-summary')?.addEventListener('click', () => {
     if (!date.value) date.value = getOperationalDate();
@@ -441,11 +521,20 @@ export function attachSummary(ctx) {
   });
   container.querySelector('#admin-summary-csv').addEventListener('click', () => {
     const [start, end] = getRange();
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([buildSummaryCsv(ctx.reports, start, end)], { type: 'text/csv;charset=utf-8' }));
-    link.download = `ruta-cero-reportes-${start}_${end}.csv`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(link.href), 0);
+    downloadFile(buildSummaryCsv(ctx.reports, start, end), 'text/csv;charset=utf-8', `ruta-cero-reportes-${start}_${end}.csv`);
+  });
+  container.querySelector('#admin-summary-board-export').addEventListener('click', () => {
+    const [start, end] = getRange();
+    // The panel's own CSS goes into the file; a cross-origin sheet (Google Fonts) can't be read, so it is linked instead.
+    const css = [...document.styleSheets].flatMap((sheet) => {
+      try {
+        return [...sheet.cssRules].map((rule) => rule.cssText);
+      } catch {
+        return [];
+      }
+    }).join('\n');
+    const fontLinks = [...document.querySelectorAll('link[rel="stylesheet"][href^="https://fonts."]')].map((link) => link.outerHTML).join('');
+    downloadFile(buildBoardExport(ctx.reports, start, end, period.value, css, fontLinks), 'text/html;charset=utf-8', `tablero-ruta-cero-${start}_${end}.html`);
   });
   dialog.querySelector('.admin-report-dialog-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (event) => {

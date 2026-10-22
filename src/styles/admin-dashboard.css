@@ -762,11 +762,6 @@
   transition: background-color 130ms ease;
 }
 
-.admin-theme-toggle[aria-pressed="true"] {
-  border-color: var(--admin-green);
-  color: var(--admin-green);
-}
-
 .admin-button-dark {
   border-color: var(--c-173a31);
   background: var(--c-173a31);

@@ -371,11 +371,11 @@ function setAdminTheme(container, theme) {
 function syncThemeToggle(container, button) {
   if (!button) return;
   const isDark = container.dataset.theme === 'dark';
-  button.setAttribute('aria-pressed', String(isDark));
-  // A toggle keeps one name and reports its state with aria-pressed; narrow screens hide the text, so the name is also in aria-label.
-  button.setAttribute('aria-label', 'Modo oscuro');
-  button.title = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
-  button.innerHTML = `${icon(isDark ? 'light_mode' : 'dark_mode')}<span>Modo oscuro</span>`;
+  // The label names the mode the button switches to; narrow screens hide the text, so it is also in aria-label.
+  const label = isDark ? 'Modo claro' : 'Modo oscuro';
+  button.setAttribute('aria-label', label);
+  button.title = `Cambiar a ${label.toLowerCase()}`;
+  button.innerHTML = `${icon(isDark ? 'light_mode' : 'dark_mode')}<span>${label}</span>`;
 }
 
 export function attachAdminDashboardEvents(container) {
