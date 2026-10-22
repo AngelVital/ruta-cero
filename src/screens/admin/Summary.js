@@ -25,7 +25,7 @@ export function renderSummary(reports, start, end, period = 'range') {
   const materials = Object.entries(summary.materials).sort(([, a], [, b]) => b - a);
   const materialKg = materials.reduce((sum, [, kg]) => sum + kg, 0);
   const materialRows = materials.map(([material, kg]) => `
-      <tr><td>${escapeHtml(formatMaterialLabel(material))}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td><td class="num">${percentFormatter.format(kg / materialKg)}</td></tr>
+      <tr><td><i class="board-swatch" style="background: var(--mat-${materialSlot(material)})"></i>${escapeHtml(formatMaterialLabel(material))}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td><td class="num">${percentFormatter.format(kg / materialKg)}</td></tr>
     `).join('') || '<tr><td colspan="3">Sin materiales registrados en este periodo.</td></tr>';
   const containerRows = Object.entries(summary.byContainer)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -59,11 +59,18 @@ export function renderSummary(reports, start, end, period = 'range') {
 
       <section>
         <h2>2. Peso por material</h2>
+        <div class="summary-doc-chart">
+        ${materialKg ? `
+          <div class="board-donut">
+            ${renderDonutSvg(materials.filter(([, kg]) => kg > 0), materialKg)}
+            <div class="board-donut-center"><span>Total</span><strong>${escapeHtml(formatReportWeight(materialKg))}</strong></div>
+          </div>` : ''}
         <table class="summary-doc-table">
           <thead><tr><th scope="col">Material</th><th scope="col" class="num">Peso</th><th scope="col" class="num">% del total</th></tr></thead>
           <tbody>${materialRows}</tbody>
           <tfoot><tr><th scope="row">Total</th><td class="num">${escapeHtml(formatReportWeight(materialKg))}</td><td class="num">${materialKg ? percentFormatter.format(1) : '—'}</td></tr></tfoot>
         </table>
+        </div>
       </section>
 
       <section>
@@ -121,6 +128,54 @@ export function buildSummaryCsv(reports, start, end) {
 
 const percentOf = (value, max) => (max ? (value / max) * 100 : 0);
 
+// Color follows the material, never its rank, so filtering or a new period doesn't repaint slices.
+const materialOrder = ['plastico', 'carton', 'papel'];
+// shortcut: any material outside materialOrder shares slot 4, add it to materialOrder if the field app gains one.
+const materialSlot = (name) => (materialOrder.indexOf(name) + 1) || 4;
+
+/** Donut slices as SVG; only the board's copy is interactive (the document's would change the board filter on click). */
+function renderDonutSvg(materials, total, selected = '', interactive = false) {
+  const radius = 48;
+  const circumference = 2 * Math.PI * radius;
+  const gap = materials.length > 1 ? 1.5 : 0;
+  let offset = 0;
+  const slices = materials.map(([name, kg]) => {
+    const length = (kg / total) * circumference;
+    const attributes = interactive
+      ? ` data-board-material="${escapeHtml(name)}" data-donut-tip="${escapeHtml(`${formatMaterialLabel(name)}|${formatReportWeight(kg)} · ${percentFormatter.format(kg / total)}`)}"`
+      : '';
+    const slice = `<circle class="donut-slice${selected && name !== selected ? ' is-dimmed' : ''}" cx="60" cy="60" r="${radius}"
+      style="stroke: var(--mat-${materialSlot(name)})" stroke-dasharray="${Math.max(length - gap, 0.5)} ${circumference}" stroke-dashoffset="${-offset}"${attributes}></circle>`;
+    offset += length;
+    return slice;
+  }).join('');
+  return `<svg viewBox="0 0 120 120" aria-hidden="true"><g transform="rotate(-90 60 60)">${slices}</g></svg>`;
+}
+
+/** Donut of kg per material; each slice and legend row filters the board, hover shows the slice in the center. */
+function renderMaterialDonut(materials, total, selected) {
+  const centerTip = `${selected ? formatMaterialLabel(selected) : 'Total'}|${formatReportWeight(selected ? materials.find(([name]) => name === selected)?.[1] || 0 : total)}`;
+  const [centerLabel, centerValue] = centerTip.split('|');
+
+  return `
+    <div class="board-donut-wrap">
+      <div class="board-donut" data-donut-default="${escapeHtml(centerTip)}">
+        ${renderDonutSvg(materials, total, selected, true)}
+        <div class="board-donut-center"><span>${escapeHtml(centerLabel)}</span><strong>${escapeHtml(centerValue)}</strong></div>
+      </div>
+      <div class="board-donut-legend">
+        ${materials.map(([name, kg]) => `
+          <button type="button" class="board-row${name === selected ? ' is-selected' : ''}" data-board-material="${escapeHtml(name)}" aria-pressed="${name === selected}"
+            data-donut-tip="${escapeHtml(`${formatMaterialLabel(name)}|${formatReportWeight(kg)} · ${percentFormatter.format(kg / total)}`)}">
+            <span class="board-row-label"><i class="board-swatch" style="background: var(--mat-${materialSlot(name)})"></i>${escapeHtml(formatMaterialLabel(name))}</span>
+            <span class="board-row-value">${escapeHtml(formatReportWeight(kg))} · ${percentFormatter.format(kg / total)}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
 /** Interactive view of the same period: KPI tiles, kg per day and kg per container; a material bar filters the rest. */
 export function renderSummaryBoard(reports, start, end, period = 'range', material = '') {
   const all = summarizeReports(reports, start, end);
@@ -149,13 +204,9 @@ export function renderSummaryBoard(reports, start, end, period = 'range', materi
       <span style="height: ${percentOf(kg, maxDayKg)}%"></span>
     </div>
   `).join('');
-  const materialRows = materials.map(([name, kg]) => `
-    <button type="button" class="board-row${name === material ? ' is-selected' : ''}" data-board-material="${escapeHtml(name)}" aria-pressed="${name === material}">
-      <span class="board-row-label">${escapeHtml(formatMaterialLabel(name))}</span>
-      <span class="board-track"><span style="width: ${percentOf(kg, materials[0][1])}%"></span></span>
-      <span class="board-row-value">${escapeHtml(formatReportWeight(kg))} · ${materialKg ? percentFormatter.format(kg / materialKg) : '—'}</span>
-    </button>
-  `).join('') || '<p class="board-empty">Sin materiales registrados en este periodo.</p>';
+  const materialRows = materialKg
+    ? renderMaterialDonut(materials.filter(([, kg]) => kg > 0), materialKg, material)
+    : '<p class="board-empty">Sin materiales registrados en este periodo.</p>';
   const containerRows = containers.map(([id, { reports: count, kg }]) => `
     <div class="board-row">
       <span class="board-row-label"><strong>${escapeHtml(id)}</strong> ${escapeHtml(pointNames[id] || '')}</span>
@@ -189,7 +240,7 @@ export function renderSummaryBoard(reports, start, end, period = 'range', materi
       <div class="board-grid">
         <div class="board-card">
           <h2>Peso por material</h2>
-          <p class="board-hint">Selecciona un material para filtrar el tablero.</p>
+          <p class="board-hint">Selecciona un material en la gráfica o la lista para filtrar el tablero.</p>
           ${materialRows}
         </div>
         <div class="board-card">
@@ -268,6 +319,16 @@ export function attachSummary(ctx) {
     material = button.dataset.boardMaterial === material ? '' : button.dataset.boardMaterial;
     update();
   });
+  // Hovering or focusing a slice or legend row shows its kg and share in the donut's center.
+  const showDonutTip = (event) => {
+    const donut = content.querySelector('.board-donut');
+    if (!donut) return;
+    const tip = event.type === 'mouseout' || event.type === 'focusout' ? null : event.target.closest('[data-donut-tip]');
+    const [label, value] = (tip?.dataset.donutTip || donut.dataset.donutDefault).split('|');
+    donut.querySelector('.board-donut-center span').textContent = label;
+    donut.querySelector('.board-donut-center strong').textContent = value;
+  };
+  ['mouseover', 'mouseout', 'focusin', 'focusout'].forEach((type) => content.addEventListener(type, showDonutTip));
 
   container.querySelector('#btn-generate-summary')?.addEventListener('click', () => {
     if (!date.value) date.value = getOperationalDate();

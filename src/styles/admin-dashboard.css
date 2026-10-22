@@ -2768,6 +2768,27 @@ button.board-row { cursor: pointer; }
 .board-track span { display: block; height: 100%; border-radius: 4px; background: var(--admin-green); }
 .board-scroll { max-height: 260px; overflow-y: auto; }
 
+/* Material donut: CVD-checked categorical slots, fixed per material (see materialOrder in Summary.js). */
+.summary-doc, .summary-board { --mat-1: #2a78d6; --mat-2: #eb6834; --mat-3: #1baf7a; --mat-4: #eda100; }
+.summary-doc-chart { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+.summary-doc-chart .summary-doc-table { flex: 1 1 300px; width: auto; }
+.summary-doc-chart .board-donut { flex-basis: 150px; width: 150px; height: 150px; }
+.summary-doc .donut-slice { cursor: default; }
+.summary-doc .donut-slice:hover { stroke-width: 16; }
+.summary-doc .board-swatch { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.board-donut-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.board-donut { position: relative; flex: 0 0 180px; width: 180px; height: 180px; }
+.board-donut svg { display: block; width: 100%; height: 100%; }
+.donut-slice { fill: none; stroke-width: 16; cursor: pointer; transition: opacity 0.15s, stroke-width 0.15s; }
+.donut-slice:hover { stroke-width: 19; }
+.donut-slice.is-dimmed { opacity: 0.3; }
+.board-donut-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+.board-donut-center span { color: var(--admin-muted); font-size: 12px; }
+.board-donut-center strong { font-family: var(--font-headline); font-size: 18px; font-variant-numeric: tabular-nums; }
+.board-donut-legend { display: grid; flex: 1 1 180px; gap: 2px; min-width: 0; }
+.board-donut-legend .board-row { grid-template-columns: minmax(0, 1fr) auto; }
+.board-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 3px; vertical-align: -1px; }
+
 /* Tooltip for the day bars. */
 [data-tip]:hover::after,
 [data-tip]:focus-visible::after {
