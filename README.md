@@ -74,9 +74,9 @@ Las rutas se almacenan en `public.route_configurations`; las asignaciones por d�
 
 El resumen se calcula en el navegador con el historial ya cargado; no hace consultas extra a Supabase. Tiene dos vistas y dos exportaciones:
 
-- **Documento:** indicadores generales, peso por material (gráfica de dona y tabla), kilos por día (columnas por material; no aparece en el resumen diario) y recolección por contenedor (tabla con barra por material). Incluye espacio para las firmas de quien elaboró y revisó.
+- **Documento:** indicadores generales, peso por material (gráfica de dona con porcentajes y tabla) y recolección por contenedor (tabla). Incluye espacio para las firmas de quien elaboró y revisó.
 - **Tablero interactivo:** los mismos datos con indicadores, kilos por día, la dona de materiales y la lista de contenedores. Al pasar el mouse por una columna o un segmento se ven sus kilos; al elegir un material en la dona o en su lista, todo el tablero se filtra por ese material.
-- **Exportar PDF:** abre el diálogo de impresión con el documento (aunque el tablero esté en pantalla); elige **Guardar como PDF**. Los colores de las gráficas se conservan.
+- **Exportar PDF:** abre el diálogo de impresión con el documento (aunque el tablero esté en pantalla); elige **Guardar como PDF**. Los colores de la gráfica se conservan.
 - **Exportar CSV:** descarga `ruta-cero-reportes-<inicio>_<fin>.csv`, listo para Power BI, Excel o herramientas similares.
 
 Cada material tiene siempre el mismo color en todas las gráficas: plástico azul, cartón naranja y papel verde. Un material nuevo usaría amarillo; agrégalo a `materialOrder` en `src/screens/admin/Summary.js` para darle su propio color.

@@ -27,15 +27,11 @@ export function renderSummary(reports, start, end, period = 'range') {
   const materialRows = materials.map(([material, kg]) => `
       <tr><td>${swatch(material)}${escapeHtml(formatMaterialLabel(material))}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td><td class="num">${percentFormatter.format(kg / materialKg)}</td></tr>
     `).join('') || '<tr><td colspan="3">Sin materiales registrados en este periodo.</td></tr>';
-  const containers = Object.entries(summary.byContainer).sort(([a], [b]) => a.localeCompare(b));
-  const maxContainerKg = Math.max(0, ...containers.map(([, { kg }]) => kg));
-  const containerRows = containers.map(([id, { reports: count, kg, materials: kgs }]) => `
-      <tr><td>${escapeHtml(id)}</td><td>${escapeHtml(pointNames[id] || '—')}</td><td class="summary-doc-bar">${renderMaterialBar(kgs, maxContainerKg, true)}</td><td class="num">${count}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
-    `).join('') || '<tr><td colspan="5">Sin contenedores atendidos en este periodo.</td></tr>';
-  // A one-day period has a single column, so the day chart is left out; sections are numbered as rendered.
-  const showDays = summary.start !== summary.end && summary.reports.length > 0;
-  let section = 0;
-  const heading = (text) => `<h2>${++section}. ${text}</h2>`;
+  const containerRows = Object.entries(summary.byContainer)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, { reports: count, kg }]) => `
+      <tr><td>${escapeHtml(id)}</td><td>${escapeHtml(pointNames[id] || '—')}</td><td class="num">${count}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
+    `).join('') || '<tr><td colspan="4">Sin contenedores atendidos en este periodo.</td></tr>';
 
   return `
     <article class="summary-doc">
@@ -49,7 +45,7 @@ export function renderSummary(reports, start, end, period = 'range') {
       <p class="summary-doc-range">Periodo: ${escapeHtml(range)}</p>
 
       <section>
-        ${heading('Indicadores generales')}
+        <h2>1. Indicadores generales</h2>
         <table class="summary-doc-table">
           <tbody>
             <tr><th scope="row">Material recolectado</th><td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr>
@@ -62,7 +58,7 @@ export function renderSummary(reports, start, end, period = 'range') {
       </section>
 
       <section>
-        ${heading('Peso por material')}
+        <h2>2. Peso por material</h2>
         <div class="summary-doc-chart">
         ${materialKg ? `
           <div class="board-donut">
@@ -77,20 +73,12 @@ export function renderSummary(reports, start, end, period = 'range') {
         </div>
       </section>
 
-      ${showDays ? `
       <section>
-        ${heading('Kilos por día')}
-        ${renderMaterialLegend(summary.materials)}
-        ${renderDayChart(getKgByDay(summary.reports, summary.start, summary.end), summary.start, summary.end, true)}
-      </section>` : ''}
-
-      <section>
-        ${heading('Recolección por contenedor')}
-        ${renderMaterialLegend(summary.materials)}
+        <h2>3. Recolección por contenedor</h2>
         <table class="summary-doc-table">
-          <thead><tr><th scope="col">Contenedor</th><th scope="col">Punto</th><th scope="col">Por material</th><th scope="col" class="num">Reportes</th><th scope="col" class="num">Peso</th></tr></thead>
+          <thead><tr><th scope="col">Contenedor</th><th scope="col">Punto</th><th scope="col" class="num">Reportes</th><th scope="col" class="num">Peso</th></tr></thead>
           <tbody>${containerRows}</tbody>
-          <tfoot><tr><th scope="row" colspan="3">Total</th><td class="num">${summary.reports.length}</td><td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr></tfoot>
+          <tfoot><tr><th scope="row" colspan="2">Total</th><td class="num">${summary.reports.length}</td><td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr></tfoot>
         </table>
       </section>
 
@@ -157,36 +145,28 @@ function renderMaterialLegend(kgByMaterial) {
     : '';
 }
 
-// Value labels printed on the document's charts; the unit is in the chart's heading or axis.
-const kgNumber = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 1 });
-// A segment gets its own number only when it spans this share of the chart's max, so the text fits inside it.
-const LABEL_MIN_SHARE = 0.12;
-
-/** Horizontal bar split by material, its length relative to maxKg; with labels, wide segments show their kg. */
-function renderMaterialBar(kgs, maxKg, labels = false) {
+/** Horizontal bar split by material, its length relative to maxKg. */
+function renderMaterialBar(kgs, maxKg) {
   return `<span class="board-track board-stack">${stackSegments(kgs).map(([name, value]) => `<span
-    style="width: ${percentOf(value, maxKg)}%; background: var(--mat-${materialSlot(name)})" title="${escapeHtml(`${formatMaterialLabel(name)}: ${formatReportWeight(value)}`)}">${labels && value / maxKg >= LABEL_MIN_SHARE ? kgNumber.format(value) : ''}</span>`).join('')}</span>`;
+    style="width: ${percentOf(value, maxKg)}%; background: var(--mat-${materialSlot(name)})" title="${escapeHtml(`${formatMaterialLabel(name)}: ${formatReportWeight(value)}`)}"></span>`).join('')}</span>`;
 }
 
-/** One column per day (from getKgByDay), stacked by material, with the date axis below; with labels, totals on top and kg inside tall segments. */
-function renderDayChart(days, start, end, labels = false) {
+/** One column per day (from getKgByDay), stacked by material, with the date axis below. */
+function renderDayChart(days, start, end) {
   const maxDayKg = Math.max(0, ...days.map(([, kg]) => kg));
-  // Past two weeks the columns are too narrow for per-segment numbers; the totals stay.
-  const segmentLabels = labels && days.length <= 14;
   const columns = days.map(([day, kg, kgs]) => {
     const segments = stackSegments(kgs);
     const tip = `${formatScheduledDate(day)} · ${formatReportWeight(kg)}${segments.length > 1 ? ` (${segments.map(([name, value]) => `${formatMaterialLabel(name)} ${formatReportWeight(value)}`).join(', ')})` : ''}`;
     // Segments share the column's height in proportion to their kg (flex-grow); the column keeps its height per day.
     return `
     <div class="board-col" tabindex="0" role="img" aria-label="${escapeHtml(tip)}" data-tip="${escapeHtml(tip)}">
-      <span class="board-col-stack" style="height: ${percentOf(kg, maxDayKg)}%">${segments.map(([name, value]) => `<span style="flex-grow: ${value}; background: var(--mat-${materialSlot(name)})">${segmentLabels && segments.length > 1 && value / maxDayKg >= LABEL_MIN_SHARE ? kgNumber.format(value) : ''}</span>`).join('')}</span>
-      ${labels && kg > 0 ? `<span class="board-col-total" style="bottom: ${percentOf(kg, maxDayKg)}%">${kgNumber.format(kg)}</span>` : ''}
+      <span class="board-col-stack" style="height: ${percentOf(kg, maxDayKg)}%">${segments.map(([name, value]) => `<span style="flex-grow: ${value}; background: var(--mat-${materialSlot(name)})"></span>`).join('')}</span>
     </div>
   `;
   }).join('');
   return `
-    <div class="board-columns${labels ? ' has-labels' : ''}${labels && days.length > 14 ? ' is-dense' : ''}" style="--days: ${days.length}">${columns}</div>
-    <div class="board-axis"><span>${escapeHtml(formatScheduledDate(start))}</span><span>${labels ? 'Valores en kg · ' : ''}Máximo: ${escapeHtml(formatReportWeight(maxDayKg))}</span><span>${escapeHtml(formatScheduledDate(end))}</span></div>
+    <div class="board-columns" style="--days: ${days.length}">${columns}</div>
+    <div class="board-axis"><span>${escapeHtml(formatScheduledDate(start))}</span><span>Máximo: ${escapeHtml(formatReportWeight(maxDayKg))}</span><span>${escapeHtml(formatScheduledDate(end))}</span></div>
   `;
 }
 
