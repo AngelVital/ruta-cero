@@ -3036,6 +3036,8 @@ button.admin-alert-row:hover { background: var(--c-f6f8f6); }
 @media print {
   @page { size: letter; margin: 18mm 16mm; }
   body.is-printing-summary .summary-doc { font-size: 11pt; }
+  /* A table split across pages repeats its header, but the totals row only closes the table, not each page. */
+  body.is-printing-summary .summary-doc-table tfoot { display: table-row-group; }
   body.is-printing-summary .summary-doc-table thead th,
   body.is-printing-summary .summary-doc-table tfoot th,
   body.is-printing-summary .summary-doc-table tfoot td { print-color-adjust: exact; -webkit-print-color-adjust: exact; }

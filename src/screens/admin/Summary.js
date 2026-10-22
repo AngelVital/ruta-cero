@@ -32,6 +32,18 @@ export function renderSummary(reports, start, end, period = 'range') {
     .map(([id, { reports: count, kg }]) => `
       <tr><td>${escapeHtml(id)}</td><td>${escapeHtml(pointNames[id] || '—')}</td><td class="num">${count}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
     `).join('') || '<tr><td colspan="4">Sin contenedores atendidos en este periodo.</td></tr>';
+  // One row per day with reports (days without collection are left out), material columns in the charts' fixed order.
+  const dateMaterials = materials.map(([name]) => [name]).sort(byMaterialSlot).map(([name]) => name);
+  const reportsByDay = {};
+  summary.reports.forEach((report) => {
+    const day = getOperationalDate(new Date(report.created_at));
+    reportsByDay[day] = (reportsByDay[day] || 0) + 1;
+  });
+  const dateRows = getKgByDay(summary.reports, summary.start, summary.end)
+    .filter(([day]) => reportsByDay[day])
+    .map(([day, kg, kgs]) => `
+      <tr><td>${escapeHtml(formatScheduledDate(day))}</td><td class="num">${reportsByDay[day]}</td>${dateMaterials.map((name) => `<td class="num">${escapeHtml(formatReportWeight(kgs[name] || 0))}</td>`).join('')}<td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
+    `).join('') || `<tr><td colspan="${dateMaterials.length + 3}">Sin recolección en este periodo.</td></tr>`;
 
   return `
     <article class="summary-doc">
@@ -74,7 +86,16 @@ export function renderSummary(reports, start, end, period = 'range') {
       </section>
 
       <section>
-        <h2>3. Recolección por contenedor</h2>
+        <h2>3. Recolección por fecha</h2>
+        <table class="summary-doc-table">
+          <thead><tr><th scope="col">Fecha</th><th scope="col" class="num">Reportes</th>${dateMaterials.map((name) => `<th scope="col" class="num">${escapeHtml(formatMaterialLabel(name))}</th>`).join('')}<th scope="col" class="num">Total</th></tr></thead>
+          <tbody>${dateRows}</tbody>
+          <tfoot><tr><th scope="row">Total</th><td class="num">${summary.reports.length}</td>${dateMaterials.map((name) => `<td class="num">${escapeHtml(formatReportWeight(summary.materials[name]))}</td>`).join('')}<td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr></tfoot>
+        </table>
+      </section>
+
+      <section>
+        <h2>4. Recolección por contenedor</h2>
         <table class="summary-doc-table">
           <thead><tr><th scope="col">Contenedor</th><th scope="col">Punto</th><th scope="col" class="num">Reportes</th><th scope="col" class="num">Peso</th></tr></thead>
           <tbody>${containerRows}</tbody>
