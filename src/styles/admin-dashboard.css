@@ -2824,4 +2824,7 @@ button.board-row { cursor: pointer; }
 [data-tip-align="start"]:focus-visible::after { left: 0; transform: none; }
 [data-tip-align="end"]:hover::after,
 [data-tip-align="end"]:focus-visible::after { left: auto; right: 0; transform: none; }
+/* Fixed, so the container list's scroll box doesn't clip it; Summary.js sets the coordinates on hover/focus. */
+.board-scroll [data-tip]:hover::after,
+.board-scroll [data-tip]:focus-visible::after { position: fixed; left: var(--tip-x); top: var(--tip-y); bottom: auto; transform: translate(-50%, calc(-100% - 4px)); }
 .board-empty-period { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--admin-muted); }

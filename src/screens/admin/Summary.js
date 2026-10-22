@@ -148,7 +148,13 @@ function renderMaterialLegend(kgByMaterial) {
 /** Horizontal bar split by material, its length relative to maxKg. */
 function renderMaterialBar(kgs, maxKg) {
   return `<span class="board-track board-stack">${stackSegments(kgs).map(([name, value]) => `<span
-    style="width: ${percentOf(value, maxKg)}%; background: var(--mat-${materialSlot(name)})" title="${escapeHtml(`${formatMaterialLabel(name)}: ${formatReportWeight(value)}`)}"></span>`).join('')}</span>`;
+    style="width: ${percentOf(value, maxKg)}%; background: var(--mat-${materialSlot(name)})"></span>`).join('')}</span>`;
+}
+
+/** Tooltip text: "<label> · <kg>", plus the kg of each material when there is more than one. */
+function breakdownTip(label, kg, kgs) {
+  const segments = stackSegments(kgs);
+  return `${label} · ${formatReportWeight(kg)}${segments.length > 1 ? ` (${segments.map(([name, value]) => `${formatMaterialLabel(name)} ${formatReportWeight(value)}`).join(', ')})` : ''}`;
 }
 
 /** One column per day (from getKgByDay), stacked by material, with the date axis below. */
@@ -156,7 +162,7 @@ function renderDayChart(days, start, end) {
   const maxDayKg = Math.max(0, ...days.map(([, kg]) => kg));
   const columns = days.map(([day, kg, kgs], index) => {
     const segments = stackSegments(kgs);
-    const tip = `${formatScheduledDate(day)} · ${formatReportWeight(kg)}${segments.length > 1 ? ` (${segments.map(([name, value]) => `${formatMaterialLabel(name)} ${formatReportWeight(value)}`).join(', ')})` : ''}`;
+    const tip = breakdownTip(formatScheduledDate(day), kg, kgs);
     // Tooltips near the chart's edges grow inward so the dialog doesn't clip them.
     const align = index < days.length / 3 ? 'start' : index >= (days.length * 2) / 3 ? 'end' : 'center';
     // Segments share the column's height in proportion to their kg (flex-grow); the column keeps its height per day.
@@ -254,7 +260,7 @@ export function renderSummaryBoard(reports, start, end, period = 'range', materi
     : '<p class="board-empty">Sin materiales registrados en este periodo.</p>';
   const materialLegend = renderMaterialLegend(summary.materials);
   const containerRows = containers.map(([id, { reports: count, kg, materials: kgs }]) => `
-    <div class="board-row">
+    <div class="board-row" tabindex="0" data-tip="${escapeHtml(breakdownTip(id, kg, kgs))}">
       <span class="board-row-label"><strong>${escapeHtml(id)}</strong> ${escapeHtml(pointNames[id] || '')}</span>
       ${renderMaterialBar(kgs, maxContainerKg)}
       <span class="board-row-value">${escapeHtml(formatReportWeight(kg))} · ${count} ${count === 1 ? 'reporte' : 'reportes'}</span>
@@ -376,6 +382,16 @@ export function attachSummary(ctx) {
     donut.querySelector('.board-donut-center strong').textContent = value;
   };
   ['mouseover', 'mouseout', 'focusin', 'focusout'].forEach((type) => content.addEventListener(type, showDonutTip));
+  // Container rows sit in a scrolling list that would clip a normal tooltip, so theirs is fixed to the viewport at the row's top center.
+  const placeRowTip = (event) => {
+    const row = event.target.closest('.board-scroll [data-tip]');
+    if (!row) return;
+    const rect = row.getBoundingClientRect();
+    row.style.setProperty('--tip-x', `${rect.left + rect.width / 2}px`);
+    row.style.setProperty('--tip-y', `${rect.top}px`);
+  };
+  content.addEventListener('mouseover', placeRowTip);
+  content.addEventListener('focusin', placeRowTip);
 
   container.querySelector('#btn-generate-summary')?.addEventListener('click', () => {
     if (!date.value) date.value = getOperationalDate();
