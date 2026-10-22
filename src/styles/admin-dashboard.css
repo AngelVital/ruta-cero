@@ -2777,7 +2777,10 @@ button.board-row { cursor: pointer; }
 .summary-doc-chart .board-donut { flex-basis: 150px; width: 150px; height: 150px; }
 .summary-doc .donut-slice { cursor: default; }
 .summary-doc .donut-slice:hover { stroke-width: 16; }
-.summary-doc .board-swatch { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+/* Inherited: keeps every chart color (swatches, slices, bar segments) when printing to PDF. */
+.summary-doc { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.summary-doc .summary-doc-bar { width: 30%; }
+.summary-doc .board-col { cursor: default; }
 .board-donut-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 .board-donut { position: relative; flex: 0 0 180px; width: 180px; height: 180px; }
 .board-donut svg { display: block; width: 100%; height: 100%; }

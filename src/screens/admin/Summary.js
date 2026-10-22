@@ -25,13 +25,17 @@ export function renderSummary(reports, start, end, period = 'range') {
   const materials = Object.entries(summary.materials).sort(([, a], [, b]) => b - a);
   const materialKg = materials.reduce((sum, [, kg]) => sum + kg, 0);
   const materialRows = materials.map(([material, kg]) => `
-      <tr><td><i class="board-swatch" style="background: var(--mat-${materialSlot(material)})"></i>${escapeHtml(formatMaterialLabel(material))}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td><td class="num">${percentFormatter.format(kg / materialKg)}</td></tr>
+      <tr><td>${swatch(material)}${escapeHtml(formatMaterialLabel(material))}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td><td class="num">${percentFormatter.format(kg / materialKg)}</td></tr>
     `).join('') || '<tr><td colspan="3">Sin materiales registrados en este periodo.</td></tr>';
-  const containerRows = Object.entries(summary.byContainer)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, { reports: count, kg }]) => `
-      <tr><td>${escapeHtml(id)}</td><td>${escapeHtml(pointNames[id] || '—')}</td><td class="num">${count}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
-    `).join('') || '<tr><td colspan="4">Sin contenedores atendidos en este periodo.</td></tr>';
+  const containers = Object.entries(summary.byContainer).sort(([a], [b]) => a.localeCompare(b));
+  const maxContainerKg = Math.max(0, ...containers.map(([, { kg }]) => kg));
+  const containerRows = containers.map(([id, { reports: count, kg, materials: kgs }]) => `
+      <tr><td>${escapeHtml(id)}</td><td>${escapeHtml(pointNames[id] || '—')}</td><td class="summary-doc-bar">${renderMaterialBar(kgs, maxContainerKg)}</td><td class="num">${count}</td><td class="num">${escapeHtml(formatReportWeight(kg))}</td></tr>
+    `).join('') || '<tr><td colspan="5">Sin contenedores atendidos en este periodo.</td></tr>';
+  // A one-day period has a single column, so the day chart is left out; sections are numbered as rendered.
+  const showDays = summary.start !== summary.end && summary.reports.length > 0;
+  let section = 0;
+  const heading = (text) => `<h2>${++section}. ${text}</h2>`;
 
   return `
     <article class="summary-doc">
@@ -45,7 +49,7 @@ export function renderSummary(reports, start, end, period = 'range') {
       <p class="summary-doc-range">Periodo: ${escapeHtml(range)}</p>
 
       <section>
-        <h2>1. Indicadores generales</h2>
+        ${heading('Indicadores generales')}
         <table class="summary-doc-table">
           <tbody>
             <tr><th scope="row">Material recolectado</th><td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr>
@@ -58,7 +62,7 @@ export function renderSummary(reports, start, end, period = 'range') {
       </section>
 
       <section>
-        <h2>2. Peso por material</h2>
+        ${heading('Peso por material')}
         <div class="summary-doc-chart">
         ${materialKg ? `
           <div class="board-donut">
@@ -73,12 +77,20 @@ export function renderSummary(reports, start, end, period = 'range') {
         </div>
       </section>
 
+      ${showDays ? `
       <section>
-        <h2>3. Recolección por contenedor</h2>
+        ${heading('Kilos por día')}
+        ${renderMaterialLegend(summary.materials)}
+        ${renderDayChart(getKgByDay(summary.reports, summary.start, summary.end), summary.start, summary.end)}
+      </section>` : ''}
+
+      <section>
+        ${heading('Recolección por contenedor')}
+        ${renderMaterialLegend(summary.materials)}
         <table class="summary-doc-table">
-          <thead><tr><th scope="col">Contenedor</th><th scope="col">Punto</th><th scope="col" class="num">Reportes</th><th scope="col" class="num">Peso</th></tr></thead>
+          <thead><tr><th scope="col">Contenedor</th><th scope="col">Punto</th><th scope="col">Por material</th><th scope="col" class="num">Reportes</th><th scope="col" class="num">Peso</th></tr></thead>
           <tbody>${containerRows}</tbody>
-          <tfoot><tr><th scope="row" colspan="2">Total</th><td class="num">${summary.reports.length}</td><td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr></tfoot>
+          <tfoot><tr><th scope="row" colspan="3">Total</th><td class="num">${summary.reports.length}</td><td class="num">${escapeHtml(formatReportWeight(summary.totalKg))}</td></tr></tfoot>
         </table>
       </section>
 
@@ -133,6 +145,43 @@ const materialOrder = ['plastico', 'carton', 'papel'];
 // shortcut: any material outside materialOrder shares slot 4, add it to materialOrder if the field app gains one.
 const materialSlot = (name) => (materialOrder.indexOf(name) + 1) || 4;
 
+const byMaterialSlot = ([a], [b]) => materialSlot(a) - materialSlot(b) || a.localeCompare(b);
+const stackSegments = (kgs) => Object.entries(kgs).filter(([, value]) => value > 0).sort(byMaterialSlot);
+const swatch = (name) => `<i class="board-swatch" style="background: var(--mat-${materialSlot(name)})"></i>`;
+
+/** Color key for the stacked charts; a single material needs none (the chart title names it). */
+function renderMaterialLegend(kgByMaterial) {
+  const names = Object.keys(kgByMaterial).map((name) => [name]).sort(byMaterialSlot);
+  return names.length > 1
+    ? `<p class="board-legend">${names.map(([name]) => `<span>${swatch(name)}${escapeHtml(formatMaterialLabel(name))}</span>`).join('')}</p>`
+    : '';
+}
+
+/** Horizontal bar split by material, its length relative to maxKg. */
+function renderMaterialBar(kgs, maxKg) {
+  return `<span class="board-track board-stack">${stackSegments(kgs).map(([name, value]) => `<span
+    style="width: ${percentOf(value, maxKg)}%; background: var(--mat-${materialSlot(name)})" title="${escapeHtml(`${formatMaterialLabel(name)}: ${formatReportWeight(value)}`)}"></span>`).join('')}</span>`;
+}
+
+/** One column per day (from getKgByDay), stacked by material, with the date axis below. */
+function renderDayChart(days, start, end) {
+  const maxDayKg = Math.max(0, ...days.map(([, kg]) => kg));
+  const columns = days.map(([day, kg, kgs]) => {
+    const segments = stackSegments(kgs);
+    const tip = `${formatScheduledDate(day)} · ${formatReportWeight(kg)}${segments.length > 1 ? ` (${segments.map(([name, value]) => `${formatMaterialLabel(name)} ${formatReportWeight(value)}`).join(', ')})` : ''}`;
+    // Segments share the column's height in proportion to their kg (flex-grow); the column keeps its height per day.
+    return `
+    <div class="board-col" tabindex="0" role="img" aria-label="${escapeHtml(tip)}" data-tip="${escapeHtml(tip)}">
+      <span class="board-col-stack" style="height: ${percentOf(kg, maxDayKg)}%">${segments.map(([name, value]) => `<span style="flex-grow: ${value}; background: var(--mat-${materialSlot(name)})"></span>`).join('')}</span>
+    </div>
+  `;
+  }).join('');
+  return `
+    <div class="board-columns" style="--days: ${days.length}">${columns}</div>
+    <div class="board-axis"><span>${escapeHtml(formatScheduledDate(start))}</span><span>Máximo: ${escapeHtml(formatReportWeight(maxDayKg))}</span><span>${escapeHtml(formatScheduledDate(end))}</span></div>
+  `;
+}
+
 /** Donut slices as SVG; only the board's copy is interactive (the document's would change the board filter on click). */
 function renderDonutSvg(materials, total, selected = '', interactive = false) {
   const radius = 48;
@@ -184,7 +233,6 @@ export function renderSummaryBoard(reports, start, end, period = 'range', materi
     ? formatScheduledDate(all.start)
     : `${formatScheduledDate(all.start)} – ${formatScheduledDate(all.end)}`;
   const days = getKgByDay(summary.reports, start, end);
-  const maxDayKg = Math.max(0, ...days.map(([, kg]) => kg));
   const materials = Object.entries(all.materials).sort(([, a], [, b]) => b - a);
   const materialKg = materials.reduce((sum, [, kg]) => sum + kg, 0);
   const containers = Object.entries(summary.byContainer).sort(([, a], [, b]) => b.kg - a.kg);
@@ -199,30 +247,14 @@ export function renderSummaryBoard(reports, start, end, period = 'range', materi
     ['functions', 'Promedio por reporte', formatReportWeight(average)]
   ];
 
-  const byMaterialSlot = ([a], [b]) => materialSlot(a) - materialSlot(b) || a.localeCompare(b);
-  const stackSegments = (kgs) => Object.entries(kgs).filter(([, value]) => value > 0).sort(byMaterialSlot);
-  const dayBars = days.map(([day, kg, kgs]) => {
-    const segments = stackSegments(kgs);
-    const tip = `${formatScheduledDate(day)} · ${formatReportWeight(kg)}${segments.length > 1 ? ` (${segments.map(([name, value]) => `${formatMaterialLabel(name)} ${formatReportWeight(value)}`).join(', ')})` : ''}`;
-    // Segments share the column's height in proportion to their kg (flex-grow); the column keeps its height per day.
-    return `
-    <div class="board-col" tabindex="0" role="img" aria-label="${escapeHtml(tip)}" data-tip="${escapeHtml(tip)}">
-      <span class="board-col-stack" style="height: ${percentOf(kg, maxDayKg)}%">${segments.map(([name, value]) => `<span style="flex-grow: ${value}; background: var(--mat-${materialSlot(name)})"></span>`).join('')}</span>
-    </div>
-  `;
-  }).join('');
   const materialRows = materialKg
     ? renderMaterialDonut(materials.filter(([, kg]) => kg > 0), materialKg, material)
     : '<p class="board-empty">Sin materiales registrados en este periodo.</p>';
-  const legendMaterials = Object.keys(summary.materials).map((name) => [name]).sort(byMaterialSlot);
-  const materialLegend = legendMaterials.length > 1
-    ? `<p class="board-legend">${legendMaterials.map(([name]) => `<span><i class="board-swatch" style="background: var(--mat-${materialSlot(name)})"></i>${escapeHtml(formatMaterialLabel(name))}</span>`).join('')}</p>`
-    : '';
+  const materialLegend = renderMaterialLegend(summary.materials);
   const containerRows = containers.map(([id, { reports: count, kg, materials: kgs }]) => `
     <div class="board-row">
       <span class="board-row-label"><strong>${escapeHtml(id)}</strong> ${escapeHtml(pointNames[id] || '')}</span>
-      <span class="board-track board-stack">${stackSegments(kgs).map(([name, value]) => `<span
-        style="width: ${percentOf(value, maxContainerKg)}%; background: var(--mat-${materialSlot(name)})" title="${escapeHtml(`${formatMaterialLabel(name)}: ${formatReportWeight(value)}`)}"></span>`).join('')}</span>
+      ${renderMaterialBar(kgs, maxContainerKg)}
       <span class="board-row-value">${escapeHtml(formatReportWeight(kg))} · ${count} ${count === 1 ? 'reporte' : 'reportes'}</span>
     </div>
   `).join('') || '<p class="board-empty">Sin contenedores atendidos en este periodo.</p>';
@@ -246,8 +278,7 @@ export function renderSummaryBoard(reports, start, end, period = 'range', materi
       <div class="board-card board-card-wide">
         <h2>Kilos por día</h2>
         ${materialLegend}
-        <div class="board-columns" style="--days: ${days.length}">${dayBars}</div>
-        <div class="board-axis"><span>${escapeHtml(formatScheduledDate(start))}</span><span>Máximo: ${escapeHtml(formatReportWeight(maxDayKg))}</span><span>${escapeHtml(formatScheduledDate(end))}</span></div>
+        ${renderDayChart(days, start, end)}
       </div>
 
       <div class="board-grid">
