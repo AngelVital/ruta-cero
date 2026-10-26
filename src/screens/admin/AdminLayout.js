@@ -99,26 +99,48 @@ export function renderAdminOperations({
             </article>
           </section>
 
-          <section class="admin-section admin-reports-section is-collapsed" id="reports">
+          <section class="admin-section admin-schedule-section" id="schedule">
             <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN LA BASE DE DATOS</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${todaysReports.length}</span>${sectionToggle}</h2></div>
-              <div class="admin-report-actions">
-                <button type="button" class="admin-button" id="admin-toggle-all-reports">${icon('list')}<span>Ver todos</span></button>
-                <button type="button" class="admin-button" id="admin-refresh-reports">${icon('refresh')}<span>Actualizar</span></button>
-              </div>
+              <div><div class="admin-section-kicker">CALENDARIO OPERATIVO</div><h2>Programar rutas</h2><p>Selecciona un día y asigna la ruta que utilizará el equipo de campo.</p></div>
             </div>
-            ${reportError ? `<p class="admin-report-error" id="admin-report-message" role="alert">${escapeHtml(reportError)}</p>` : '<p class="admin-report-message" id="admin-report-message" role="status" aria-live="polite"></p>'}
+            <div class="admin-calendar-container" id="admin-calendar-container">${renderRouteScheduleCalendar(routes, today, parseDateKey(today), reports)}</div>
+          </section>
+
+          <section class="admin-section admin-routes-section" id="routes">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">PUNTOS DEFINIDOS POR RECORRIDO</div><h2>Rutas configuradas <span class="admin-heading-count" id="admin-routes-count">${routes.length}</span></h2></div>
+              <button type="button" class="admin-button admin-button-dark" id="admin-create-route">${icon('add')}<span>Nueva ruta</span></button>
+            </div>
+            <div class="admin-table-toolbar">
+              <label class="admin-search">${icon('search')}<span class="sr-only">Buscar rutas</span><input type="search" id="route-search" placeholder="Buscar ruta, zona o punto"></label>
+              <label class="admin-filter-select"><span class="sr-only">Filtrar rutas por estado</span><select id="route-status-filter"><option value="all">Todos los estados</option><option value="unscheduled">No programadas</option><option value="scheduled">Programadas</option><option value="active">En curso</option><option value="completed">Completadas</option></select>${icon('expand_more')}</label>
+            </div>
+            <p class="admin-route-message${routeError ? ' is-error' : ''}" id="admin-route-message" role="status" aria-live="polite">${escapeHtml(routeError)}</p>
+            <div class="admin-table-scroll">
+              <table class="admin-route-table">
+                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
+                <tbody id="admin-route-rows">${renderRouteTable(routes)}</tbody>
+              </table>
+              <div class="admin-empty-state" id="admin-route-empty" hidden>${icon('search_off')}<span>No hay rutas que coincidan con esos filtros.</span></div>
+            </div>
+            <div class="admin-table-footer"><span id="admin-route-count">${routes.length} rutas configuradas</span><span id="admin-selected-route-label">${scheduledRoute ? `Ruta de hoy: ${escapeHtml(scheduledRoute.id)} · ${escapeHtml(scheduledRoute.zone)}` : 'Sin ruta programada para hoy'}</span></div>
+            ${renderRouteEditorDialog()}
+          </section>
+
+          ${renderFleetSection(fleet, fleetError)}
+
+          <section class="admin-section admin-reports-section admin-alerts-section is-collapsed" id="alerts">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">REQUIERE ATENCIÓN · <span id="admin-incident-critical-count">${incidents.filter((incident) => incident.severity === 'high').length}</span> DE GRAVEDAD ALTA</div><h2>Incidencias <span class="admin-heading-count alert-count" data-incident-count>${incidents.length}</span>${sectionToggle}</h2></div>
+            </div>
+            ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
             <div class="admin-points-table-wrap admin-reports-table-wrap">
               <table class="admin-points-table admin-reports-table">
-                <thead><tr><th scope="col">FECHA</th><th scope="col">CONTENEDOR</th><th scope="col">RUTA</th><th scope="col">LLENADO</th><th scope="col">RECOLECTADO</th><th scope="col">MATERIALES</th><th scope="col">INCIDENCIAS</th><th scope="col">DETALLE</th></tr></thead>
-                <tbody id="admin-report-rows">${renderReportRows(todaysReports)}</tbody>
+                <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">TIPO</th><th scope="col">GRAVEDAD</th><th scope="col">DESCRIPCIÓN</th><th scope="col">DETALLE</th></tr></thead>
+                <tbody id="admin-incident-rows">${renderIncidentRows(incidents)}</tbody>
               </table>
             </div>
           </section>
-
-          ${renderReportDialogShell()}
-          ${renderSummaryDialogShell()}
-          ${renderFieldEventDialogShell()}
 
           <section class="admin-section admin-reports-section is-collapsed" id="fuel">
             <div class="admin-section-heading">
@@ -159,49 +181,6 @@ export function renderAdminOperations({
             </div>
           </section>
 
-          <section class="admin-section admin-reports-section admin-alerts-section is-collapsed" id="alerts">
-            <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">REQUIERE ATENCIÓN · <span id="admin-incident-critical-count">${incidents.filter((incident) => incident.severity === 'high').length}</span> DE GRAVEDAD ALTA</div><h2>Incidencias <span class="admin-heading-count alert-count" data-incident-count>${incidents.length}</span>${sectionToggle}</h2></div>
-            </div>
-            ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
-            <div class="admin-points-table-wrap admin-reports-table-wrap">
-              <table class="admin-points-table admin-reports-table">
-                <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">TIPO</th><th scope="col">GRAVEDAD</th><th scope="col">DESCRIPCIÓN</th><th scope="col">DETALLE</th></tr></thead>
-                <tbody id="admin-incident-rows">${renderIncidentRows(incidents)}</tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="admin-section admin-schedule-section" id="schedule">
-            <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">CALENDARIO OPERATIVO</div><h2>Programar rutas</h2><p>Selecciona un día y asigna la ruta que utilizará el equipo de campo.</p></div>
-            </div>
-            <div class="admin-calendar-container" id="admin-calendar-container">${renderRouteScheduleCalendar(routes, today, parseDateKey(today), reports)}</div>
-          </section>
-
-          <section class="admin-section admin-routes-section" id="routes">
-            <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">PUNTOS DEFINIDOS POR RECORRIDO</div><h2>Rutas configuradas <span class="admin-heading-count" id="admin-routes-count">${routes.length}</span></h2></div>
-              <button type="button" class="admin-button admin-button-dark" id="admin-create-route">${icon('add')}<span>Nueva ruta</span></button>
-            </div>
-            <div class="admin-table-toolbar">
-              <label class="admin-search">${icon('search')}<span class="sr-only">Buscar rutas</span><input type="search" id="route-search" placeholder="Buscar ruta, zona o punto"></label>
-              <label class="admin-filter-select"><span class="sr-only">Filtrar rutas por estado</span><select id="route-status-filter"><option value="all">Todos los estados</option><option value="unscheduled">No programadas</option><option value="scheduled">Programadas</option><option value="active">En curso</option><option value="completed">Completadas</option></select>${icon('expand_more')}</label>
-            </div>
-            <p class="admin-route-message${routeError ? ' is-error' : ''}" id="admin-route-message" role="status" aria-live="polite">${escapeHtml(routeError)}</p>
-            <div class="admin-table-scroll">
-              <table class="admin-route-table">
-                <thead><tr><th scope="col">RUTA / ZONA</th><th scope="col">PUNTOS INCLUIDOS</th><th scope="col">AVANCE DEL RECORRIDO</th><th scope="col">ESTADO</th><th scope="col">ACTUALIZACIÓN</th><th scope="col">SINCRONIZACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
-                <tbody id="admin-route-rows">${renderRouteTable(routes)}</tbody>
-              </table>
-              <div class="admin-empty-state" id="admin-route-empty" hidden>${icon('search_off')}<span>No hay rutas que coincidan con esos filtros.</span></div>
-            </div>
-            <div class="admin-table-footer"><span id="admin-route-count">${routes.length} rutas configuradas</span><span id="admin-selected-route-label">${scheduledRoute ? `Ruta de hoy: ${escapeHtml(scheduledRoute.id)} · ${escapeHtml(scheduledRoute.zone)}` : 'Sin ruta programada para hoy'}</span></div>
-            ${renderRouteEditorDialog()}
-          </section>
-
-          ${renderFleetSection(fleet, fleetError)}
-
           <div class="admin-bottom-grid">
             <section class="admin-section admin-points-section" id="points">
               <div class="admin-section-heading">
@@ -217,6 +196,27 @@ export function renderAdminOperations({
               <div class="admin-points-foot"><span><i class="point-legend-overdue"></i>7 días o más</span><span><i class="point-legend-due"></i>4–6 días</span><span><i class="point-legend-recent"></i>0–3 días</span><strong>Orden: CONT-01 al CONT-08</strong></div>
             </section>
           </div>
+
+          <section class="admin-section admin-reports-section is-collapsed" id="reports">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN LA BASE DE DATOS</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${todaysReports.length}</span>${sectionToggle}</h2></div>
+              <div class="admin-report-actions">
+                <button type="button" class="admin-button" id="admin-toggle-all-reports">${icon('list')}<span>Ver todos</span></button>
+                <button type="button" class="admin-button" id="admin-refresh-reports">${icon('refresh')}<span>Actualizar</span></button>
+              </div>
+            </div>
+            ${reportError ? `<p class="admin-report-error" id="admin-report-message" role="alert">${escapeHtml(reportError)}</p>` : '<p class="admin-report-message" id="admin-report-message" role="status" aria-live="polite"></p>'}
+            <div class="admin-points-table-wrap admin-reports-table-wrap">
+              <table class="admin-points-table admin-reports-table">
+                <thead><tr><th scope="col">FECHA</th><th scope="col">CONTENEDOR</th><th scope="col">RUTA</th><th scope="col">LLENADO</th><th scope="col">RECOLECTADO</th><th scope="col">MATERIALES</th><th scope="col">INCIDENCIAS</th><th scope="col">DETALLE</th></tr></thead>
+                <tbody id="admin-report-rows">${renderReportRows(todaysReports)}</tbody>
+              </table>
+            </div>
+          </section>
+
+          ${renderReportDialogShell()}
+          ${renderSummaryDialogShell()}
+          ${renderFieldEventDialogShell()}
 
           <footer class="admin-footer"><span>RUTA CERO <span>·</span> PANEL ADMINISTRATIVO</span><span>Reportes conectados a la base de datos</span></footer>
         </main>

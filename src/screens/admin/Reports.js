@@ -12,9 +12,11 @@ const evidenceLabels = {
   finalInterior: 'Interior final'
 };
 
-export function renderReportRows(reports) {
+export function renderReportRows(reports, showAll = false) {
   if (!reports.length) {
-    return '<tr><td colspan="8">Todavía no hay reportes registrados.</td></tr>';
+    return showAll
+      ? '<tr><td colspan="8">Todavía no hay reportes registrados.</td></tr>'
+      : '<tr><td colspan="8">No hay reportes registrados hoy. Usa «Ver todos» para consultar el historial.</td></tr>';
   }
 
   return reports.map((report, index) => {
@@ -110,7 +112,7 @@ export function renderReportDialogShell() {
 export function updateReportList(ctx) {
   const { container } = ctx;
   ctx.visibleReports = ctx.showAllReports ? ctx.reports : getReportsForDate(ctx.reports, getOperationalDate());
-  container.querySelector('#admin-report-rows').innerHTML = renderReportRows(ctx.visibleReports);
+  container.querySelector('#admin-report-rows').innerHTML = renderReportRows(ctx.visibleReports, ctx.showAllReports);
   container.querySelector('#admin-report-count').textContent = String(ctx.visibleReports.length);
   const toggleButton = container.querySelector('#admin-toggle-all-reports');
   toggleButton.querySelector('span:last-child').textContent = ctx.showAllReports ? 'Ver solo hoy' : 'Ver todos';
