@@ -410,6 +410,7 @@
   flex-direction: column;
   height: 100vh;
   min-height: 560px;
+  overflow-y: auto;
   padding: 24px 16px 18px;
   background: var(--c-173a31);
   border-right: 4px solid var(--c-28a879);

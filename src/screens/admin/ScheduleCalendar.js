@@ -39,6 +39,8 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
     <option value="${escapeHtml(route.id)}" ${route.id === selectedRoute?.id ? 'selected' : ''}>${escapeHtml(route.id)} · ${escapeHtml(route.zone)}</option>
   `).join('');
   const isPast = selectedDate < today;
+  // Field already started today's route, so swapping it would orphan that crew's progress.
+  const isLocked = selectedDate === today && Boolean(selectedRoute?.startedAt);
   const reportsHtml = selectedReports.length
     ? selectedReports.map(({ report, index }) => `
       <li>
@@ -66,13 +68,19 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
         <div class="admin-section-kicker">ASIGNACIÓN DEL DÍA</div>
         <h3>${formatScheduledDate(selectedDate)}</h3>
         <label class="admin-route-field" for="admin-calendar-route">Ruta para esta fecha
-          <select id="admin-calendar-route" name="routeId" ${isPast ? 'disabled' : ''}>
+          <select id="admin-calendar-route" name="routeId" ${isPast || isLocked ? 'disabled' : ''}>
             <option value="">Sin ruta asignada</option>
             ${routeOptions}
           </select>
         </label>
-        <p class="admin-calendar-assignment-note">${isPast ? 'Las fechas pasadas son de solo lectura; puedes consultar aquí los reportes registrados.' : 'Cada día admite una sola ruta. La misma ruta puede asignarse a varios días.'}</p>
-        <button type="submit" class="admin-button admin-button-dark" ${routes.length && !isPast ? '' : 'disabled'}>${icon('event_available')}<span>Guardar asignación</span></button>
+        <p class="admin-calendar-assignment-note">${isPast
+          ? 'Las fechas pasadas son de solo lectura; puedes consultar aquí los reportes registrados.'
+          : isLocked
+            ? 'La ruta de hoy ya fue iniciada en campo; no se puede cambiar la asignación.'
+            : 'Cada día admite una sola ruta. La misma ruta puede asignarse a varios días.'}</p>
+        ${isPast
+          ? `<button type="button" class="admin-button admin-button-dark" data-calendar-summary>${icon('summarize')}<span>Generar resumen</span></button>`
+          : `<button type="submit" class="admin-button admin-button-dark" ${routes.length && !isLocked ? '' : 'disabled'}>${icon('event_available')}<span>Guardar asignación</span></button>`}
         <p class="admin-calendar-message" id="admin-calendar-message" role="status" aria-live="polite"></p>
         <div class="admin-calendar-reports">
           <h4>Reportes del día <span>${selectedReports.length}</span></h4>
@@ -91,6 +99,17 @@ export function attachScheduleCalendar(ctx, { saveRouteSchedule }) {
     const reportButton = event.target.closest('[data-calendar-report-index]');
     if (reportButton) {
       ctx.openReport(ctx.reports[Number(reportButton.dataset.calendarReportIndex)]);
+      return;
+    }
+
+    if (event.target.closest('[data-calendar-summary]')) {
+      // Reuses the summary dialog: a custom range covering just the selected day.
+      const period = ctx.container.querySelector('#admin-summary-period');
+      ctx.container.querySelector('#admin-summary-date').value = ctx.selectedScheduleDate;
+      ctx.container.querySelector('#admin-summary-end').value = ctx.selectedScheduleDate;
+      period.value = 'range';
+      period.dispatchEvent(new Event('change'));
+      ctx.container.querySelector('#admin-summary-dialog').showModal();
       return;
     }
 
@@ -115,6 +134,9 @@ export function attachScheduleCalendar(ctx, { saveRouteSchedule }) {
     const message = form.querySelector('#admin-calendar-message');
     const routeId = new FormData(form).get('routeId');
     const selectedDate = ctx.selectedScheduleDate;
+    const currentRoute = ctx.routes.find((route) => route.scheduledDates?.includes(selectedDate));
+    if (currentRoute && currentRoute.id !== routeId
+      && !window.confirm(`El ${formatScheduledDate(selectedDate)} ya tiene asignada la ruta ${currentRoute.id} (${currentRoute.zone}). ¿Seguro que quieres cambiarla?`)) return;
     button.disabled = true;
     message.textContent = 'Guardando programación…';
     message.classList.remove('is-error');
