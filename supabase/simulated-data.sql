@@ -20,7 +20,7 @@ insert into public.route_configurations (id, zone, point_ids) values
   ('SIM-R1', 'Simulada · Norte', '{CONT-02,CONT-03,CONT-04,CONT-07}'),
   ('SIM-R2', 'Simulada · Sur', '{CONT-01,CONT-05,CONT-06,CONT-08}');
 
--- Últimos 60 días (sin hoy ni domingos), alternando las rutas. Cada día tiene su propio volumen
+-- Últimos 120 días (sin hoy ni domingos), alternando las rutas. Cada día tiene su propio volumen
 -- (los lunes llega lo acumulado del fin de semana) y su propia proporción de cartón y papel.
 drop table if exists pg_temp.sim_days;
 create temp table sim_days as
@@ -30,7 +30,7 @@ select d::date as day,
        0.4 + random() * 1.4 as carton_mix,
        0.4 + random() * 1.4 as paper_mix
 from generate_series(
-  (now() at time zone 'America/Mazatlan')::date - 60,
+  (now() at time zone 'America/Mazatlan')::date - 120,
   (now() at time zone 'America/Mazatlan')::date - 1,
   interval '1 day'
 ) d
@@ -127,7 +127,7 @@ from sim_days
 cross join lateral (select round((35 + random() * 35 + 0 * extract(doy from day))::numeric, 1) as liters) l
 where extract(isodow from day) in (1, 4);
 
--- Unas 6 incidencias repartidas en el periodo.
+-- Unas 12 incidencias repartidas en el periodo.
 insert into public.incident_reports (route_id, unit_id, incident_type, severity, description, created_at)
 select route_id, 'SIM-UNIDAD',
        (array['collision', 'mechanical', 'flat_tire', 'road_block', 'other'])[1 + floor(random() * 5)::int],

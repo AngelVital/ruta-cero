@@ -7,7 +7,8 @@ const supabaseUrl = environment.VITE_SUPABASE_URL;
 const supabaseAnonKey = environment.VITE_SUPABASE_ANON_KEY;
 
 const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  // The admin session lives in memory only, so opening the panel always asks for email and password.
+  ? createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } })
   : null;
 
 export const isSupabaseConfigured = Boolean(supabase);

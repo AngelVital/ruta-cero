@@ -127,7 +127,7 @@ La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pon
 
 ### Datos simulados
 
-Para probar el resumen, el tablero, el calendario y los eventos de campo sin salir a ruta, ejecuta `supabase/simulated-data.sql` en el SQL Editor (después de `schema.sql`). Crea dos rutas (`SIM-R1` y `SIM-R2`) y, para los últimos 60 días sin contar hoy ni los domingos, un reporte por contenedor (sin fotos), inspecciones, cierres, cargas de combustible y algunas incidencias. Los kilos cambian cada día (más los lunes, menos los sábados) y la proporción de cartón y papel también, para que las gráficas muestren variación.
+Para probar el resumen, el tablero, el calendario y los eventos de campo sin salir a ruta, ejecuta `supabase/simulated-data.sql` en el SQL Editor (después de `schema.sql`). Crea dos rutas (`SIM-R1` y `SIM-R2`) y, para los últimos 120 días sin contar hoy ni los domingos, un reporte por contenedor (sin fotos), inspecciones, cierres, cargas de combustible y algunas incidencias. Los kilos cambian cada día (más los lunes, menos los sábados) y la proporción de cartón y papel también, para que las gráficas muestren variación.
 
 - Se puede volver a ejecutar: primero borra la simulación anterior y genera datos nuevos.
 - En el calendario solo ocupa días libres, así que no reemplaza asignaciones reales.
