@@ -360,11 +360,34 @@ function downloadFile(content, type, name) {
   setTimeout(() => URL.revokeObjectURL(link.href), 0);
 }
 
+/** Swaps each url() of a @font-face for a data URL, so the exported file shows the bundled fonts and icons on its own. */
+async function inlineFontUrls(cssText, base) {
+  let result = cssText;
+  for (const [match, url] of cssText.matchAll(/url\("?([^")]+)"?\)/g)) {
+    if (url.startsWith('data:')) continue;
+    try {
+      const response = await fetch(new URL(url, base));
+      if (!response.ok) continue;
+      const blob = await response.blob();
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      result = result.replace(match, `url("${dataUrl}")`);
+    } catch {
+      // Keeps the original url(): that font falls back, the rest of the export still works.
+    }
+  }
+  return result;
+}
+
 /**
  * Standalone HTML of the board for the period, to send to someone without panel access. Holds only that period's
  * totals: the unfiltered board plus one pre-rendered copy per material, swapped on click, so no report data is embedded.
  */
-export function buildBoardExport(reports, start, end, period, css, fontLinks = '') {
+export function buildBoardExport(reports, start, end, period, css) {
   const materials = Object.keys(summarizeReports(reports, start, end).materials);
   const variants = ['', ...materials].map((material) => [material, renderSummaryBoard(reports, start, end, period, material)]);
   const title = `Tablero de recolección ${start === end ? start : `${start} – ${end}`}`;
@@ -374,7 +397,6 @@ export function buildBoardExport(reports, start, end, period, css, fontLinks = '
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
-${fontLinks}
 <style>${css}
 .board-export { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
 .board-export-bar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
@@ -523,18 +545,20 @@ export function attachSummary(ctx) {
     const [start, end] = getRange();
     downloadFile(buildSummaryCsv(ctx.reports, start, end), 'text/csv;charset=utf-8', `ruta-cero-reportes-${start}_${end}.csv`);
   });
-  container.querySelector('#admin-summary-board-export').addEventListener('click', () => {
+  container.querySelector('#admin-summary-board-export').addEventListener('click', async () => {
     const [start, end] = getRange();
-    // The panel's own CSS goes into the file; a cross-origin sheet (Google Fonts) can't be read, so it is linked instead.
-    const css = [...document.styleSheets].flatMap((sheet) => {
+    // The panel's own CSS goes into the file, with the bundled fonts (text and Material Symbols) embedded,
+    // since their relative URLs don't resolve once the file is opened elsewhere.
+    const css = (await Promise.all([...document.styleSheets].flatMap((sheet) => {
       try {
-        return [...sheet.cssRules].map((rule) => rule.cssText);
+        return [...sheet.cssRules].map((rule) => (rule instanceof CSSFontFaceRule
+          ? inlineFontUrls(rule.cssText, sheet.href || location.href)
+          : rule.cssText));
       } catch {
         return [];
       }
-    }).join('\n');
-    const fontLinks = [...document.querySelectorAll('link[rel="stylesheet"][href^="https://fonts."]')].map((link) => link.outerHTML).join('');
-    downloadFile(buildBoardExport(ctx.reports, start, end, period.value, css, fontLinks), 'text/html;charset=utf-8', `tablero-ruta-cero-${start}_${end}.html`);
+    }))).join('\n');
+    downloadFile(buildBoardExport(ctx.reports, start, end, period.value, css), 'text/html;charset=utf-8', `tablero-ruta-cero-${start}_${end}.html`);
   });
   dialog.querySelector('.admin-report-dialog-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (event) => {
