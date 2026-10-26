@@ -1506,36 +1506,8 @@ tr[data-route-status="completed"] .admin-progress-track span {
   scroll-margin-top: 82px;
 }
 
-.admin-alerts-section .admin-section-heading,
 .admin-points-section .admin-section-heading {
   padding-bottom: 12px;
-}
-
-.admin-alert-row {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  min-height: 67px;
-  padding: 10px 18px;
-  border-top: 1px solid var(--c-e8ede9);
-}
-
-button.admin-alert-row {
-  width: 100%;
-  border-right: 0;
-  border-bottom: 0;
-  background: transparent;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-button.admin-alert-row:hover { background: var(--c-f6f8f6); }
-
-.admin-incident-list {
-  max-height: 420px;
-  overflow-y: auto;
 }
 
 .admin-field-events-empty {
@@ -1553,60 +1525,6 @@ button.admin-alert-row:hover { background: var(--c-f6f8f6); }
 .admin-field-event-photos img {
   width: 100%;
   border: 1px solid var(--c-e8ede9);
-}
-
-.admin-alert-row.alert-row-critical {
-  border-left: 3px solid var(--c-c34d3d);
-}
-
-.admin-alert-row.alert-row-sync {
-  border-left: 3px solid var(--c-d09a2b);
-}
-
-.admin-alert-icon {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  background: var(--c-f9e9e4);
-  color: var(--c-a74537);
-}
-
-.alert-row-sync .admin-alert-icon {
-  background: var(--c-fff3d9);
-  color: var(--c-956717);
-}
-
-.admin-alert-icon .material-symbols-outlined {
-  font-size: 18px !important;
-}
-
-.admin-alert-copy {
-  min-width: 0;
-}
-
-.admin-alert-copy strong {
-  display: block;
-  overflow: hidden;
-  color: var(--c-324238);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.admin-alert-copy p {
-  margin-top: 3px;
-  overflow: hidden;
-  color: var(--c-7a877e);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.admin-alert-row time {
-  color: var(--c-87928a);
-  font-family: var(--font-mono);
-  font-size: 10px;
 }
 
 .admin-points-section {
@@ -2045,17 +1963,6 @@ button.admin-alert-row:hover { background: var(--c-f6f8f6); }
 
   .admin-bottom-grid { gap: 16px; }
 
-  .admin-alert-row {
-    grid-template-columns: 30px minmax(0, 1fr) auto;
-    gap: 7px;
-    padding-right: 10px;
-    padding-left: 10px;
-  }
-
-  .admin-alert-copy strong { font-size: 10px; }
-  .admin-alert-copy p { font-size: 9px; }
-  .admin-alert-row time { font-size: 9px; }
-
   .admin-points-table {
     min-width: 0;
   }
@@ -2163,18 +2070,6 @@ button.admin-alert-row:hover { background: var(--c-f6f8f6); }
 #admin-root .admin-brand-mark,
 #admin-root .admin-avatar {
   border-radius: 50% !important;
-}
-
-#admin-root .admin-nav-link,
-#admin-root .admin-field-link,
-#admin-root .admin-date-filter,
-#admin-root .admin-button,
-#admin-root .admin-icon-button,
-#admin-root .admin-search,
-#admin-root .admin-filter-select,
-#admin-root .admin-point-route-select,
-#admin-root .admin-alert-icon {
-  border-radius: var(--radius-sm) !important;
 }
 
 #admin-root .admin-demo-pill,

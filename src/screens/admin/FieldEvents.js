@@ -16,18 +16,20 @@ function renderMapLink({ latitude, longitude }) {
 
 export function renderIncidentRows(incidents) {
   if (!incidents.length) {
-    return '<p class="admin-field-events-empty">Sin incidencias reportadas.</p>';
+    return '<tr><td colspan="7">Sin incidencias reportadas.</td></tr>';
   }
 
+  // Severity reuses the fill-level badge colors: low green, medium amber, high red.
   return incidents.map((incident, index) => `
-    <button type="button" class="admin-alert-row ${incident.severity === 'high' ? 'alert-row-critical' : 'alert-row-sync'}" data-incident-index="${index}">
-      <span class="admin-alert-icon">${icon(incident.severity === 'high' ? 'emergency' : 'report')}</span>
-      <span class="admin-alert-copy">
-        <strong>${escapeHtml(getIncidentTypeLabel(incident.incident_type))} · Gravedad ${escapeHtml(getSeverityLabel(incident.severity))}</strong>
-        <p>${escapeHtml([incident.unit_id, incident.route_id, incident.description].filter(Boolean).join(' · '))}</p>
-      </span>
-      <time datetime="${escapeHtml(incident.created_at)}">${escapeHtml(formatReportDate(incident.created_at))}</time>
-    </button>
+    <tr>
+      <td><time datetime="${escapeHtml(incident.created_at)}">${escapeHtml(formatReportDate(incident.created_at))}</time></td>
+      <td><span class="admin-route-id">${escapeHtml(incident.unit_id || '—')}</span></td>
+      <td>${escapeHtml(incident.route_id || '—')}</td>
+      <td>${escapeHtml(getIncidentTypeLabel(incident.incident_type))}</td>
+      <td><span class="admin-fill-level fill-${incident.severity === 'high' ? 'full' : escapeHtml(incident.severity)}">${escapeHtml(getSeverityLabel(incident.severity))}</span></td>
+      <td>${escapeHtml(incident.description || '—')}</td>
+      <td><button class="admin-report-open" type="button" data-incident-index="${index}">${icon('visibility')}<span>Ver detalles</span></button></td>
+    </tr>
   `).join('');
 }
 

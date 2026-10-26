@@ -159,6 +159,19 @@ export function renderAdminOperations({
             </div>
           </section>
 
+          <section class="admin-section admin-reports-section admin-alerts-section is-collapsed" id="alerts">
+            <div class="admin-section-heading">
+              <div><div class="admin-section-kicker">REQUIERE ATENCIÓN · <span id="admin-incident-critical-count">${incidents.filter((incident) => incident.severity === 'high').length}</span> DE GRAVEDAD ALTA</div><h2>Incidencias <span class="admin-heading-count alert-count" data-incident-count>${incidents.length}</span>${sectionToggle}</h2></div>
+            </div>
+            ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
+            <div class="admin-points-table-wrap admin-reports-table-wrap">
+              <table class="admin-points-table admin-reports-table">
+                <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">TIPO</th><th scope="col">GRAVEDAD</th><th scope="col">DESCRIPCIÓN</th><th scope="col">DETALLE</th></tr></thead>
+                <tbody id="admin-incident-rows">${renderIncidentRows(incidents)}</tbody>
+              </table>
+            </div>
+          </section>
+
           <section class="admin-section admin-schedule-section" id="schedule">
             <div class="admin-section-heading">
               <div><div class="admin-section-kicker">CALENDARIO OPERATIVO</div><h2>Programar rutas</h2><p>Selecciona un día y asigna la ruta que utilizará el equipo de campo.</p></div>
@@ -190,14 +203,6 @@ export function renderAdminOperations({
           ${renderFleetSection(fleet, fleetError)}
 
           <div class="admin-bottom-grid">
-            <section class="admin-section admin-alerts-section" id="alerts">
-              <div class="admin-section-heading">
-                <div><div class="admin-section-kicker">REQUIERE ATENCIÓN · <span id="admin-incident-critical-count">${incidents.filter((incident) => incident.severity === 'high').length}</span> DE GRAVEDAD ALTA</div><h2>Incidencias <span class="admin-heading-count alert-count" data-incident-count>${incidents.length}</span></h2></div>
-              </div>
-              ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
-              <div class="admin-incident-list" id="admin-incident-rows">${renderIncidentRows(incidents)}</div>
-            </section>
-
             <section class="admin-section admin-points-section" id="points">
               <div class="admin-section-heading">
                 <div><div class="admin-section-kicker">COBERTURA DE LA CIUDAD</div><h2>Puntos de recolección <span class="admin-heading-count">${String(collectionPoints.length).padStart(2, '0')}</span></h2></div>
