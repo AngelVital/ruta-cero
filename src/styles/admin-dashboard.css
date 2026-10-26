@@ -2909,7 +2909,10 @@ tr[data-route-status="completed"] .admin-progress-track span {
 }
 
 /* Summary laid out as an office document; the same markup is used on screen and in the PDF. */
-#admin-summary-dialog { width: min(760px, calc(100vw - 32px)); overflow-y: auto; }
+/* Wide enough for the title plus the four export buttons on one row; narrower screens wrap them. */
+#admin-summary-dialog { width: min(980px, calc(100vw - 32px)); overflow-y: auto; }
+#admin-summary-dialog .admin-report-actions { flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end; }
+#admin-summary-dialog .admin-report-actions .admin-button { white-space: nowrap; }
 #admin-summary-content { max-height: none; overflow: visible; }
 
 .summary-doc { color: var(--c-1a2d24); font-size: 13px; }
