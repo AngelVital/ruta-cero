@@ -255,6 +255,18 @@ function attachAdminDashboardContentEvents(container, reports, fieldEvents) {
     archiveFleetResource: async (...args) => (await api()).archiveFleetResource(...args)
   });
 
+  container.querySelectorAll('.admin-section-toggle').forEach((toggle) => {
+    const section = toggle.closest('.admin-section');
+    section.querySelector('.admin-section-heading').addEventListener('click', (event) => {
+      // A heading action (Ver todos, Actualizar) only unfolds, so its result is visible; the rest of the heading toggles.
+      const action = event.target.closest('button');
+      const open = action && action !== toggle ? true : section.classList.contains('is-collapsed');
+      section.classList.toggle('is-collapsed', !open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Ocultar lista' : 'Mostrar lista');
+    });
+  });
+
   container.querySelectorAll('.admin-nav-link').forEach((link) => {
     link.addEventListener('click', () => {
       container.querySelector('.admin-nav-link.is-active')?.classList.remove('is-active');

@@ -881,6 +881,26 @@
   padding: 18px 20px 15px;
 }
 
+.admin-section-heading:has(.admin-section-toggle) { cursor: pointer; }
+.admin-section.is-collapsed .admin-points-table-wrap { display: none; }
+
+.admin-section-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--c-728078);
+  cursor: pointer;
+}
+
+.admin-section-toggle:hover { background: var(--admin-line); }
+.admin-section-toggle .material-symbols-outlined { transition: transform 0.2s; }
+.admin-section-toggle[aria-expanded="true"] .material-symbols-outlined { transform: rotate(180deg); }
+
 .admin-report-actions {
   display: flex;
   flex: 0 0 auto;

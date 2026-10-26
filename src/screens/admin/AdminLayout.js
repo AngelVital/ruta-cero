@@ -11,6 +11,9 @@ import { renderSummaryDialogShell } from './Summary.js';
 import { renderRouteEditorDialog, renderRouteTable } from './RouteTable.js';
 import { renderRouteScheduleCalendar } from './ScheduleCalendar.js';
 
+// Chevron that folds a long list; the sections start folded so the overview stays short.
+const sectionToggle = `<button type="button" class="admin-section-toggle" aria-expanded="false" aria-label="Mostrar lista">${icon('expand_more')}</button>`;
+
 /** Full admin panel: sidebar, KPIs, reports, calendar, routes, incidents and points. */
 export function renderAdminOperations({
   user, routes, scheduledRoute, reports, incidents = [], fuelLoads = [], inspections = [], closures = [], fleet = [],
@@ -96,9 +99,9 @@ export function renderAdminOperations({
             </article>
           </section>
 
-          <section class="admin-section admin-reports-section" id="reports">
+          <section class="admin-section admin-reports-section is-collapsed" id="reports">
             <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN LA BASE DE DATOS</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${todaysReports.length}</span></h2></div>
+              <div><div class="admin-section-kicker">REGISTROS GUARDADOS EN LA BASE DE DATOS</div><h2>Reportes de contenedores <span class="admin-heading-count" id="admin-report-count">${todaysReports.length}</span>${sectionToggle}</h2></div>
               <div class="admin-report-actions">
                 <button type="button" class="admin-button" id="admin-toggle-all-reports">${icon('list')}<span>Ver todos</span></button>
                 <button type="button" class="admin-button" id="admin-refresh-reports">${icon('refresh')}<span>Actualizar</span></button>
@@ -117,9 +120,9 @@ export function renderAdminOperations({
           ${renderSummaryDialogShell()}
           ${renderFieldEventDialogShell()}
 
-          <section class="admin-section admin-reports-section" id="fuel">
+          <section class="admin-section admin-reports-section is-collapsed" id="fuel">
             <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">CARGAS EN GASOLINERÍA · ÚLTIMAS 100</div><h2>Combustible <span class="admin-heading-count" id="admin-fuel-count">${fuelLoads.length}</span></h2></div>
+              <div><div class="admin-section-kicker">CARGAS EN GASOLINERÍA · ÚLTIMAS 100</div><h2>Combustible <span class="admin-heading-count" id="admin-fuel-count">${fuelLoads.length}</span>${sectionToggle}</h2></div>
             </div>
             ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
             <div class="admin-points-table-wrap admin-reports-table-wrap">
@@ -130,9 +133,9 @@ export function renderAdminOperations({
             </div>
           </section>
 
-          <section class="admin-section admin-reports-section" id="inspections">
+          <section class="admin-section admin-reports-section is-collapsed" id="inspections">
             <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">INSPECCIÓN 360° AL DESPACHAR · ÚLTIMAS 100</div><h2>Inspecciones <span class="admin-heading-count" id="admin-inspection-count">${inspections.length}</span></h2></div>
+              <div><div class="admin-section-kicker">INSPECCIÓN 360° AL DESPACHAR · ÚLTIMAS 100</div><h2>Inspecciones <span class="admin-heading-count" id="admin-inspection-count">${inspections.length}</span>${sectionToggle}</h2></div>
             </div>
             ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
             <div class="admin-points-table-wrap admin-reports-table-wrap">
@@ -143,9 +146,9 @@ export function renderAdminOperations({
             </div>
           </section>
 
-          <section class="admin-section admin-reports-section" id="closures">
+          <section class="admin-section admin-reports-section is-collapsed" id="closures">
             <div class="admin-section-heading">
-              <div><div class="admin-section-kicker">EVIDENCIA AL REGRESAR A ESTACIÓN · ÚLTIMOS 100</div><h2>Cierres de ruta <span class="admin-heading-count" id="admin-closure-count">${closures.length}</span></h2></div>
+              <div><div class="admin-section-kicker">EVIDENCIA AL REGRESAR A ESTACIÓN · ÚLTIMOS 100</div><h2>Cierres de ruta <span class="admin-heading-count" id="admin-closure-count">${closures.length}</span>${sectionToggle}</h2></div>
             </div>
             ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
             <div class="admin-points-table-wrap admin-reports-table-wrap">
