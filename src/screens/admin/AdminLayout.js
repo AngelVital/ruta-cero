@@ -27,7 +27,7 @@ export function renderAdminOperations({
     <div class="admin-shell">
       <aside class="admin-sidebar">
         <a class="admin-brand" href="/?mode=admin" aria-label="Ruta Cero, resumen administrativo">
-          <span class="admin-brand-mark"><img src="/logo.png" alt=""></span>        </a>
+          <span class="admin-brand-mark"><img src="/logo.svg" alt=""></span>        </a>
 
         <div class="admin-nav-label">OPERACIÓN</div>
         <nav class="admin-nav" aria-label="Navegación administrativa">

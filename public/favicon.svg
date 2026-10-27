@@ -1,7 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <!-- Ruta Cero: a "0" that is also a road. Kept inside the central 80% so maskable crops don't cut it. -->
-  <rect width="512" height="512" fill="#0F172A" />
-  <rect x="172" y="104" width="168" height="304" rx="84" stroke="#00A86B" stroke-width="68" />
-  <rect x="172" y="104" width="168" height="304" rx="84" stroke="#F8FAFC" stroke-width="10" stroke-dasharray="30 26" />
-  <circle cx="340" cy="190" r="30" fill="#F8FAFC" stroke="#0F172A" stroke-width="12" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="113 -2 100 100" role="img" aria-label="Ruta Cero">
+  <defs>
+    <linearGradient id="leaf" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#7f9a3c"/>
+      <stop offset="1" stop-color="#c3d67a"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#leaf)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M150 34 C164 16 184 8 204 6 C206 40 192 72 158 88 C146 93 132 92 120 90" stroke-width="8"/>
+    <path d="M124 86 C142 72 158 52 186 24" stroke-width="6"/>
+    <path d="M146 68 C138 62 136 54 138 46 M162 50 C156 44 156 38 158 32 M150 72 C160 72 170 68 178 62" stroke-width="4"/>
+  </g>
 </svg>
