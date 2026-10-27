@@ -724,7 +724,6 @@
   gap: 10px;
 }
 
-.admin-date-filter,
 .admin-button {
   display: inline-flex;
   align-items: center;
@@ -738,24 +737,6 @@
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
-}
-
-.admin-date-filter {
-  min-width: 108px;
-}
-
-.admin-date-filter .material-symbols-outlined {
-  font-size: 17px !important;
-}
-
-.admin-date-caret {
-  display: inline-flex;
-  margin-left: auto;
-  color: var(--c-758178);
-}
-
-.admin-date-caret .material-symbols-outlined {
-  font-size: 19px !important;
 }
 
 .admin-button {
@@ -1889,10 +1870,6 @@ tr[data-route-status="completed"] .admin-progress-track span {
 
   .admin-heading-actions {
     width: 100%;
-  }
-
-  .admin-date-filter {
-    flex: 1;
   }
 
   .admin-kpi-grid {

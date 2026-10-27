@@ -72,7 +72,6 @@ export function renderAdminOperations({
               <p>Estado de rutas, cobertura y actividad de la flota.</p>
             </div>
             <div class="admin-heading-actions">
-              <label class="admin-date-filter">${icon('calendar_today')}<span>Hoy</span><span class="admin-date-caret">${icon('expand_more')}</span></label>
               <button type="button" class="admin-button admin-button-dark" id="btn-generate-summary">${icon('summarize')}<span>Generar resumen</span></button>
             </div>
           </section>
