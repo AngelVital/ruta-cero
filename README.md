@@ -35,7 +35,7 @@ Inicia sesión en la página principal (o en el APK) con una cuenta registrada e
 5. **Identificar el contenedor:** escanea el código QR o código de barras del punto activo. Si la cámara no logra leerlo, se puede elegir manualmente el mismo punto activo. Los códigos de otros puntos no permiten avanzar.
 6. **Registrar la recolección:** toma fotos iniciales y finales del exterior e interior, indica el nivel de llenado y registra materiales, peso por material e incidencias. Para nivel medio o lleno se requiere al menos un material con peso mayor que cero; para nivel bajo no hace falta registrar material.
 7. **Guardar y continuar:** guarda el reporte. El punto queda completado y el mapa activa el siguiente; al completar todos los contenedores de cualquier ruta, se agrega la estación de regreso y se muestran sus indicaciones en el mapa.
-8. **Finalizar la ruta:** al llegar a la estación, captura de 1 a 3 fotos de evidencia de regreso (se pueden quitar y repetir) y confirma el cierre para volver a Despacho.
+8. **Finalizar la ruta:** al llegar a la estación, captura de 1 a 3 fotos de evidencia de regreso (se pueden quitar y repetir) y confirma el cierre. La app muestra el resumen del día (horarios, puntos, kilos, incidencias y tripulación) y el botón **Cerrar sesión**, que solo funciona con señal y sin registros pendientes de enviar.
 
 Durante la ruta también se pueden registrar incidencias (con fotos) y cargas de combustible (con foto del ticket).
 
