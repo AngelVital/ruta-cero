@@ -7,8 +7,8 @@ const supabaseUrl = environment.VITE_SUPABASE_URL;
 const supabaseAnonKey = environment.VITE_SUPABASE_ANON_KEY;
 
 const supabase = supabaseUrl && supabaseAnonKey
-  // The admin session lives in memory only, so opening the panel always asks for email and password.
-  ? createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } })
+  // The session is kept on the device, so a field phone stays signed in while offline.
+  ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
 export const isSupabaseConfigured = Boolean(supabase);
@@ -27,25 +27,28 @@ export async function getSupabaseSession() {
   return data.session;
 }
 
-export async function signInAdmin(email, password) {
+export async function signIn(email, password) {
   const { data, error } = await requireSupabase().auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data.session;
 }
 
-export async function signOutAdmin() {
+export async function signOut() {
   const { error } = await requireSupabase().auth.signOut();
   if (error) throw error;
 }
 
-export async function isCurrentUserAdmin() {
-  const { data, error } = await requireSupabase()
-    .from('admin_users')
-    .select('user_id')
-    .maybeSingle();
+/** Roles of the signed-in account as { admin, field }; RLS lets each account read only its own rows. */
+export async function getCurrentUserRoles() {
+  const client = requireSupabase();
+  const [admin, field] = await Promise.all([
+    client.from('admin_users').select('user_id').maybeSingle(),
+    client.from('field_users').select('user_id').maybeSingle()
+  ]);
 
-  if (error) throw error;
-  return Boolean(data);
+  if (admin.error) throw admin.error;
+  if (field.error) throw field.error;
+  return { admin: Boolean(admin.data), field: Boolean(field.data) };
 }
 
 /**

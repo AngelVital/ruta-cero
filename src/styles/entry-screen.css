@@ -174,118 +174,69 @@
   font-size: 14px;
 }
 
-.entry-choices {
+.entry-login-form {
   display: grid;
-  gap: 13px;
+  gap: 9px;
+  width: min(100%, 440px);
   margin-top: 31px;
 }
 
-.entry-choice {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) 34px;
-  align-items: center;
-  gap: 16px;
-  min-height: 126px;
-  padding: 19px 21px;
-  border: 1px solid #d8e1da;
-  border-left: 0;
-  background: #ffffff;
-  box-shadow: inset 4px 0 0 var(--choice-accent, var(--entry-green)), 0 5px 16px rgba(24, 55, 38, 0.055);
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-}
-
-.entry-choice-field { --choice-accent: #17845d; }
-.entry-choice-admin { --choice-accent: #327c9b; }
-
-.entry-choice:hover {
-  transform: translateY(-3px);
-  border-color: #bdcec2;
-  box-shadow: inset 4px 0 0 var(--choice-accent, var(--entry-green)), 0 12px 26px rgba(24, 55, 38, 0.12);
-}
-
-.entry-choice:focus-visible {
-  outline: 3px solid rgba(23, 131, 93, 0.45);
-  outline-offset: 3px;
-}
-
-.entry-choice-icon {
-  display: grid;
-  place-items: center;
-  width: 50px;
-  height: 50px;
-  background: #e7f2eb;
-  color: #14734e;
-}
-
-.entry-choice-admin .entry-choice-icon {
-  background: #e8f1f5;
-  color: #286f8d;
-}
-
-.entry-choice-icon .material-symbols-outlined {
-  font-size: 26px !important;
-}
-
-.entry-choice-copy,
-.entry-choice-copy > span {
-  display: block;
-}
-
-.entry-choice-kicker {
-  color: #748078;
-  font-family: var(--font-headline);
-  font-size: 10px;
+.entry-login-form label {
+  margin-top: 5px;
+  color: #33453a;
+  font-size: 12px;
   font-weight: 700;
 }
 
-.entry-choice-copy strong {
-  display: block;
-  margin-top: 2px;
-  color: #23382b;
-  font-family: var(--font-headline);
-  font-size: 23px;
-  font-weight: 800;
-  line-height: 1.2;
+.entry-login-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #cbd6ce;
+  background: #ffffff;
+  color: var(--entry-ink);
+  font: inherit;
+  font-size: 16px;
 }
 
-.entry-choice-description {
-  margin-top: 5px;
-  color: #66746b;
-  font-size: 12px;
-  line-height: 1.4;
+.entry-login-form input:focus-visible,
+.entry-login-submit:focus-visible {
+  outline: 3px solid rgba(23, 131, 93, 0.45);
+  outline-offset: 2px;
 }
 
-.entry-choice-arrow {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  background: #f0f4f1;
-  color: #53675b;
-}
-
-.entry-choice:hover .entry-choice-arrow {
+.entry-login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 50px;
+  margin-top: 12px;
+  border: 0;
   background: #173a31;
   color: #ffffff;
+  font-family: var(--font-headline);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 150ms ease;
 }
 
-.entry-choice-arrow .material-symbols-outlined {
-  font-size: 20px !important;
+.entry-login-submit:hover {
+  background: #17845d;
 }
 
-.entry-demo-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 22px;
-  color: #77847b;
-  font-size: 11px;
+.entry-login-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
-.entry-demo-indicator {
-  width: 7px;
-  height: 7px;
-  background: #d39a27;
+.entry-login-message {
+  min-height: 20px;
+  margin-top: 14px;
+  color: #a64034;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .entry-footer {
@@ -302,33 +253,18 @@
   font-weight: 700;
 }
 
-#entry-root .entry-brand-mark,
-#entry-root .entry-choice,
-#entry-root .entry-choice-icon,
-#entry-root .entry-choice-arrow {
-#entry-root .entry-choice,
-#entry-root .entry-choice-icon,
-#entry-root .entry-choice-arrow {
-  border-radius: var(--entry-radius-control) !important;
-}
-
-#entry-root .entry-choice {
-  border-radius: var(--entry-radius-card) !important;
-}
-}
-
 #entry-root .entry-brand-mark {
   border-radius: 50% !important;
 }
 
-#entry-root .entry-choice-arrow {
-  border-radius: 50% !important;
+#entry-root .entry-eyebrow > span,
+#entry-root .entry-brand-rule {
+  border-radius: 999px !important;
 }
 
-#entry-root .entry-eyebrow > span,
-#entry-root .entry-brand-rule,
-#entry-root .entry-demo-indicator {
-  border-radius: 999px !important;
+#entry-root .entry-login-form input,
+#entry-root .entry-login-submit {
+  border-radius: var(--entry-radius-control) !important;
 }
 
 @media (max-width: 760px) {
@@ -367,31 +303,6 @@
 
   .entry-main h1 {
     font-size: 32px;
-  }
-
-  .entry-choices {
-    gap: 10px;
-    margin-top: 23px;
-  }
-
-  .entry-choice {
-    grid-template-columns: 44px minmax(0, 1fr) 30px;
-    gap: 11px;
-    min-height: 112px;
-    padding: 14px 12px;
-  }
-
-  .entry-choice-icon {
-    width: 42px;
-    height: 42px;
-  }
-
-  .entry-choice-copy strong {
-    font-size: 20px;
-  }
-
-  .entry-choice-description {
-    font-size: 11px;
   }
 }
 

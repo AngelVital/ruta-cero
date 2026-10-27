@@ -46,9 +46,7 @@ export function renderAdminOperations({
         </nav>
 
         <div class="admin-sidebar-foot">
-          <div class="admin-network-state"><span class="network-indicator"></span><span><strong>Base de datos conectada</strong><small>Acceso administrativo</small></span></div>
-          <a class="admin-field-link" href="/?mode=field">${icon('open_in_new')}<span>Abrir vista de campo</span></a>
-        </div>
+          <div class="admin-network-state"><span class="network-indicator"></span><span><strong>Base de datos conectada</strong><small>Acceso administrativo</small></span></div>        </div>
       </aside>
 
       <div class="admin-workspace">

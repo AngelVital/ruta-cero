@@ -7,7 +7,7 @@ Plataforma operativa para coordinar las rutas urbanas de recolección de residuo
 - **Frontend:** JavaScript vanilla con módulos ES.
 - **Build y servidor local:** Vite 6.
 - **Entrada:** `index.html` carga `src/main.js`.
-- **Arranque por modo:** `main.js` solo decide el modo (`entry`, `field` o `admin`) y carga con `import()` el código y el CSS de ese modo. El panel de administración, el lector de códigos (ZXing) y Supabase no se descargan en las pantallas que no los usan.
+- **Inicio de sesión y arranque por perfil:** la página principal es el inicio de sesión (`src/screens/EntryScreen.js`). `main.js` consulta el perfil de la cuenta (`admin_users` o `field_users` en Supabase), abre `/?mode=admin` o `/?mode=field` y carga con `import()` el código y el CSS de ese panel; si alguien abre el panel que no le corresponde, se le redirige al suyo. La sesión se guarda en el dispositivo hasta cerrar sesión. El panel de administración y el lector de códigos (ZXing) no se descargan en las pantallas que no los usan.
 - **Renderizado:** cada pantalla expone `renderX(state)`, que devuelve HTML, y `attachX(el, store)`, que monta sus eventos y puede devolver una función de limpieza (temporizadores, cámara). `src/fieldApp.js` es el shell del modo campo: elige la pantalla activa, ejecuta la limpieza de la anterior y vuelve a dibujar cuando cambia el estado.
 - **Estado:** `src/state/store.js` contiene un store inmutable: cada acción crea un estado nuevo y avisa a los suscriptores. Incluye los borradores de reporte por contenedor, para que una actualización de la ruta o la cámara no borre lo capturado. El avance del día se guarda en el dispositivo (`localStorage`) y se recupera al reabrir la app. La configuración de rutas se comparte mediante `public.route_configurations` en Supabase y se mantiene en caché local.
 - **Trabajo sin conexión:** `src/services/fieldSync.js` guarda en una cola del dispositivo la inspección de despacho, el inicio de ruta, cada reporte, las incidencias, las cargas de combustible, la evidencia de cierre y el cierre, y los envía a Supabase en orden cuando hay señal.
@@ -26,7 +26,7 @@ Esta separación (render/attach, store con suscripción y lógica pura en `domai
 
 ## Flujo de campo
 
-Abre `/?mode=field` o elige **Campo** en la pantalla inicial. El flujo sigue la ruta seleccionada por administración:
+Inicia sesión en la página principal (o en el APK) con una cuenta registrada en `public.field_users`. La sesión se queda guardada en el teléfono, así que solo se pide la primera vez y la app abre sin señal. El flujo sigue la ruta seleccionada por administración:
 
 1. **Preparar la salida:** en Despacho se eligen unidad, operador, auxiliar y ruta. Antes de iniciar, registra el nivel de combustible y completa la inspección 360°.
 2. **Registrar combustible:** selecciona uno de los niveles predefinidos y guarda el registro para volver a Despacho.
@@ -58,7 +58,7 @@ Sin Supabase configurado, los reportes quedan registrados solo en el dispositivo
 
 ## Flujo de administración
 
-Abre `/?mode=admin` o elige **Administración** en la pantalla inicial. Se requiere iniciar sesión con una cuenta de Supabase registrada en `public.admin_users`; una cuenta autenticada sin ese permiso no puede abrir el panel.
+Inicia sesión en la página principal con una cuenta registrada en `public.admin_users`; el sistema abre el panel de administración. Una cuenta de campo que abra `/?mode=admin` se redirige a su panel. Si una cuenta está en las dos tablas, en la web abre administración y en el APK abre campo.
 
 1. **Consultar operación:** el resumen muestra reportes de contenedores registrados hoy y cobertura de puntos. Se sincroniza automáticamente con los cambios del panel de campo; también se puede usar **Actualizar** para sincronizar manualmente. **Ver todos** muestra el historial completo; desde cada reporte se consulta el detalle de llenado, peso, materiales, incidencias y las 4 fotos de evidencia.
 2. **Revisar eventos de campo:** las secciones **Combustible**, **Inspecciones**, **Cierres de ruta** e **Incidencias** muestran los últimos 100 registros de cada tipo. Al abrir uno se ven su tripulación, sus datos y sus fotos, que se descargan solo en ese momento.
@@ -67,7 +67,7 @@ Abre `/?mode=admin` o elige **Administración** en la pantalla inicial. Se requi
 5. **Revisar visitas:** la tabla de puntos usa el reporte más reciente de cada contenedor para mostrar su última visita. Los reportes se sincronizan automáticamente; pulsa **Actualizar** para forzar una consulta.
 6. **Generar resumen:** **Generar resumen** totaliza los reportes de un periodo diario, semanal (lunes a domingo), mensual o personalizado. Ver [Resumen de recolección](#resumen-de-recolección).
 7. **Modo oscuro:** el botón **Modo oscuro** de la barra superior cambia el panel de administración a colores oscuros; no afecta la app de campo. La elección se guarda en el navegador; sin elección guardada, el panel sigue la configuración del sistema. El PDF del resumen siempre se imprime en claro. Los colores del panel están definidos como variables al inicio de `src/styles/admin-dashboard.css`, con su valor claro y oscuro.
-8. **Cerrar sesión:** usa **Cerrar sesión** en la barra superior para salir del panel.
+8. **Cerrar sesión:** usa **Cerrar sesión** en la barra superior para salir del panel y volver al inicio de sesión.
 
 Las rutas se almacenan en `public.route_configurations`; las asignaciones por día, en `public.route_schedules`. El campo ya no permite elegir una ruta manualmente: usa la ruta asignada al día operativo de La Paz (`America/Mazatlan`) y no permite iniciar si no existe una. El panel descarga el historial completo una vez y después solo pide los reportes nuevos (por Realtime, cada 30 s o con **Actualizar**); al cerrar sesión se detienen esas sincronizaciones. Los reportes que llegan tarde desde un teléfono sin señal se detectan por `received_at` (hora de llegada) y se muestran según su hora de captura (`created_at`).
 
@@ -110,20 +110,28 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
 1. Crea un proyecto en el plan gratuito de Supabase.
 2. En el SQL Editor del proyecto, ejecuta el contenido de `supabase/schema.sql`.
 3. Copia `.env.example` como `.env.local` y completa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` con los valores del proyecto.
-4. En **Authentication → Users**, crea una cuenta para el administrador y confirma el correo si el proyecto lo requiere.
-5. En el SQL Editor, registra esa cuenta como administradora. Reemplaza el correo por el de la cuenta:
+4. En **Authentication → Users**, crea una cuenta para el administrador y otra para cada teléfono o tripulación de campo, y confirma el correo si el proyecto lo requiere.
+5. En el SQL Editor, registra cada cuenta con su perfil. Reemplaza los correos por los de las cuentas:
 
   ```sql
+  -- Administración
   insert into public.admin_users (user_id)
   select id from auth.users where email = 'admin@tu-dominio.com'
   on conflict (user_id) do nothing;
+
+  -- Campo
+  insert into public.field_users (user_id)
+  select id from auth.users where email = 'campo1@tu-dominio.com'
+  on conflict (user_id) do nothing;
   ```
 
-6. Reinicia Vite con `npm run dev`. Abre `http://localhost:5173/?mode=admin` e inicia sesión con esa cuenta. El panel carga los reportes de `public.container_reports` en páginas para mostrar el historial completo.
+  Una cuenta que no esté en ninguna de las dos tablas no puede entrar. Para quitarle el acceso a una cuenta, borra su fila (`delete from public.field_users where user_id = ...`) o elimina la cuenta en **Authentication → Users**.
+
+6. Reinicia Vite con `npm run dev`. Abre `http://localhost:5173` e inicia sesión: la cuenta de administración abre el panel, que carga los reportes de `public.container_reports` en páginas para mostrar el historial completo.
 
 En **Rutas configuradas**, crea o edita las rutas y sus puntos. En **Programar rutas**, usa el calendario para asignar una ruta a cada fecha; la ruta de hoy aparece automáticamente en despacho y el mapa de campo. Ejecuta de nuevo `supabase/schema.sql` para crear la tabla de calendario, actualizar las funciones RPC (que ahora aceptan la hora del dispositivo), agregar la columna `received_at` y habilitar las notificaciones Realtime de los reportes; las asignaciones anteriores se migran cuando es posible.
 
-La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Los reportes solo se pueden leer con una sesión cuya cuenta esté registrada en `admin_users`; la inserción de reportes anónimos sigue habilitada para pruebas. Sin variables configuradas, la aplicación sigue funcionando en modo local.
+La clave `anon`/publishable está diseñada para usarse en el cliente; nunca pongas la clave `service_role` en estas variables. Como esa clave viaja dentro del APK y de la web, por sí sola no permite leer ni escribir nada: los reportes, incidencias, cargas, inspecciones, cierres, fotos y el inicio o cierre de rutas solo se aceptan de una sesión registrada en `field_users`, y los reportes solo se pueden leer con una sesión registrada en `admin_users`. Sin variables configuradas, la aplicación abre directamente el panel de campo en modo local, sin inicio de sesión.
 
 ### Datos simulados
 
@@ -135,7 +143,7 @@ Para probar el resumen, el tablero, el calendario y los eventos de campo sin sal
 
 ### Fotos en Storage
 
-`schema.sql` crea el bucket privado `field-photos` (solo JPEG, máximo 1 MB por archivo) y sus permisos: la app de campo solo puede subir archivos y únicamente las cuentas de `admin_users` pueden leerlos. Cada foto se guarda como `<tabla>/<id del registro>/<nombre>.jpg`; por ejemplo, `container_reports/<id>/initialExterior.jpg`. Las filas guardadas antes de usar Storage contienen la imagen como texto (data URL) y el panel las sigue mostrando.
+`schema.sql` crea el bucket privado `field-photos` (solo JPEG, máximo 1 MB por archivo) y sus permisos: solo las cuentas de `field_users` pueden subir archivos y únicamente las cuentas de `admin_users` pueden leerlos. Cada foto se guarda como `<tabla>/<id del registro>/<nombre>.jpg`; por ejemplo, `container_reports/<id>/initialExterior.jpg`. Las filas guardadas antes de usar Storage contienen la imagen como texto (data URL) y el panel las sigue mostrando.
 
 En el plan gratuito, Storage tiene 1 GB, aparte de los 500 MB de la base de datos. Una ruta de 3 puntos ocupa alrededor de 1 MB de fotos.
 
@@ -147,7 +155,7 @@ Borra de forma permanente reportes, fotos, rutas, calendario y personal. El plan
 2. **Borra los datos.** En el SQL Editor ejecuta:
 
   ```sql
-  -- Conserva admin_users, que da acceso al panel.
+  -- Conserva admin_users y field_users, que dan acceso a los paneles.
   truncate table
     public.container_reports,
     public.incident_reports,
@@ -186,7 +194,7 @@ En iPhone no hay APK: el panel de campo se instala desde Safari como app web, co
 2. Toca **Compartir** (el cuadro con una flecha hacia arriba). En iOS 26, primero toca **⋯** en la barra y luego **Compartir**.
 3. Desliza hacia abajo y elige **Agregar a inicio**.
 4. Deja activado **Abrir como app web** si aparece, revisa que el nombre sea **Ruta Cero** y toca **Agregar**.
-5. Abre la app desde el nuevo ícono, no desde Safari. La primera vez que tomes una foto o escanees un código, permite el acceso a la cámara.
+5. Abre la app desde el nuevo ícono, no desde Safari, e inicia sesión con la cuenta de campo (la app instalada no comparte la sesión de Safari). La primera vez que tomes una foto o escanees un código, permite el acceso a la cámara.
 
 - Se necesita HTTPS (Vercel ya lo usa); desde una dirección `http://` por IP la cámara no funciona.
 - La app instalada guarda sus datos aparte de Safari: el avance del día y los envíos pendientes están en la app, no en las pestañas del navegador.
@@ -212,7 +220,7 @@ npm run preview
 
 ## APK de Android
 
-El APK contiene únicamente el panel de campo: `npm run build:android` compila con `vite build --mode android`, que abre siempre el modo campo y deja fuera del paquete la pantalla inicial y el panel de administración. Después de ejecutarlo, genera el APK desde Android Studio (`npx cap open android`). No uses `npm run build` + `npx cap sync` para el APK, porque esa compilación incluye el panel de administración.
+El APK contiene únicamente el panel de campo: `npm run build:android` compila con `vite build --mode android`, que abre siempre el modo campo y deja fuera del paquete el panel de administración. Al abrirlo pide iniciar sesión y solo acepta cuentas de `field_users`. Después de ejecutarlo, genera el APK desde Android Studio (`npx cap open android`). No uses `npm run build` + `npx cap sync` para el APK, porque esa compilación incluye el panel de administración.
 
 ## Estructura principal
 

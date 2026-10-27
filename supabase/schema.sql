@@ -54,16 +54,12 @@ alter table public.container_reports
   check (fill_level in ('low', 'medium', 'full'));
 
 alter table public.container_reports enable row level security;
-grant insert on public.container_reports to anon, authenticated;
+-- Only signed-in field accounts write reports; the anon key alone can't (it ships inside the app).
+revoke insert on public.container_reports from anon;
+grant insert on public.container_reports to authenticated;
 
 drop policy if exists "Allow anonymous report inserts for testing"
   on public.container_reports;
-
-create policy "Allow anonymous report inserts for testing"
-  on public.container_reports
-  for insert
-  to anon, authenticated
-  with check (true);
 
 create table if not exists public.admin_users (
   user_id uuid primary key references auth.users(id) on delete cascade
@@ -97,6 +93,48 @@ create policy "Admins can read container reports"
       where user_id = auth.uid()
     )
   );
+
+-- Accounts that use the field app (APK or web). The login reads this table and admin_users to
+-- open the right panel; an account in neither can't sign in to any panel.
+create table if not exists public.field_users (
+  user_id uuid primary key references auth.users(id) on delete cascade
+);
+
+alter table public.field_users enable row level security;
+
+grant select on public.field_users to authenticated;
+
+drop policy if exists "Field users can read their own field record"
+  on public.field_users;
+
+create policy "Field users can read their own field record"
+  on public.field_users
+  for select
+  to authenticated
+  using (user_id = auth.uid());
+
+-- Definer so policies and RPCs can check it without reading field_users as the caller.
+create or replace function public.is_field_user()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from public.field_users where user_id = auth.uid());
+$$;
+
+revoke all on function public.is_field_user() from public, anon;
+grant execute on function public.is_field_user() to authenticated;
+
+drop policy if exists "Field users can insert reports"
+  on public.container_reports;
+
+create policy "Field users can insert reports"
+  on public.container_reports
+  for insert
+  to authenticated
+  with check (public.is_field_user());
 
 create table if not exists public.route_configurations (
   id text primary key,
@@ -171,7 +209,8 @@ begin
 end $$;
 
 alter table public.route_schedules enable row level security;
-grant select on public.route_schedules to anon, authenticated;
+revoke select on public.route_schedules from anon;
+grant select on public.route_schedules to authenticated;
 
 drop policy if exists "Field users can read route schedules"
   on public.route_schedules;
@@ -179,11 +218,15 @@ drop policy if exists "Field users can read route schedules"
 create policy "Field users can read route schedules"
   on public.route_schedules
   for select
-  to anon, authenticated
-  using (true);
+  to authenticated
+  using (
+    public.is_field_user()
+    or exists (select 1 from public.admin_users where user_id = auth.uid())
+  );
 
 alter table public.route_configurations enable row level security;
-grant select on public.route_configurations to anon, authenticated;
+revoke select on public.route_configurations from anon;
+grant select on public.route_configurations to authenticated;
 
 drop policy if exists "Field users can read route configurations"
   on public.route_configurations;
@@ -191,8 +234,11 @@ drop policy if exists "Field users can read route configurations"
 create policy "Field users can read route configurations"
   on public.route_configurations
   for select
-  to anon, authenticated
-  using (true);
+  to authenticated
+  using (
+    public.is_field_user()
+    or exists (select 1 from public.admin_users where user_id = auth.uid())
+  );
 
 do $$
 begin
@@ -407,6 +453,10 @@ declare
   -- p_at: when it happened on the device (offline sync); never in the future.
   v_at timestamptz := least(coalesce(p_at, now()), now());
 begin
+  if not public.is_field_user() then
+    raise exception 'Esta cuenta no es de campo.' using errcode = '42501';
+  end if;
+
   update public.route_schedules
   set status = 'active',
       stops_done = 0,
@@ -433,8 +483,8 @@ begin
 end;
 $$;
 
-revoke all on function public.start_route_configuration(text, timestamptz, text, text, text) from public;
-grant execute on function public.start_route_configuration(text, timestamptz, text, text, text) to anon, authenticated;
+revoke all on function public.start_route_configuration(text, timestamptz, text, text, text) from public, anon;
+grant execute on function public.start_route_configuration(text, timestamptz, text, text, text) to authenticated;
 
 create or replace function public.complete_route_configuration(
   p_route_id text,
@@ -454,6 +504,10 @@ declare
   completed_points integer;
   completed_ids text[];
 begin
+  if not public.is_field_user() then
+    raise exception 'Esta cuenta no es de campo.' using errcode = '42501';
+  end if;
+
   select count(distinct report.container_id)::integer,
          coalesce(array_agg(distinct report.container_id), '{}'::text[])
   into completed_points, completed_ids
@@ -502,8 +556,8 @@ begin
 end;
 $$;
 
-revoke all on function public.complete_route_configuration(text, timestamptz, text, text, text) from public;
-grant execute on function public.complete_route_configuration(text, timestamptz, text, text, text) to anon, authenticated;
+revoke all on function public.complete_route_configuration(text, timestamptz, text, text, text) from public, anon;
+grant execute on function public.complete_route_configuration(text, timestamptz, text, text, text) to authenticated;
 
 create or replace function public.update_route_progress_from_report()
 returns trigger
@@ -727,12 +781,13 @@ declare
 begin
   foreach field_table in array array['incident_reports', 'fuel_loads', 'dispatch_inspections', 'route_completions'] loop
     execute format('alter table public.%I enable row level security', field_table);
-    execute format('grant insert on public.%I to anon, authenticated', field_table);
+    execute format('revoke insert on public.%I from anon', field_table);
+    execute format('grant insert on public.%I to authenticated', field_table);
     execute format('grant select on public.%I to authenticated', field_table);
 
     execute format('drop policy if exists "Field app can insert" on public.%I', field_table);
     execute format(
-      'create policy "Field app can insert" on public.%I for insert to anon, authenticated with check (true)',
+      'create policy "Field app can insert" on public.%I for insert to authenticated with check (public.is_field_user())',
       field_table
     );
 
@@ -835,7 +890,8 @@ create trigger fleet_resource_assign_id
 
 alter table public.fleet_resources enable row level security;
 revoke delete on public.fleet_resources from authenticated;
-grant select on public.fleet_resources to anon, authenticated;
+revoke select on public.fleet_resources from anon;
+grant select on public.fleet_resources to authenticated;
 grant insert (kind, name) on public.fleet_resources to authenticated;
 grant update (active) on public.fleet_resources to authenticated;
 
@@ -843,8 +899,11 @@ drop policy if exists "Field app can read fleet resources" on public.fleet_resou
 create policy "Field app can read fleet resources"
   on public.fleet_resources
   for select
-  to anon, authenticated
-  using (true);
+  to authenticated
+  using (
+    public.is_field_user()
+    or exists (select 1 from public.admin_users where user_id = auth.uid())
+  );
 
 drop policy if exists "Admins can add fleet resources" on public.fleet_resources;
 create policy "Admins can add fleet resources"
@@ -949,7 +1008,7 @@ grant execute on function public.next_route_id() to authenticated;
 
 -- Field photos as JPEG files in Storage (its own 1 GB on the free plan) instead of base64 text in
 -- rows. Paths are <table>/<record id>/<name>.jpg. The field app can only upload; admins read them
--- through short-lived signed URLs. Type and size are capped because the anon key is public.
+-- through short-lived signed URLs. Only field accounts upload; type and size are capped too.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('field-photos', 'field-photos', false, 1048576, array['image/jpeg'])
 on conflict (id) do update
@@ -961,8 +1020,8 @@ drop policy if exists "Field app can upload photos" on storage.objects;
 create policy "Field app can upload photos"
   on storage.objects
   for insert
-  to anon, authenticated
-  with check (bucket_id = 'field-photos');
+  to authenticated
+  with check (bucket_id = 'field-photos' and public.is_field_user());
 
 drop policy if exists "Admins can read photos" on storage.objects;
 create policy "Admins can read photos"

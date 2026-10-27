@@ -13,8 +13,7 @@ import {
   saveConfiguredRoutes
 } from '../services/routeConfiguration.js';
 import { formatElapsedTime } from '../utils/format.js';
-import { icon } from '../utils/html.js';
-import { attachAdminLogin, renderAdminLogin } from './admin/AdminLogin.js';
+import { escapeHtml, icon } from '../utils/html.js';
 import { renderAdminOperations } from './admin/AdminLayout.js';
 import { renderCollectionPointTable } from './admin/CollectionPoints.js';
 import { formatReportDate, parseDateKey } from './admin/format.js';
@@ -285,23 +284,13 @@ function attachAdminDashboardContentEvents(container, reports, fieldEvents) {
 
   container.querySelector('#admin-signout')?.addEventListener('click', async () => {
     try {
-      await (await api()).signOutAdmin();
+      await (await api()).signOut();
       teardown();
-      showAdminLogin(container, 'Sesión cerrada.');
+      window.location.replace('/');
     } catch (error) {
       const message = container.querySelector('#admin-report-message');
       if (message) message.textContent = error.message;
     }
-  });
-}
-
-function showAdminLogin(container, message = '', showSignOut = false) {
-  container.innerHTML = renderAdminLogin(message, showSignOut);
-  attachAdminLogin(container, {
-    signIn: async (...args) => (await api()).signInAdmin(...args),
-    onSignIn: () => mountAdminDashboard(container),
-    signOut: async () => (await api()).signOutAdmin(),
-    onSignOut: () => showAdminLogin(container, 'Sesión cerrada.')
   });
 }
 
@@ -311,24 +300,13 @@ async function loadSharedRoutes() {
   saveConfiguredRoutes(await fetchRouteConfigurations());
 }
 
+// main.js already checked that the signed-in account is an admin before mounting the panel.
 async function mountAdminDashboard(container) {
-  let session;
   try {
-    session = await (await api()).getSupabaseSession();
-  } catch (error) {
-    showAdminLogin(container, error.message);
-    return;
-  }
-
-  if (!session) {
-    showAdminLogin(container);
-    return;
-  }
-
-  try {
-    const { isCurrentUserAdmin, fetchAdminContainerReports } = await api();
-    if (!await isCurrentUserAdmin()) {
-      showAdminLogin(container, 'Esta cuenta no tiene permisos de administrador.', true);
+    const { getSupabaseSession, fetchAdminContainerReports } = await api();
+    const session = await getSupabaseSession();
+    if (!session) {
+      window.location.replace('/');
       return;
     }
 
@@ -360,12 +338,12 @@ async function mountAdminDashboard(container) {
     });
     attachAdminDashboardContentEvents(container, reports, { ...fieldEvents, ...fleet });
   } catch (error) {
-    showAdminLogin(container, error.message, true);
+    container.innerHTML = `<p class="admin-report-error" role="alert">No se pudo abrir el panel: ${escapeHtml(error.message)}</p>`;
   }
 }
 
 export function renderAdminDashboard() {
-  return renderAdminLogin();
+  return '<p class="admin-report-message" role="status">Cargando panel…</p>';
 }
 
 const THEME_KEY = 'ruta-cero-admin-theme';
