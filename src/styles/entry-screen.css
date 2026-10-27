@@ -63,11 +63,7 @@
 
 .entry-brand-mark {
   display: grid;
-  place-items: center;
-  width: 180px;
-  padding: 12px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: #fff;
+  width: 170px;
 }
 
 .entry-brand-mark img {
@@ -232,10 +228,6 @@
   font-weight: 700;
 }
 
-#entry-root .entry-brand-mark {
-  border-radius: 16px !important;
-}
-
 #entry-root .entry-eyebrow > span,
 #entry-root .entry-brand-rule {
   border-radius: 999px !important;
@@ -262,8 +254,7 @@
   }
 
   .entry-brand-mark {
-    width: 140px;
-    padding: 8px 14px;
+    width: 130px;
   }
 
   .entry-brand-note,
