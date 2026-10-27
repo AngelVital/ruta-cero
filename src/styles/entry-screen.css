@@ -64,35 +64,14 @@
 .entry-brand-mark {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 180px;
+  padding: 12px 18px;
   border: 1px solid rgba(255, 255, 255, 0.4);
-  background: #f0c44a;
-  color: #173a31;
+  background: #fff;
 }
 
-.entry-brand-mark .material-symbols-outlined {
-  font-size: 27px !important;
-}
-
-.entry-brand strong,
-.entry-brand small {
-  display: block;
-}
-
-.entry-brand strong {
-  font-family: var(--font-headline);
-  font-size: 25px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.entry-brand small {
-  margin-top: 5px;
-  color: #c0d1c7;
-  font-family: var(--font-headline);
-  font-size: 11px;
-  font-weight: 700;
+.entry-brand-mark img {
+  width: 100%;
 }
 
 .entry-brand-note {
@@ -254,7 +233,7 @@
 }
 
 #entry-root .entry-brand-mark {
-  border-radius: 50% !important;
+  border-radius: 16px !important;
 }
 
 #entry-root .entry-eyebrow > span,
@@ -283,12 +262,8 @@
   }
 
   .entry-brand-mark {
-    width: 42px;
-    height: 42px;
-  }
-
-  .entry-brand strong {
-    font-size: 22px;
+    width: 140px;
+    padding: 8px 14px;
   }
 
   .entry-brand-note,

@@ -5,9 +5,7 @@ export function renderEntryScreen(message = '') {
     <main class="entry-screen">
       <aside class="entry-brand-band" aria-label="Ruta Cero">
         <a class="entry-brand" href="/" aria-label="Ruta Cero, inicio">
-          <span class="entry-brand-mark">${icon('recycling')}</span>
-          <span><strong>RUTA CERO</strong><small>PLATAFORMA OPERATIVA</small></span>
-        </a>
+          <span class="entry-brand-mark"><img src="/logo.png" alt=""></span>        </a>
         <div class="entry-brand-note">
           <span class="entry-brand-rule"></span>
           <span>RECOLECCIÓN URBANA<br>CONTROL DE OPERACIONES</span>
