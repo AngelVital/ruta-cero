@@ -127,6 +127,38 @@ $$;
 revoke all on function public.is_field_user() from public, anon;
 grant execute on function public.is_field_user() to authenticated;
 
+-- One profile per account: the login opens a single panel, so an account can't be admin and field at once.
+-- Accounts that already have both are not changed; find them with
+-- select user_id from public.admin_users intersect select user_id from public.field_users;
+create or replace function public.reject_dual_role()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if (tg_table_name = 'admin_users' and exists (select 1 from public.field_users where user_id = new.user_id))
+    or (tg_table_name = 'field_users' and exists (select 1 from public.admin_users where user_id = new.user_id)) then
+    raise exception 'Esta cuenta ya tiene el otro perfil; usa una cuenta distinta para administración y campo.';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.reject_dual_role() from public, anon, authenticated;
+
+drop trigger if exists admin_users_single_role on public.admin_users;
+create trigger admin_users_single_role
+  before insert or update on public.admin_users
+  for each row
+  execute function public.reject_dual_role();
+
+drop trigger if exists field_users_single_role on public.field_users;
+create trigger field_users_single_role
+  before insert or update on public.field_users
+  for each row
+  execute function public.reject_dual_role();
+
 drop policy if exists "Field users can insert reports"
   on public.container_reports;
 

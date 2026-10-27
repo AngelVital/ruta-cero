@@ -58,7 +58,7 @@ Sin Supabase configurado, los reportes quedan registrados solo en el dispositivo
 
 ## Flujo de administración
 
-Inicia sesión en la página principal con una cuenta registrada en `public.admin_users`; el sistema abre el panel de administración. Una cuenta de campo que abra `/?mode=admin` se redirige a su panel. Si una cuenta está en las dos tablas, en la web abre administración y en el APK abre campo.
+Inicia sesión en la página principal con una cuenta registrada en `public.admin_users`; el sistema abre el panel de administración. Una cuenta de campo que abra `/?mode=admin` se redirige a su panel. Cada cuenta tiene un solo perfil: la base de datos rechaza registrar en `admin_users` una cuenta que ya está en `field_users`, y al revés.
 
 1. **Consultar operación:** el resumen muestra reportes de contenedores registrados hoy y cobertura de puntos. Se sincroniza automáticamente con los cambios del panel de campo; también se puede usar **Actualizar** para sincronizar manualmente. **Ver todos** muestra el historial completo; desde cada reporte se consulta el detalle de llenado, peso, materiales, incidencias y las 4 fotos de evidencia.
 2. **Revisar eventos de campo:** las secciones **Combustible**, **Inspecciones**, **Cierres de ruta** e **Incidencias** muestran los últimos 100 registros de cada tipo. Al abrir uno se ven su tripulación, sus datos y sus fotos, que se descargan solo en ese momento.
@@ -125,7 +125,7 @@ Vite iniciará el servidor en `http://localhost:5173`. La configuración permite
   on conflict (user_id) do nothing;
   ```
 
-  Una cuenta que no esté en ninguna de las dos tablas no puede entrar. Para quitarle el acceso a una cuenta, borra su fila (`delete from public.field_users where user_id = ...`) o elimina la cuenta en **Authentication → Users**.
+  Una cuenta que no esté en ninguna de las dos tablas no puede entrar, y una misma cuenta no puede estar en las dos: usa cuentas distintas para administración y campo. Como la app no tiene pantalla de registro, desactiva también **Authentication → Sign In / Providers → Allow new users to sign up** para que nadie cree cuentas con la clave pública. Para quitarle el acceso a una cuenta, borra su fila (`delete from public.field_users where user_id = ...`) o elimina la cuenta en **Authentication → Users**.
 
 6. Reinicia Vite con `npm run dev`. Abre `http://localhost:5173` e inicia sesión: la cuenta de administración abre el panel, que carga los reportes de `public.container_reports` en páginas para mostrar el historial completo.
 
