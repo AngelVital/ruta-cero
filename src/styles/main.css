@@ -24,6 +24,49 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Loading screen while the session is checked and a panel loads (index.html, AdminDashboard.js) */
+.app-splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background-color: #173a31;
+  background-image: radial-gradient(ellipse at 50% 35%, rgba(49, 112, 84, 0.5), transparent 60%);
+  color: #c0d1c7;
+}
+
+.app-splash img {
+  width: min(200px, 55vw);
+}
+
+.app-splash-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(255, 255, 255, 0.16);
+  border-top-color: #f0c44a;
+  border-radius: 50%;
+  animation: app-splash-spin 0.9s linear infinite;
+}
+
+.app-splash-label {
+  font-family: var(--font-headline);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@keyframes app-splash-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-splash-spinner { animation-duration: 2.4s; }
+}
+
 .photo-capture-overlay {
   position: fixed;
   inset: 0;

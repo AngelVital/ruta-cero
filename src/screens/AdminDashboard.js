@@ -343,7 +343,13 @@ async function mountAdminDashboard(container) {
 }
 
 export function renderAdminDashboard() {
-  return '<p class="admin-report-message" role="status">Cargando panel…</p>';
+  return `
+    <div class="app-splash" role="status">
+      <img src="/logo-light.svg" alt="Ruta Cero">
+      <span class="app-splash-spinner" aria-hidden="true"></span>
+      <span class="app-splash-label">Cargando panel…</span>
+    </div>
+  `;
 }
 
 const THEME_KEY = 'ruta-cero-admin-theme';

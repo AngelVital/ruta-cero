@@ -20,7 +20,14 @@
   <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 <body class="hud-body">
-  <div id="app"></div>
+  <!-- Splash shown until src/main.js mounts a screen; same markup as renderAdminDashboard() -->
+  <div id="app">
+    <div class="app-splash" role="status">
+      <img src="/logo-light.svg" alt="Ruta Cero">
+      <span class="app-splash-spinner" aria-hidden="true"></span>
+      <span class="app-splash-label">Cargando…</span>
+    </div>
+  </div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
