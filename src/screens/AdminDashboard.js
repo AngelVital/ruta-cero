@@ -304,6 +304,7 @@ async function loadSharedRoutes() {
 
 // main.js already checked that the signed-in account is an admin before mounting the panel.
 async function mountAdminDashboard(container) {
+  const splash = document.querySelector('.app-splash');
   try {
     const { getSupabaseSession, fetchAdminContainerReports } = await api();
     const session = await getSupabaseSession();
@@ -328,7 +329,6 @@ async function mountAdminDashboard(container) {
     }
 
     const [fieldEvents, fleet] = await Promise.all([loadFieldEvents(), loadFleet()]);
-    const splash = container.querySelector('.app-splash');
     container.innerHTML = renderAdminOperations({
       user: session.user,
       routes: getConfiguredRoutes(),
@@ -342,32 +342,20 @@ async function mountAdminDashboard(container) {
     attachAdminDashboardContentEvents(container, reports, { ...fieldEvents, ...fleet });
     // Fonts download only once text using them is laid out, so the panel renders under the splash
     // and the splash leaves when fonts and images are ready (no visible font swap).
-    if (splash) {
-      container.append(splash);
-      await new Promise(requestAnimationFrame);
-      // A stalled request (slow network) must not hold the splash forever: 4 s at most.
-      await Promise.race([
-        Promise.all([
-          document.fonts.ready,
-          ...[...container.querySelectorAll('img')].map((img) => img.decode().catch(() => {}))
-        ]),
-        new Promise((resolve) => { setTimeout(resolve, 4000); })
-      ]);
-      splash.remove();
-    }
+    await new Promise(requestAnimationFrame);
+    // A stalled request (slow network) must not hold the splash forever: 4 s at most.
+    await Promise.race([
+      Promise.all([
+        document.fonts.ready,
+        ...[...container.querySelectorAll('img')].map((img) => img.decode().catch(() => {}))
+      ]),
+      new Promise((resolve) => { setTimeout(resolve, 4000); })
+    ]);
   } catch (error) {
     container.innerHTML = `<p class="admin-report-error" role="alert">No se pudo abrir el panel: ${escapeHtml(error.message)}</p>`;
+  } finally {
+    splash?.remove();
   }
-}
-
-export function renderAdminDashboard() {
-  return `
-    <div class="app-splash" role="status">
-      <img src="/logo-light.svg" alt="Ruta Cero">
-      <span class="app-splash-spinner" aria-hidden="true"></span>
-      <span class="app-splash-label">Cargando panel…</span>
-    </div>
-  `;
 }
 
 const THEME_KEY = 'ruta-cero-admin-theme';

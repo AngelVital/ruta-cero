@@ -72,11 +72,13 @@ async function startApp() {
   }
 
   if (!isFieldOnlyBuild && panel === 'admin') {
-    const [{ renderAdminDashboard, attachAdminDashboardEvents }] = await Promise.all([
+    const [{ attachAdminDashboardEvents }] = await Promise.all([
       import('./screens/AdminDashboard.js'),
       import('./styles/admin-dashboard.css')
     ]);
-    appEl.innerHTML = `<div id="admin-root">${renderAdminDashboard()}</div>`;
+    // The index.html splash stays in place (a new one would restart its spinner) and covers the panel until it is ready.
+    appEl.querySelector('.app-splash-label').textContent = 'Cargando panel…';
+    appEl.insertAdjacentHTML('afterbegin', '<div id="admin-root"></div>');
     attachAdminDashboardEvents(document.getElementById('admin-root'));
     return;
   }
