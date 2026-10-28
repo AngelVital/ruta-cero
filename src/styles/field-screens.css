@@ -24,6 +24,31 @@
   align-items: center;
 }
 
+.screen-viewport .field-options { position: relative; }
+.screen-viewport .field-options summary { list-style: none; }
+.screen-viewport .field-options summary::-webkit-details-marker { display: none; }
+.screen-viewport .field-options > summary { padding: 0 8px; }
+
+.screen-viewport .field-options-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.screen-viewport .field-options-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  width: 230px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
 .screen-viewport .status-pill-xs { font-size: 11px; }
 .screen-viewport .status-pill-xs .material-symbols-outlined { font-size: 14px; }
 .screen-viewport .status-pill-pending { background-color: #94a3b8; color: #ffffff; }

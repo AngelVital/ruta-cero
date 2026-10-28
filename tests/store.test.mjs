@@ -45,7 +45,7 @@ test('las acciones crean un estado nuevo sin modificar el anterior', () => {
   assert.match(summary, /2 \/ 2/);
   assert.match(summary, /40 kg/);
   assert.match(summary, /TRIPULACIÓN/);
-  assert.match(summary, /id="btn-field-sign-out"/);
+  assert.match(summary, /btn-field-sign-out/);
 });
 
 test('el borrador del reporte se conserva por contenedor y se limpia al guardar o iniciar ruta', () => {

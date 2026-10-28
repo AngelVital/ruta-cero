@@ -2,6 +2,7 @@
  * Pantalla 4: Mapa de Ruta Programada R-04
  */
 
+import { attachFieldSignOut, renderFieldOptionsMenu } from '../components/FieldOptionsMenu.js';
 import { formatElapsedTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 
@@ -32,6 +33,7 @@ export function renderRouteMapScreen(state) {
         <span class="status-pill status-pill-optimal status-pill-xs">
           ${state.route.completedCount}/${state.stops.length} HECHO
         </span>
+        ${renderFieldOptionsMenu()}
       </div>
     </div>
 
@@ -126,6 +128,7 @@ export function renderRouteMapScreen(state) {
 }
 
 export function attachRouteMapEvents(container, store) {
+  attachFieldSignOut(container, store);
   const timeInRoute = container.querySelector('#route-time-in-route');
   let timerId;
   if (timeInRoute && store.state.route.startTimestamp) {

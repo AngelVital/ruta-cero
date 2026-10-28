@@ -2,8 +2,8 @@
  * Pantalla final del día: resumen de la ruta cerrada. Solo hay una ruta por día,
  * así que la app se queda aquí hasta el siguiente día operativo.
  */
+import { attachFieldSignOut } from '../components/FieldOptionsMenu.js';
 import { getActiveIncidents } from '../domain/report.js';
-import { getPendingSyncCount } from '../services/fieldSync.js';
 import { formatClockTime, formatElapsedTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 
@@ -71,7 +71,7 @@ export function renderRouteSummaryScreen(state) {
         Después puedes cerrar sesión; la siguiente ruta aparecerá el próximo día programado.
       </p>
 
-      <button type="button" class="btn-tactical" id="btn-field-sign-out">
+      <button type="button" class="btn-tactical btn-field-sign-out">
         <span class="material-symbols-outlined">logout</span>
         <span>CERRAR SESIÓN</span>
       </button>
@@ -79,23 +79,4 @@ export function renderRouteSummaryScreen(state) {
   `;
 }
 
-export function attachRouteSummaryEvents(container, store) {
-  const button = container.querySelector('#btn-field-sign-out');
-  button?.addEventListener('click', async () => {
-    // Signing out first would leave the queue without an account that may send it.
-    if (getPendingSyncCount() > 0) {
-      store.showToast('Espera a que se envíen los registros pendientes antes de cerrar sesión.', 'info', 5000);
-      return;
-    }
-
-    button.disabled = true;
-    try {
-      const { signOut } = await import('../services/supabase.js');
-      await signOut();
-      window.location.replace('/');
-    } catch (error) {
-      store.showToast(`No se pudo cerrar sesión (revisa la señal): ${error.message}`, 'info', 5000);
-      button.disabled = false;
-    }
-  });
-}
+export const attachRouteSummaryEvents = attachFieldSignOut;

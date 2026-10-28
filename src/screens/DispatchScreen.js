@@ -1,6 +1,7 @@
 /**
  * Pantalla 1: Despacho • Inicio de Ruta
  */
+import { attachFieldSignOut, renderFieldOptionsMenu } from '../components/FieldOptionsMenu.js';
 import { collectionPoints } from '../data/collectionPoints.js';
 import { getFuelPercent } from '../data/fuel.js';
 import { buildDispatchInspection, getInspectionProgress } from '../domain/inspection.js';
@@ -56,9 +57,12 @@ export function renderDispatchScreen(state) {
         <span class="material-symbols-outlined">local_shipping</span>
         <span>DESPACHO • INICIO DE RUTA</span>
       </div>
-      <div class="status-pill status-pill-optimal status-pill-xs">
-        <span class="material-symbols-outlined">check_circle</span>
-        PRE-OPERATIVO
+      <div class="header-actions">
+        <div class="status-pill status-pill-optimal status-pill-xs">
+          <span class="material-symbols-outlined">check_circle</span>
+          PRE-OPERATIVO
+        </div>
+        ${renderFieldOptionsMenu()}
       </div>
     </div>
 
@@ -182,6 +186,7 @@ export function renderDispatchScreen(state) {
 }
 
 export function attachDispatchScreenEvents(container, store) {
+  attachFieldSignOut(container, store);
   container.querySelector('#select-unit')?.addEventListener('change', (event) => {
     store.setDispatchAssignment('unitId', event.currentTarget.value, false);
   });
