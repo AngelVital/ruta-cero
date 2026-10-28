@@ -29,7 +29,7 @@ Esta separación (render/attach, store con suscripción y lógica pura en `domai
 Inicia sesión en la página principal (o en el APK) con una cuenta registrada en `public.field_users`. La sesión se queda guardada en el teléfono, así que solo se pide la primera vez y la app abre sin señal. El flujo sigue la ruta seleccionada por administración:
 
 1. **Preparar la salida:** en Despacho se eligen unidad, operador, auxiliar y ruta. Antes de iniciar, registra el nivel de combustible y completa la inspección 360°.
-2. **Registrar combustible:** selecciona uno de los niveles predefinidos y guarda el registro para volver a Despacho.
+2. **Registrar combustible:** selecciona uno de los niveles predefinidos (de reserva a lleno; no se muestran litros) y guarda el registro para volver a Despacho.
 3. **Completar inspección:** revisa los nueve puntos del vehículo como Bien, Regular o Mal. Los estados Regular y Mal requieren comentario; también se debe tomar la foto del odómetro (ya no se captura el kilometraje a mano). Al completar todo, confirma la inspección.
 4. **Iniciar y recorrer:** inicia la ruta desde Despacho. Al iniciar se envían a administración los resultados de la inspección, sus comentarios, los litros de combustible y la foto del odómetro. El mapa muestra el punto activo, el avance y los puntos programados; ofrece abrir indicaciones en Google Maps.
 5. **Identificar el contenedor:** escanea el código QR o código de barras del punto activo. Si la cámara no logra leerlo, se puede elegir manualmente el mismo punto activo. Los códigos de otros puntos no permiten avanzar.
@@ -37,7 +37,7 @@ Inicia sesión en la página principal (o en el APK) con una cuenta registrada e
 7. **Guardar y continuar:** guarda el reporte. El punto queda completado y el mapa activa el siguiente; al completar todos los contenedores de cualquier ruta, se agrega la estación de regreso y se muestran sus indicaciones en el mapa.
 8. **Finalizar la ruta:** al llegar a la estación, captura de 1 a 3 fotos de evidencia de regreso (se pueden quitar y repetir) y confirma el cierre. La app muestra el resumen del día (horarios, puntos, kilos, incidencias y tripulación) y el botón **Cerrar sesión**, que solo funciona con señal y sin registros pendientes de enviar.
 
-Durante la ruta también se pueden registrar incidencias (con fotos) y cargas de combustible (con foto del ticket).
+Durante la ruta también se pueden registrar incidencias (con fotos) y cargas de combustible (litros cargados, importe opcional y foto del ticket; el odómetro se toma de la foto de la inspección 360°).
 
 | Foto | Tamaño máximo | Calidad JPEG |
 |---|---|---|
