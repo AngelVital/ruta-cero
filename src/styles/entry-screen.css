@@ -63,11 +63,61 @@
 
 .entry-brand-mark {
   display: grid;
-  width: 170px;
+  width: clamp(170px, 22vw, 340px);
 }
 
 .entry-brand-mark img {
   width: 100%;
+}
+
+.entry-routes {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 380px;
+  max-height: 42vh;
+  margin: 32px 0;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.entry-route-base {
+  stroke: rgba(226, 241, 232, 0.18);
+  stroke-width: 4;
+}
+
+.entry-route-active {
+  stroke: #c3d67a;
+  stroke-width: 5;
+}
+
+/* Dashes moving along the active route, like a truck on its way */
+.entry-route-flow {
+  stroke: #173a31;
+  stroke-width: 2;
+  stroke-dasharray: 6 14;
+  animation: entry-route-flow 1.6s linear infinite;
+}
+
+@keyframes entry-route-flow {
+  to { stroke-dashoffset: -20; }
+}
+
+.entry-route-stop {
+  fill: #173a31;
+  stroke: rgba(226, 241, 232, 0.35);
+  stroke-width: 3;
+}
+
+.entry-route-stop.is-active {
+  stroke: #c3d67a;
+}
+
+.entry-route-end {
+  fill: #f0c44a;
+  stroke: #173a31;
+  stroke-width: 3;
 }
 
 .entry-brand-note {
@@ -257,6 +307,7 @@
     width: 130px;
   }
 
+  .entry-routes,
   .entry-brand-note,
   .entry-band-index {
     display: none;
@@ -278,5 +329,9 @@
   #entry-root *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  #entry-root .entry-route-flow {
+    animation: none !important;
   }
 }

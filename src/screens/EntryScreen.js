@@ -6,6 +6,20 @@ export function renderEntryScreen(message = '') {
       <aside class="entry-brand-band" aria-label="Ruta Cero">
         <a class="entry-brand" href="/" aria-label="Ruta Cero, inicio">
           <span class="entry-brand-mark"><img src="/logo-light.svg" alt=""></span>        </a>
+        <svg class="entry-routes" viewBox="0 0 300 260" aria-hidden="true">
+          <path class="entry-route-base" d="M20 60 H120 V140 H280"/>
+          <path class="entry-route-base" d="M60 240 V180 H200 V40"/>
+          <path class="entry-route-active" d="M20 200 H90 V100 H180 V220 H280"/>
+          <path class="entry-route-flow" d="M20 200 H90 V100 H180 V220 H280"/>
+          <circle class="entry-route-stop" cx="20" cy="60" r="5"/>
+          <circle class="entry-route-stop" cx="280" cy="140" r="5"/>
+          <circle class="entry-route-stop" cx="60" cy="240" r="5"/>
+          <circle class="entry-route-stop" cx="200" cy="40" r="5"/>
+          <circle class="entry-route-stop is-active" cx="20" cy="200" r="6"/>
+          <circle class="entry-route-stop is-active" cx="90" cy="100" r="6"/>
+          <circle class="entry-route-stop is-active" cx="180" cy="100" r="6"/>
+          <circle class="entry-route-end" cx="280" cy="220" r="9"/>
+        </svg>
         <div class="entry-brand-note">
           <span class="entry-brand-rule"></span>
           <span>RECOLECCIÓN URBANA<br>CONTROL DE OPERACIONES</span>
