@@ -328,6 +328,7 @@ async function mountAdminDashboard(container) {
     }
 
     const [fieldEvents, fleet] = await Promise.all([loadFieldEvents(), loadFleet()]);
+    const splash = container.querySelector('.app-splash');
     container.innerHTML = renderAdminOperations({
       user: session.user,
       routes: getConfiguredRoutes(),
@@ -339,6 +340,21 @@ async function mountAdminDashboard(container) {
       ...fleet
     });
     attachAdminDashboardContentEvents(container, reports, { ...fieldEvents, ...fleet });
+    // Fonts download only once text using them is laid out, so the panel renders under the splash
+    // and the splash leaves when fonts and images are ready (no visible font swap).
+    if (splash) {
+      container.append(splash);
+      await new Promise(requestAnimationFrame);
+      // A stalled request (slow network) must not hold the splash forever: 4 s at most.
+      await Promise.race([
+        Promise.all([
+          document.fonts.ready,
+          ...[...container.querySelectorAll('img')].map((img) => img.decode().catch(() => {}))
+        ]),
+        new Promise((resolve) => { setTimeout(resolve, 4000); })
+      ]);
+      splash.remove();
+    }
   } catch (error) {
     container.innerHTML = `<p class="admin-report-error" role="alert">No se pudo abrir el panel: ${escapeHtml(error.message)}</p>`;
   }

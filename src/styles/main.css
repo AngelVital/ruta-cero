@@ -28,6 +28,8 @@ html, body {
 .app-splash {
   position: fixed;
   inset: 0;
+  /* Covers the admin panel while it renders underneath (AdminDashboard.js). */
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: center;
