@@ -45,6 +45,25 @@ test('el tiempo de ruta calcula la duración desde el inicio y avanza en vivo', 
   assert.doesNotMatch(table, /hace 3 min/);
 });
 
+test('sin ruta programada, despacho permite elegir una de las rutas configuradas', () => {
+  const previousWindow = globalThis.window;
+  const routes = getConfiguredRoutes().map((route) => ({ ...route, scheduledDates: [] }));
+  globalThis.window = { localStorage: createMemoryStorage() };
+
+  try {
+    saveConfiguredRoutes(routes);
+    store.applyConfiguredRoute(getScheduledRoute());
+    assert.equal(store.state.route.id, '');
+    const dispatch = renderDispatchScreen(store.state);
+    assert.match(dispatch, /id="select-route"/);
+    routes.forEach((route) => assert.match(dispatch, new RegExp(`value="${route.id}"`)));
+    assert.match(dispatch, /R-01 · Centro Histórico: Ayuntamiento, Parque Morelos, Malecón/);
+    assert.doesNotMatch(dispatch, /id="btn-start-route" disabled/);
+  } finally {
+    globalThis.window = previousWindow;
+  }
+});
+
 test('la ruta programada para hoy aparece automáticamente en despacho y mapa', () => {
   const previousWindow = globalThis.window;
   const defaultRoutes = getConfiguredRoutes();

@@ -201,7 +201,9 @@ alter table public.route_schedules
   -- Crew that ran the route (fleet_resources ids; foreign keys are added with that table).
   add column if not exists unit_id text,
   add column if not exists driver_id text,
-  add column if not exists assistant_id text;
+  add column if not exists assistant_id text,
+  -- 'field' when the crew chose the route because the admin left the day empty.
+  add column if not exists assigned_by text not null default 'admin';
 
 do $$
 begin
@@ -406,6 +408,16 @@ begin
     raise exception 'No se pueden programar rutas en fechas pasadas.';
   end if;
 
+  -- A route already started in the field keeps its day; swapping it would orphan that crew's progress.
+  if exists (
+    select 1 from public.route_schedules
+    where scheduled_for = p_scheduled_for
+      and started_at is not null
+      and route_id is distinct from p_route_id
+  ) then
+    raise exception 'La ruta de ese día ya fue iniciada en campo; no se puede cambiar la asignación.';
+  end if;
+
   if p_route_id is null then
     delete from public.route_schedules where scheduled_for = p_scheduled_for;
     return;
@@ -439,6 +451,7 @@ begin
           else route_schedules.completed_at
         end,
         route_id = excluded.route_id,
+        assigned_by = 'admin',
         created_at = now();
 end;
 $$;
@@ -590,6 +603,59 @@ $$;
 
 revoke all on function public.complete_route_configuration(text, timestamptz, text, text, text) from public, anon;
 grant execute on function public.complete_route_configuration(text, timestamptz, text, text, text) to authenticated;
+
+-- An admin mistake (no route for the day) must not leave the crew without work: the field app
+-- may pick one of the configured routes when it found the day empty.
+create or replace function public.claim_route_for_today(
+  p_route_id text,
+  p_at timestamptz default now()
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  -- p_at: when the crew chose it on the device (offline sync); never in the future.
+  v_day date := (least(coalesce(p_at, now()), now()) at time zone 'America/Mazatlan')::date;
+  v_route_id text;
+begin
+  if not public.is_field_user() then
+    raise exception 'Esta cuenta no es de campo.' using errcode = '42501';
+  end if;
+
+  if v_day < (now() at time zone 'America/Mazatlan')::date - 7 then
+    raise exception 'No se puede elegir ruta para una fecha de hace más de una semana.';
+  end if;
+
+  if not exists (select 1 from public.route_configurations where id = p_route_id) then
+    raise exception 'La ruta seleccionada no existe.';
+  end if;
+
+  -- The crew may have started offline before the admin scheduled the day: the route actually run
+  -- replaces the admin's, unless that one was already started (another crew is running it).
+  insert into public.route_schedules (scheduled_for, route_id, assigned_by)
+  values (v_day, p_route_id, 'field')
+  on conflict (scheduled_for) do update
+    set route_id = excluded.route_id,
+        assigned_by = 'field',
+        status = 'scheduled',
+        stops_done = 0,
+        completed_point_ids = '{}',
+        completed_at = null,
+        created_at = now()
+    where route_schedules.started_at is null
+      and route_schedules.route_id is distinct from excluded.route_id;
+
+  select route_id into v_route_id from public.route_schedules where scheduled_for = v_day;
+  if v_route_id is distinct from p_route_id then
+    raise exception 'La ruta % ya fue iniciada ese día por otra cuadrilla.', v_route_id;
+  end if;
+end;
+$$;
+
+revoke all on function public.claim_route_for_today(text, timestamptz) from public, anon;
+grant execute on function public.claim_route_for_today(text, timestamptz) to authenticated;
 
 create or replace function public.update_route_progress_from_report()
 returns trigger

@@ -89,7 +89,7 @@ export async function fetchRouteConfigurations() {
       .order('id'),
     client
       .from('route_schedules')
-      .select('route_id, scheduled_for, status, stops_done, completed_point_ids, started_at, completed_at')
+      .select('route_id, scheduled_for, status, stops_done, completed_point_ids, started_at, completed_at, assigned_by')
   ]);
 
   if (error) throw error;
@@ -114,6 +114,9 @@ export async function fetchRouteConfigurations() {
       zone: route.zone,
       pointIds: route.point_ids || [],
       scheduledDates: scheduledDatesByRoute.get(route.id) || [],
+      fieldScheduledDates: schedules
+        .filter((schedule) => schedule.route_id === route.id && schedule.assigned_by === 'field')
+        .map((schedule) => schedule.scheduled_for),
       completedPointIds: todaysSchedule?.completed_point_ids || [],
       stopsDone: todaysSchedule?.stops_done || 0,
       stopsTotal: (route.point_ids || []).length,
@@ -166,6 +169,16 @@ const crewParams = (crew = {}) => ({
   p_driver_id: crew.driverId || null,
   p_assistant_id: crew.assistantId || null
 });
+
+/** Field fallback when the admin scheduled nothing for the day; `at` is when the crew chose it. */
+export async function claimRouteForToday(routeId, at) {
+  const { error } = await requireSupabase().rpc('claim_route_for_today', {
+    p_route_id: routeId,
+    p_at: at
+  });
+
+  if (error) throw error;
+}
 
 /** `at` is when the route started on the device; it may be earlier than the sync time. */
 export async function markRouteStarted(routeId, at, crew) {

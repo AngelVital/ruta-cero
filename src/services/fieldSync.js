@@ -24,6 +24,7 @@ function writeQueue(queue) {
 }
 
 const senders = {
+  claim: (api, { payload, at }) => api.claimRouteForToday(payload.routeId, at),
   start: (api, { payload, at, crew }) => api.markRouteStarted(payload.routeId, at, crew),
   report: (api, { id, payload, at, crew }) => api.insertContainerReport(payload.routeId, payload.containerId, payload.report, {
     id,
@@ -129,4 +130,8 @@ async function sendQueue(loadApi) {
 
 export function getPendingSyncCount() {
   return readQueue().length;
+}
+
+export function hasPendingFieldAction(type) {
+  return readQueue().some((item) => item.type === type);
 }

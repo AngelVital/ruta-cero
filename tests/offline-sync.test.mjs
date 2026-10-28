@@ -13,7 +13,7 @@ function createMemoryStorage() {
 
 globalThis.window = { localStorage: createMemoryStorage() };
 const { store, fieldStateStorageKey } = await import('../src/state/store.js');
-const { queueFieldAction, flushFieldQueue, getPendingSyncCount, syncQueueStorageKey } = await import('../src/services/fieldSync.js');
+const { queueFieldAction, flushFieldQueue, getPendingSyncCount, hasPendingFieldAction, syncQueueStorageKey } = await import('../src/services/fieldSync.js');
 
 const route = {
   id: 'R-70',
@@ -35,6 +35,7 @@ function createApi(respond) {
   };
   const api = {
     isSupabaseConfigured: true,
+    claimRouteForToday: call('claim'),
     markRouteStarted: call('start'),
     insertContainerReport: call('report'),
     markRouteCompleted: call('complete'),
@@ -66,6 +67,19 @@ test('sin conexión las acciones quedan en cola y se envían en orden al volver 
   assert.ok(createdAt, 'the report keeps its capture time');
   assert.equal(getPendingSyncCount(), 0);
   assert.equal(store.state.pendingSyncCount, 0);
+});
+
+test('la ruta elegida en campo se programa antes de iniciarla', async () => {
+  window.localStorage.removeItem(syncQueueStorageKey);
+  const offline = createApi(() => offlineError);
+  await queueFieldAction('claim', { routeId: 'R-70' }, offline.loadApi);
+  await queueFieldAction('start', { routeId: 'R-70' }, offline.loadApi);
+  assert.equal(hasPendingFieldAction('claim'), true);
+
+  const online = createApi(() => null);
+  await flushFieldQueue(online.loadApi);
+  assert.deepEqual(online.calls.map(([type, routeId]) => [type, routeId]), [['claim', 'R-70'], ['start', 'R-70']]);
+  assert.equal(hasPendingFieldAction('claim'), false);
 });
 
 test('un reporte duplicado cuenta como enviado y uno rechazado se conserva', async () => {

@@ -4,7 +4,7 @@
  */
 
 import { store } from './state/store.js';
-import { flushFieldQueue, getPendingSyncCount } from './services/fieldSync.js';
+import { flushFieldQueue, getPendingSyncCount, hasPendingFieldAction } from './services/fieldSync.js';
 import {
   getOperationalDate,
   getScheduledRoute,
@@ -47,6 +47,8 @@ async function refreshFieldRouteConfiguration() {
       fetchFleetResources().catch(() => null)
     ]);
     if (fleet) store.setFleetResources(fleet);
+    // The server doesn't know the route the crew chose yet; its empty day would wipe the local run.
+    if (hasPendingFieldAction('claim')) return;
     saveConfiguredRoutes(routes);
     store.applyConfiguredRoute(routes.find((route) => route.scheduledDates?.includes(getOperationalDate())) || null);
   } catch {

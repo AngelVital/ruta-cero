@@ -137,7 +137,11 @@ export function assignRouteToDate(routes, date, routeId) {
   return routes.map((route) => {
     const scheduledDates = (route.scheduledDates || []).filter((scheduledDate) => scheduledDate !== date);
     if (route.id === routeId) scheduledDates.push(date);
-    return { ...route, scheduledDates: scheduledDates.sort() };
+    return {
+      ...route,
+      scheduledDates: scheduledDates.sort(),
+      fieldScheduledDates: (route.fieldScheduledDates || []).filter((fieldDate) => fieldDate !== date)
+    };
   });
 }
 

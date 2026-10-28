@@ -30,7 +30,7 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
     return `
       <button type="button" class="admin-calendar-day${outsideMonth ? ' is-outside-month' : ''}${dateKey === today ? ' is-today' : ''}${dateKey === selectedDate ? ' is-selected' : ''}" data-calendar-date="${dateKey}" aria-pressed="${dateKey === selectedDate}">
         <span class="admin-calendar-day-number">${date.getDate()}</span>
-        ${route ? `<span class="admin-calendar-route">${escapeHtml(route.id)} · ${escapeHtml(route.zone)}</span>` : '<span class="admin-calendar-empty">Sin ruta</span>'}
+        ${route ? `<span class="admin-calendar-route">${escapeHtml(route.id)} · ${escapeHtml(route.zone)}${route.fieldScheduledDates?.includes(dateKey) ? ' · campo' : ''}</span>` : '<span class="admin-calendar-empty">Sin ruta</span>'}
         ${reportCount ? `<span class="admin-calendar-report-count">${reportCount} reporte${reportCount === 1 ? '' : 's'}</span>` : ''}
       </button>
     `;
@@ -73,6 +73,9 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
             ${routeOptions}
           </select>
         </label>
+        ${selectedRoute?.fieldScheduledDates?.includes(selectedDate)
+          ? '<p class="admin-calendar-assignment-note">Elegida en campo porque no había ruta asignada para este día.</p>'
+          : ''}
         <p class="admin-calendar-assignment-note">${isPast
           ? 'Las fechas pasadas son de solo lectura; puedes consultar aquí los reportes registrados.'
           : isLocked

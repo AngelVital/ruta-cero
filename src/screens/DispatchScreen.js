@@ -1,11 +1,19 @@
 /**
  * Pantalla 1: Despacho • Inicio de Ruta
  */
+import { collectionPoints } from '../data/collectionPoints.js';
 import { getFuelPercent } from '../data/fuel.js';
 import { buildDispatchInspection, getInspectionProgress } from '../domain/inspection.js';
 import { formatClockTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 import { queueFieldAction } from '../services/fieldSync.js';
+import {
+  assignRouteToDate,
+  getConfiguredRoutes,
+  getOperationalDate,
+  getScheduledRoute,
+  saveConfiguredRoutes
+} from '../services/routeConfiguration.js';
 
 function addHoursToTime(timeStr, hoursToAdd) {
   const [hours, minutes] = timeStr.split(':').map(Number);
@@ -13,6 +21,13 @@ function addHoursToTime(timeStr, hoursToAdd) {
   const resultHours = Math.floor(totalMinutes / 60) % 24;
   const resultMinutes = totalMinutes % 60;
   return `${String(resultHours).padStart(2, '0')}:${String(resultMinutes).padStart(2, '0')}`;
+}
+
+// Lets the crew pick a route by the containers it visits, not just its zone.
+function getPointNames(pointIds) {
+  return pointIds
+    .map((pointId) => collectionPoints.find((point) => point.id === pointId)?.name || pointId)
+    .join(', ');
 }
 
 // Names are typed by admins, so they are escaped.
@@ -122,13 +137,21 @@ export function renderDispatchScreen(state) {
 
         <!-- Ruta programada -->
         <div>
-          <div class="font-label-sm field-caption">RUTA PROGRAMADA PARA HOY</div>
-          <div class="input-tactical fw-700${state.route.id ? '' : ' dispatch-route-missing'}" aria-live="polite">
-            ${state.route.id ? `${escapeHtml(state.route.id)} · ${escapeHtml(state.route.name)}` : 'SIN RUTA PROGRAMADA'}
-          </div>
-          <div class="font-label-sm text-muted dispatch-route-note">
-            ${state.route.id ? `${state.route.totalStops} PARADAS A REALIZAR` : 'Solicita a administración que programe una ruta para hoy.'}
-          </div>
+          ${state.route.id ? `
+            <div class="font-label-sm field-caption">RUTA PROGRAMADA PARA HOY</div>
+            <div class="input-tactical fw-700" aria-live="polite">
+              ${escapeHtml(state.route.id)} · ${escapeHtml(state.route.name)}
+            </div>
+            <div class="font-label-sm text-muted dispatch-route-note">${state.route.totalStops} PARADAS A REALIZAR</div>
+          ` : `
+            <label class="font-label-sm dispatch-field-label" for="select-route">
+              <span>4. RUTA (SIN PROGRAMACIÓN DE ADMINISTRACIÓN)</span>
+            </label>
+            <select class="input-tactical fw-700 dispatch-route-missing" id="select-route">
+              ${renderAssignmentOptions(getConfiguredRoutes().map((route) => ({ id: route.id, label: `${route.id} · ${route.zone}: ${getPointNames(route.pointIds)}` })), null)}
+            </select>
+            <div class="font-label-sm text-muted dispatch-route-note">Administración no programó ruta para hoy. Elige una; quedará registrada como elegida en campo.</div>
+          `}
         </div>
 
         <!-- Time Blocks -->
@@ -150,7 +173,7 @@ export function renderDispatchScreen(state) {
         </div>
 
         <!-- Master Dispatch Action -->
-        <button type="button" class="btn-tactical btn-tactical-primary dispatch-start" id="btn-start-route" ${state.route.id ? '' : 'disabled'}>
+        <button type="button" class="btn-tactical btn-tactical-primary dispatch-start" id="btn-start-route">
           <span class="material-symbols-outlined icon-24">play_arrow</span>
           <span>INICIAR RUTA Y MONITOREO</span>
         </button>
@@ -183,6 +206,12 @@ export function attachDispatchScreenEvents(container, store) {
   container.querySelector('#btn-start-route')?.addEventListener('click', async (event) => {
     const { assignment, dispatchOptions } = store.state;
     const isListed = (options, id) => options.some((option) => option.id === id);
+    // Only shown when the admin scheduled nothing for today.
+    const claimedRouteId = container.querySelector('#select-route')?.value;
+    if (!store.state.route.id && !claimedRouteId) {
+      store.showToast('Elige la ruta que vas a realizar hoy.', 'info');
+      return;
+    }
     if (!isListed(dispatchOptions.units, assignment.unitId) || !isListed(dispatchOptions.drivers, assignment.driverId)) {
       store.showToast('Selecciona la unidad y el operador antes de iniciar la ruta.', 'info');
       return;
@@ -198,6 +227,11 @@ export function attachDispatchScreenEvents(container, store) {
       return;
     }
 
+    if (claimedRouteId) {
+      const today = getOperationalDate();
+      saveConfiguredRoutes(assignRouteToDate(getConfiguredRoutes(), today, claimedRouteId));
+      store.applyConfiguredRoute(getScheduledRoute(today), false);
+    }
     const routeId = store.startRoute();
     if (!routeId) {
       store.showToast('No hay una ruta programada para hoy. Solicita a administración que programe una.', 'info');
@@ -205,6 +239,8 @@ export function attachDispatchScreenEvents(container, store) {
     }
     event.currentTarget.disabled = true;
     try {
+      // Queued first: the server must schedule the route before it accepts the start.
+      if (claimedRouteId) await queueFieldAction('claim', { routeId });
       await queueFieldAction('inspection', buildDispatchInspection(store.state));
       await queueFieldAction('start', { routeId });
       store.showToast(`¡${routeId} iniciada! Dirígete al primer punto y escanea el código QR.`, 'success');
