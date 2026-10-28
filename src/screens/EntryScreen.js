@@ -4,8 +4,9 @@ export function renderEntryScreen(message = '') {
   return `
     <main class="entry-screen">
       <aside class="entry-brand-band" aria-label="Ruta Cero">
-        <a class="entry-brand" href="/" aria-label="Ruta Cero, inicio">
-          <span class="entry-brand-mark"><img src="/logo-light.svg" alt=""></span>        </a>
+        <div class="entry-brand">
+          <span class="entry-brand-mark"><img src="/logo-light.svg" alt=""></span>
+        </div>
         <svg class="entry-routes" aria-hidden="true">
           <!-- Coordinates are multiples of the band's 36px grid; the 0.5 offset centers strokes on its 1px lines -->
           <g transform="translate(0.5 0.5)">
