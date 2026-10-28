@@ -151,6 +151,8 @@
 }
 
 .screen-viewport .fuel-segment.is-filled { background-color: #00a86b; }
+.screen-viewport .fuel-segments.is-half .fuel-segment.is-filled { background-color: #eab308; }
+.screen-viewport .fuel-segments.is-reserve .fuel-segment.is-filled { background-color: #e11d48; }
 
 .screen-viewport .dispatch-form {
   padding: 16px;
@@ -219,6 +221,8 @@
   background-color: var(--color-primary-container);
   border-right: 2px solid #0f172a;
 }
+.screen-viewport .fuel-tank-level.is-half { background-color: #eab308; }
+.screen-viewport .fuel-tank-level.is-reserve { background-color: #e11d48; }
 
 .screen-viewport .fuel-presets {
   display: flex;

@@ -3,7 +3,7 @@
  */
 import { attachFieldSignOut, renderFieldOptionsMenu } from '../components/FieldOptionsMenu.js';
 import { collectionPoints } from '../data/collectionPoints.js';
-import { getFuelPercent } from '../data/fuel.js';
+import { getFuelPercent, getFuelLevelClass } from '../data/fuel.js';
 import { buildDispatchInspection, getInspectionProgress } from '../domain/inspection.js';
 import { formatClockTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
@@ -85,7 +85,7 @@ export function renderDispatchScreen(state) {
             ` : `
               <span class="font-headline-sm text-faint">PENDIENTE</span>
             `}
-            <div class="fuel-segments">${fuelSegments}</div>
+            <div class="fuel-segments ${hasFuel ? getFuelLevelClass(state.fuelLevel.liters) : ''}">${fuelSegments}</div>
           </div>
         </div>
 

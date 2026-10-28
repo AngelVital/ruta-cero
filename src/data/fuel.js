@@ -8,3 +8,9 @@ export const fuelPresets = [
 ];
 
 export const getFuelPercent = (liters) => liters / fuelTankCapacityLiters * 100;
+
+export const getFuelLevelClass = (liters) => {
+  const percent = getFuelPercent(liters);
+  if (!percent) return '';
+  return percent <= 25 ? 'is-reserve' : percent <= 50 ? 'is-half' : '';
+};

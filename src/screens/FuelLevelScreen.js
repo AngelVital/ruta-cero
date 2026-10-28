@@ -2,7 +2,7 @@
  * Pantalla 3: Registro de Combustible - Inspección Pre-operativa
  */
 
-import { fuelPresets as presets, getFuelPercent } from '../data/fuel.js';
+import { fuelPresets as presets, getFuelPercent, getFuelLevelClass } from '../data/fuel.js';
 
 export function renderFuelLevelScreen(state) {
   const hasPreset = Boolean(state.fuelLevel.preset);
@@ -30,7 +30,7 @@ export function renderFuelLevelScreen(state) {
 
         <!-- Visual Tank Bar -->
         <div class="fuel-tank">
-          <div id="fuel-level-bar" class="fuel-tank-level" style="width: ${getFuelPercent(state.fuelLevel.liters).toFixed(0)}%;"></div>
+          <div id="fuel-level-bar" class="fuel-tank-level ${getFuelLevelClass(state.fuelLevel.liters)}" style="width: ${getFuelPercent(state.fuelLevel.liters).toFixed(0)}%;"></div>
         </div>
       </div>
 
@@ -95,6 +95,7 @@ function updateFuelSelection(container, preset, liters) {
   }
   if (levelBar) {
     levelBar.style.width = `${getFuelPercent(liters).toFixed(0)}%`;
+    levelBar.className = `fuel-tank-level ${getFuelLevelClass(liters)}`;
   }
 
   container.querySelectorAll('.btn-fuel-preset').forEach((button) => {
