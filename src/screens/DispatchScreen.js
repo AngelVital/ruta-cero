@@ -76,8 +76,7 @@ export function renderDispatchScreen(state) {
           <div class="dispatch-tile-body">
             ${hasFuel ? `
               <div class="dispatch-fuel-readout">
-                <span class="font-headline-sm">${state.fuelLevel.liters} L</span>
-                <span class="font-label-sm text-muted">${Math.round(fuelPercent)}%</span>
+                <span class="font-headline-sm">${Math.round(fuelPercent)}%</span>
               </div>
             ` : `
               <span class="font-headline-sm text-faint">PENDIENTE</span>

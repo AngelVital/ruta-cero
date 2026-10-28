@@ -23,9 +23,6 @@ export function renderFuelLevelScreen(state) {
       <div class="card-tactical card-tactical-accent fuel-readout-card">
         <span class="font-label-sm text-muted">NIVEL EN TANQUE SELECCIONADO</span>
         <div class="fuel-readout">
-          <h2 id="fuel-liters-readout" class="font-display fuel-liters${hasPreset ? ' is-set' : ''}">
-            ${state.fuelLevel.liters.toFixed(1)} <span class="fuel-liters-unit">L</span>
-          </h2>
           <span id="fuel-preset-readout" class="font-headline-sm fuel-preset-name${hasPreset ? ' is-set' : ''}">
             ${state.fuelLevel.preset ?? 'SIN REGISTRAR'}
           </span>
@@ -49,10 +46,7 @@ export function renderFuelLevelScreen(state) {
               data-preset="${p.label}"
               data-liters="${p.liters}"
             >
-              <div>
-                <strong class="font-headline-sm fuel-preset-title">${p.label}</strong>
-                <span class="font-body-sm fuel-preset-desc">${p.desc}</span>
-              </div>
+              <strong class="font-headline-sm fuel-preset-title">${p.label}</strong>
               <span class="material-symbols-outlined fuel-preset-check">
                 ${isSelected ? 'check_circle' : 'radio_button_unchecked'}
               </span>
@@ -92,14 +86,9 @@ export function attachFuelLevelEvents(container, store) {
 }
 
 function updateFuelSelection(container, preset, liters) {
-  const litersReadout = container.querySelector('#fuel-liters-readout');
   const presetReadout = container.querySelector('#fuel-preset-readout');
   const levelBar = container.querySelector('#fuel-level-bar');
 
-  if (litersReadout) {
-    litersReadout.firstChild.textContent = `${liters.toFixed(1)} `;
-    litersReadout.classList.add('is-set');
-  }
   if (presetReadout) {
     presetReadout.textContent = preset;
     presetReadout.classList.add('is-set');

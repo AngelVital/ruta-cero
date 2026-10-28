@@ -179,19 +179,6 @@
   margin: 4px 0 10px 0;
 }
 
-.screen-viewport .fuel-liters {
-  color: #94a3b8;
-  font-size: 42px;
-  margin: 0;
-}
-
-.screen-viewport .fuel-liters.is-set { color: var(--color-primary); }
-
-.screen-viewport .fuel-liters-unit {
-  font-size: 20px;
-  color: #0f172a;
-}
-
 .screen-viewport .fuel-preset-name { color: #94a3b8; }
 .screen-viewport .fuel-preset-name.is-set { color: #0f172a; }
 
@@ -231,11 +218,6 @@
 .screen-viewport .fuel-preset-title {
   display: block;
   font-size: 16px;
-}
-
-.screen-viewport .fuel-preset-desc {
-  color: #64748b;
-  font-size: 13px;
 }
 
 .screen-viewport .fuel-preset-check {

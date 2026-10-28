@@ -35,7 +35,7 @@ export function renderIncidentRows(incidents) {
 
 export function renderFuelRows(fuelLoads) {
   if (!fuelLoads.length) {
-    return '<tr><td colspan="7">Todavía no hay cargas registradas.</td></tr>';
+    return '<tr><td colspan="6">Todavía no hay cargas registradas.</td></tr>';
   }
 
   return fuelLoads.map((load, index) => `
@@ -45,7 +45,6 @@ export function renderFuelRows(fuelLoads) {
       <td>${escapeHtml(load.route_id || '—')}</td>
       <td>${escapeHtml(numberFormatter.format(Number(load.liters)))} L</td>
       <td>${escapeHtml(formatOptional(load.amount, (value) => moneyFormatter.format(value)))}</td>
-      <td>${escapeHtml(formatOptional(load.odometer_km, (value) => `${numberFormatter.format(value)} km`))}</td>
       <td><button class="admin-report-open" type="button" data-fuel-index="${index}">${icon('receipt_long')}<span>Ver ticket</span></button></td>
     </tr>
   `).join('');
@@ -175,8 +174,7 @@ function renderFuelDetail(load) {
     </div>
     <div class="admin-report-dialog-sections">
       <section class="admin-report-dialog-section admin-report-comments-section">
-        <h3>${icon('speed')} Odómetro</h3>
-        <p>${escapeHtml(formatOptional(load.odometer_km, (value) => `${numberFormatter.format(value)} km`))}</p>
+        <h3>${icon('location_on')} Ubicación</h3>
         <p>${renderMapLink(load)}</p>
       </section>
       <section class="admin-report-dialog-section admin-report-evidence-section">

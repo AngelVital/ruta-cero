@@ -825,13 +825,15 @@ create table if not exists public.fuel_loads (
   unit_id text not null default '',
   liters numeric not null check (liters > 0),
   amount numeric check (amount >= 0),
-  odometer_km numeric check (odometer_km >= 0),
   ticket_photo text,
   latitude double precision,
   longitude double precision,
   created_at timestamptz not null default now(),
   received_at timestamptz not null default now()
 );
+
+-- The refuel form no longer asks for the odometer; the reading comes from the 360° inspection photo.
+alter table public.fuel_loads drop column if exists odometer_km;
 
 -- 360° inspection recorded at dispatch, sent when the route starts. `results` maps each
 -- checklist key (tires, brakes…) to BIEN / REGULAR / MAL; `comments` holds the REGULAR/MAL notes.

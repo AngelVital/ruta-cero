@@ -32,20 +32,17 @@ export function validateIncident({ type, severity, description, photos = [] }) {
 
 const toNumber = (value) => (value === '' || value === null || value === undefined ? null : Number(value));
 
-export function validateFuelLoad({ liters, amount, odometerKm, ticketPhoto }) {
+export function validateFuelLoad({ liters, amount, ticketPhoto }) {
   const litersValue = toNumber(liters);
   if (!Number.isFinite(litersValue) || litersValue <= 0 || litersValue > 1000) return 'Registra los litros cargados (mayor a 0)';
   const amountValue = toNumber(amount);
   if (amountValue !== null && (!Number.isFinite(amountValue) || amountValue < 0)) return 'El importe no es válido';
-  const odometerValue = toNumber(odometerKm);
-  if (odometerValue !== null && (!Number.isFinite(odometerValue) || odometerValue < 0)) return 'El odómetro no es válido';
   if (!ticketPhoto) return 'Captura la foto del ticket o de la bomba';
   return null;
 }
 
 /** Normalized values ready to queue; blank optional fields become null. */
-export const normalizeFuelLoad = ({ liters, amount, odometerKm }) => ({
+export const normalizeFuelLoad = ({ liters, amount }) => ({
   liters: toNumber(liters),
-  amount: toNumber(amount),
-  odometerKm: toNumber(odometerKm)
+  amount: toNumber(amount)
 });

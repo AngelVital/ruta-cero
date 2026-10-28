@@ -387,7 +387,6 @@ export async function insertFuelLoad(fuelLoad, { id, createdAt, crew } = {}) {
       ...crewColumns(crew),
       liters: fuelLoad.liters,
       amount: fuelLoad.amount,
-      odometer_km: fuelLoad.odometerKm,
       ticket_photo: ticketPhoto,
       latitude: fuelLoad.latitude,
       longitude: fuelLoad.longitude
@@ -446,7 +445,7 @@ export async function fetchAdminIncidentReports() {
 export async function fetchAdminFuelLoads() {
   const { data, error } = await requireSupabase()
     .from('fuel_loads')
-    .select('id, route_id, unit_id, driver_id, assistant_id, liters, amount, odometer_km, latitude, longitude, created_at')
+    .select('id, route_id, unit_id, driver_id, assistant_id, liters, amount, latitude, longitude, created_at')
     .order('created_at', { ascending: false })
     .limit(recentFieldEventLimit);
 

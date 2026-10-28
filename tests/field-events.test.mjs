@@ -16,9 +16,9 @@ test('una carga requiere litros y foto; importe y odómetro son opcionales', () 
   assert.match(validateFuelLoad({ liters: '', ticketPhoto: photo }), /litros/);
   assert.match(validateFuelLoad({ liters: '0', ticketPhoto: photo }), /litros/);
   assert.match(validateFuelLoad({ liters: '80' }), /foto/);
-  assert.equal(validateFuelLoad({ liters: '80.5', amount: '', odometerKm: '', ticketPhoto: photo }), null);
+  assert.equal(validateFuelLoad({ liters: '80.5', amount: '', ticketPhoto: photo }), null);
   assert.match(validateFuelLoad({ liters: '80', amount: '1.2.3', ticketPhoto: photo }), /importe/);
-  assert.deepEqual(normalizeFuelLoad({ liters: '80.5', amount: '', odometerKm: '120345' }), {
-    liters: 80.5, amount: null, odometerKm: 120345
+  assert.deepEqual(normalizeFuelLoad({ liters: '80.5', amount: '' }), {
+    liters: 80.5, amount: null
   });
 });

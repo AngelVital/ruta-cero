@@ -139,7 +139,7 @@ export function renderAdminOperations({
             ${fieldEventError ? `<p class="admin-report-error" role="alert">${escapeHtml(fieldEventError)}</p>` : ''}
             <div class="admin-points-table-wrap admin-reports-table-wrap">
               <table class="admin-points-table admin-reports-table">
-                <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">LITROS</th><th scope="col">IMPORTE</th><th scope="col">ODÓMETRO</th><th scope="col">TICKET</th></tr></thead>
+                <thead><tr><th scope="col">FECHA</th><th scope="col">UNIDAD</th><th scope="col">RUTA</th><th scope="col">LITROS</th><th scope="col">IMPORTE</th><th scope="col">TICKET</th></tr></thead>
                 <tbody id="admin-fuel-rows">${renderFuelRows(fuelLoads)}</tbody>
               </table>
             </div>

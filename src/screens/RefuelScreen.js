@@ -12,14 +12,12 @@ import { escapeHtml } from '../utils/html.js';
 
 const numericFields = [
   { key: 'liters', label: 'LITROS CARGADOS', unit: 'L', placeholder: '0.0', inputmode: 'decimal', required: true },
-  { key: 'amount', label: 'IMPORTE (OPCIONAL)', unit: '$', placeholder: '0.00', inputmode: 'decimal' },
-  { key: 'odometerKm', label: 'ODÓMETRO (OPCIONAL)', unit: 'KM', placeholder: '0', inputmode: 'numeric' }
+  { key: 'amount', label: 'IMPORTE (OPCIONAL)', unit: '$', placeholder: '0.00', inputmode: 'decimal' }
 ];
 
 const getRefuelDraft = (state) => ({
   liters: '',
   amount: '',
-  odometerKm: '',
   ticketPhoto: null,
   ...state.formDrafts.refuel
 });

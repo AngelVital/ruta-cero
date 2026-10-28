@@ -118,10 +118,9 @@ insert into public.route_completions (route_id, created_at)
 select route_id, (day + time '14:00') at time zone 'America/Mazatlan'
 from sim_days;
 
--- Carga de combustible lunes y jueves; el odómetro avanza.
-insert into public.fuel_loads (route_id, unit_id, liters, amount, odometer_km, created_at)
+-- Carga de combustible lunes y jueves.
+insert into public.fuel_loads (route_id, unit_id, liters, amount, created_at)
 select route_id, 'SIM-UNIDAD', l.liters, round(l.liters * 24.5, 2),
-       50000 + row_number() over (order by day) * 180,
        (day + time '13:30') at time zone 'America/Mazatlan'
 from sim_days
 cross join lateral (select round((35 + random() * 35 + 0 * extract(doy from day))::numeric, 1) as liters) l
