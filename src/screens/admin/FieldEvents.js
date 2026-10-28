@@ -229,20 +229,18 @@ export function attachFieldEvents(ctx, { fetchPhotos }) {
     }
   };
 
+  ctx.openIncident = (incident) => incident && open('incident_reports', incident,
+    `INCIDENCIA · GRAVEDAD ${getSeverityLabel(incident.severity)}`, getIncidentTypeLabel(incident.incident_type), renderIncidentDetail);
+  ctx.openFuelLoad = (load) => open('fuel_loads', load, 'CARGA DE COMBUSTIBLE', 'Detalle de la carga', renderFuelDetail);
+
   container.querySelector('#admin-incident-rows')?.addEventListener('click', (event) => {
     const row = event.target.closest('[data-incident-index]');
-    const incident = row && ctx.incidents[Number(row.dataset.incidentIndex)];
-    if (incident) {
-      open('incident_reports', incident, `INCIDENCIA · GRAVEDAD ${getSeverityLabel(incident.severity)}`,
-        getIncidentTypeLabel(incident.incident_type), renderIncidentDetail);
-    }
+    if (row) ctx.openIncident(ctx.incidents[Number(row.dataset.incidentIndex)]);
   });
 
   container.querySelector('#admin-fuel-rows')?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-fuel-index]');
-    if (button) {
-      open('fuel_loads', ctx.fuelLoads[Number(button.dataset.fuelIndex)], 'CARGA DE COMBUSTIBLE', 'Detalle de la carga', renderFuelDetail);
-    }
+    if (button) ctx.openFuelLoad(ctx.fuelLoads[Number(button.dataset.fuelIndex)]);
   });
 
   container.querySelector('#admin-inspection-rows')?.addEventListener('click', (event) => {

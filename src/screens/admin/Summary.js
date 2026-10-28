@@ -1,9 +1,10 @@
 import { collectionPoints } from '../../data/collectionPoints.js';
+import { getIncidentTypeLabel, getSeverityLabel } from '../../domain/fieldEvents.js';
 import { getActiveIncidents } from '../../domain/report.js';
 import { filterReportsByMaterial, getKgByDay, getPeriodRange, summarizeReports } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
-import { formatIncidentLabel, formatMaterialLabel, formatMonthTitle, formatReportWeight, formatScheduledDate, parseDateKey } from './format.js';
+import { formatIncidentLabel, formatMaterialLabel, formatMonthTitle, formatReportDate, formatReportWeight, formatScheduledDate, parseDateKey } from './format.js';
 
 const periodTitles = {
   day: (range) => `Resumen del ${range}`,
@@ -14,10 +15,29 @@ const periodTitles = {
 
 const issuedFormatter = new Intl.DateTimeFormat('es-MX', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Mazatlan' });
 const percentFormatter = new Intl.NumberFormat('es-MX', { style: 'percent', maximumFractionDigits: 1 });
+const moneyFormatter = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+const litersFormatter = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 1 });
+const formatLiters = (value) => `${litersFormatter.format(Number(value) || 0)} L`;
 const pointNames = Object.fromEntries(collectionPoints.map((point) => [point.id, point.name]));
 
-export function renderSummary(reports, start, end, period = 'range') {
+export function renderSummary(reports, start, end, period = 'range', { incidents = [], fuelLoads = [] } = {}) {
   const summary = summarizeReports(reports, start, end);
+  const inPeriod = (records) => records
+    .filter((record) => {
+      const day = getOperationalDate(new Date(record.created_at));
+      return day >= summary.start && day <= summary.end;
+    })
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const periodIncidents = inPeriod(incidents);
+  const periodFuel = inPeriod(fuelLoads);
+  const fuelLiters = periodFuel.reduce((sum, load) => sum + (Number(load.liters) || 0), 0);
+  const fuelAmount = periodFuel.reduce((sum, load) => sum + (Number(load.amount) || 0), 0);
+  const incidentRows = periodIncidents.map((incident) => `
+      <tr><td>${escapeHtml(formatReportDate(incident.created_at))}</td><td>${escapeHtml(incident.unit_id || '—')}</td><td>${escapeHtml(incident.route_id || '—')}</td><td>${escapeHtml(getIncidentTypeLabel(incident.incident_type))}</td><td>${escapeHtml(getSeverityLabel(incident.severity))}</td><td>${escapeHtml(incident.description || '—')}</td></tr>
+    `).join('') || '<tr><td colspan="6">Sin incidencias en este periodo.</td></tr>';
+  const fuelRows = periodFuel.map((load) => `
+      <tr><td>${escapeHtml(formatReportDate(load.created_at))}</td><td>${escapeHtml(load.unit_id || '—')}</td><td>${escapeHtml(load.route_id || '—')}</td><td class="num">${escapeHtml(formatLiters(load.liters))}</td><td class="num">${load.amount === null || load.amount === undefined ? '—' : escapeHtml(moneyFormatter.format(Number(load.amount)))}</td></tr>
+    `).join('') || '<tr><td colspan="5">Sin cargas de combustible en este periodo.</td></tr>';
   const range = summary.start === summary.end
     ? formatScheduledDate(summary.start)
     : `${formatScheduledDate(summary.start)} – ${formatScheduledDate(summary.end)}`;
@@ -65,6 +85,8 @@ export function renderSummary(reports, start, end, period = 'range') {
             <tr><th scope="row">Contenedores atendidos</th><td class="num">${summary.containers}</td></tr>
             <tr><th scope="row">Rutas con actividad</th><td class="num">${summary.routes}</td></tr>
             <tr><th scope="row">Días con recolección</th><td class="num">${summary.days}</td></tr>
+            <tr><th scope="row">Incidencias</th><td class="num">${periodIncidents.length}</td></tr>
+            <tr><th scope="row">Combustible cargado</th><td class="num">${escapeHtml(formatLiters(fuelLiters))} · ${escapeHtml(moneyFormatter.format(fuelAmount))}</td></tr>
           </tbody>
         </table>
       </section>
@@ -103,11 +125,28 @@ export function renderSummary(reports, start, end, period = 'range') {
         </table>
       </section>
 
+      <section>
+        <h2>5. Incidencias</h2>
+        <table class="summary-doc-table">
+          <thead><tr><th scope="col">Fecha</th><th scope="col">Unidad</th><th scope="col">Ruta</th><th scope="col">Tipo</th><th scope="col">Gravedad</th><th scope="col">Descripción</th></tr></thead>
+          <tbody>${incidentRows}</tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>6. Cargas de combustible</h2>
+        <table class="summary-doc-table">
+          <thead><tr><th scope="col">Fecha</th><th scope="col">Unidad</th><th scope="col">Ruta</th><th scope="col" class="num">Litros</th><th scope="col" class="num">Costo</th></tr></thead>
+          <tbody>${fuelRows}</tbody>
+          <tfoot><tr><th scope="row" colspan="3">Total</th><td class="num">${escapeHtml(formatLiters(fuelLiters))}</td><td class="num">${escapeHtml(moneyFormatter.format(fuelAmount))}</td></tr></tfoot>
+        </table>
+      </section>
+
       <footer class="summary-doc-signatures">
         <div><span></span>Elaboró</div>
         <div><span></span>Revisó</div>
       </footer>
-      <p class="summary-doc-note">Datos obtenidos de los reportes de contenedores registrados por el equipo de campo.</p>
+      <p class="summary-doc-note">Datos obtenidos de los reportes de contenedores, incidencias y cargas de combustible registrados por el equipo de campo.</p>
     </article>
   `;
 }
@@ -497,7 +536,7 @@ export function attachSummary(ctx) {
     const [start, end] = getRange();
     content.innerHTML = showBoard
       ? renderSummaryBoard(ctx.reports, start, end, period.value, material)
-      : renderSummary(ctx.reports, start, end, period.value);
+      : renderSummary(ctx.reports, start, end, period.value, { incidents: ctx.incidents, fuelLoads: ctx.fuelLoads });
     boardToggle.setAttribute('aria-pressed', String(showBoard));
     boardToggle.innerHTML = showBoard
       ? `${icon('description')}<span>Ver documento</span>`

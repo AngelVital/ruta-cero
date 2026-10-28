@@ -99,11 +99,13 @@ function createAdminContext(container, reports, { incidents, fuelLoads, inspecti
     showAllReports: false,
     selectedScheduleDate: getOperationalDate(),
     displayedMonth: parseDateKey(getOperationalDate()),
+    calendarEventList: null,
     openReport: () => {},
     updateRoutes: () => updateRoutes(ctx),
     updateCalendar: () => {
       container.querySelector('#admin-calendar-container').innerHTML = renderRouteScheduleCalendar(
-        ctx.routes, ctx.selectedScheduleDate, ctx.displayedMonth, ctx.reports
+        ctx.routes, ctx.selectedScheduleDate, ctx.displayedMonth, ctx.reports,
+        { incidents: ctx.incidents, fuelLoads: ctx.fuelLoads, openList: ctx.calendarEventList }
       );
     },
     /** Stores routes already saved in Supabase in the local cache and refreshes the panel. */
