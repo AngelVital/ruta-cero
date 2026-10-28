@@ -6,19 +6,28 @@ export function renderEntryScreen(message = '') {
       <aside class="entry-brand-band" aria-label="Ruta Cero">
         <a class="entry-brand" href="/" aria-label="Ruta Cero, inicio">
           <span class="entry-brand-mark"><img src="/logo-light.svg" alt=""></span>        </a>
-        <svg class="entry-routes" viewBox="0 0 300 260" aria-hidden="true">
-          <path class="entry-route-base" d="M20 60 H120 V140 H280"/>
-          <path class="entry-route-base" d="M60 240 V180 H200 V40"/>
-          <path class="entry-route-active" d="M20 200 H90 V100 H180 V220 H280"/>
-          <path class="entry-route-flow" d="M20 200 H90 V100 H180 V220 H280"/>
-          <circle class="entry-route-stop" cx="20" cy="60" r="5"/>
-          <circle class="entry-route-stop" cx="280" cy="140" r="5"/>
-          <circle class="entry-route-stop" cx="60" cy="240" r="5"/>
-          <circle class="entry-route-stop" cx="200" cy="40" r="5"/>
-          <circle class="entry-route-stop is-active" cx="20" cy="200" r="6"/>
-          <circle class="entry-route-stop is-active" cx="90" cy="100" r="6"/>
-          <circle class="entry-route-stop is-active" cx="180" cy="100" r="6"/>
-          <circle class="entry-route-end" cx="280" cy="220" r="9"/>
+        <svg class="entry-routes" aria-hidden="true">
+          <!-- Coordinates are multiples of the band's 36px grid; the 0.5 offset centers strokes on its 1px lines -->
+          <g transform="translate(0.5 0.5)">
+            <path class="entry-route-base" d="M72 324 H288 V468 H504"/>
+            <path class="entry-route-base" d="M252 612 H468 V792 H576"/>
+            <path class="entry-route-base" d="M36 540 V792 H216 V972"/>
+            <path class="entry-route-base" d="M396 324 V396 H540"/>
+            <path class="entry-route-active" d="M36 396 H180 V540 H360 V720 H108 V864 H288"/>
+            <path class="entry-route-flow" d="M36 396 H180 V540 H360 V720 H108 V864 H288"/>
+            <circle class="entry-route-stop" cx="72" cy="324" r="3"/>
+            <circle class="entry-route-stop" cx="504" cy="468" r="3"/>
+            <circle class="entry-route-stop" cx="252" cy="612" r="3"/>
+            <circle class="entry-route-stop" cx="468" cy="792" r="3"/>
+            <circle class="entry-route-stop" cx="36" cy="540" r="3"/>
+            <circle class="entry-route-stop" cx="216" cy="792" r="3"/>
+            <circle class="entry-route-stop" cx="396" cy="324" r="3"/>
+            <circle class="entry-route-stop is-active" cx="36" cy="396" r="3.5"/>
+            <circle class="entry-route-stop is-active" cx="180" cy="540" r="3.5"/>
+            <circle class="entry-route-stop is-active" cx="360" cy="720" r="3.5"/>
+            <circle class="entry-route-stop is-active" cx="108" cy="864" r="3.5"/>
+            <circle class="entry-route-end" cx="288" cy="864" r="6"/>
+          </g>
         </svg>
         <div class="entry-brand-note">
           <span class="entry-brand-rule"></span>

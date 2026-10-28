@@ -70,44 +70,46 @@
   width: 100%;
 }
 
+/* Drawn 1:1 in px (no viewBox) so the routes stay on the background grid */
 .entry-routes {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  max-width: 380px;
-  max-height: 42vh;
-  margin: 32px 0;
+  height: 100%;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
+  /* Fades out behind the logo and the bottom note */
+  -webkit-mask-image: linear-gradient(transparent 260px, #000 340px, #000 calc(100% - 140px), transparent calc(100% - 90px));
+  mask-image: linear-gradient(transparent 260px, #000 340px, #000 calc(100% - 140px), transparent calc(100% - 90px));
 }
 
 .entry-route-base {
-  stroke: rgba(226, 241, 232, 0.18);
-  stroke-width: 4;
+  stroke: rgba(226, 241, 232, 0.28);
+  stroke-width: 1;
 }
 
 .entry-route-active {
   stroke: #c3d67a;
-  stroke-width: 5;
+  stroke-width: 2;
 }
 
 /* Dashes moving along the active route, like a truck on its way */
 .entry-route-flow {
   stroke: #173a31;
   stroke-width: 2;
-  stroke-dasharray: 6 14;
+  stroke-dasharray: 4 14;
   animation: entry-route-flow 1.6s linear infinite;
 }
 
 @keyframes entry-route-flow {
-  to { stroke-dashoffset: -20; }
+  to { stroke-dashoffset: -18; }
 }
 
 .entry-route-stop {
   fill: #173a31;
-  stroke: rgba(226, 241, 232, 0.35);
-  stroke-width: 3;
+  stroke: rgba(226, 241, 232, 0.5);
+  stroke-width: 1.5;
 }
 
 .entry-route-stop.is-active {
@@ -117,7 +119,7 @@
 .entry-route-end {
   fill: #f0c44a;
   stroke: #173a31;
-  stroke-width: 3;
+  stroke-width: 2;
 }
 
 .entry-brand-note {
