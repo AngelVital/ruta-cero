@@ -1,6 +1,23 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Supabase (REST, Storage signed URLs, Realtime), the Google Maps embed of the route map, and photos
+// held as data URLs until upload. Inline styles stay allowed: screens set widths and colors with style="".
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://*.supabase.co",
+  "font-src 'self' data:",
+  "connect-src 'self' data: https://*.supabase.co wss://*.supabase.co",
+  "media-src 'self' blob: mediastream:",
+  'frame-src https://www.google.com',
+  "worker-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'"
+].join('; ');
+
 export default defineConfig(({ mode }) => ({
   server: {
     port: 5173,
@@ -10,10 +27,20 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: true
+    sourcemap: false
   },
   base: './',
   plugins: [
+    // Build only: the dev server injects inline scripts and its own websocket.
+    {
+      name: 'content-security-policy',
+      apply: 'build',
+      transformIndexHtml: () => [{
+        tag: 'meta',
+        attrs: { 'http-equiv': 'Content-Security-Policy', content: contentSecurityPolicy },
+        injectTo: 'head-prepend'
+      }]
+    },
     // Web build only: lets phones install the field panel from the browser (Vercel).
     // The APK already ships its files, so it gets no service worker.
     VitePWA({
