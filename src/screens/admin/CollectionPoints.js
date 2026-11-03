@@ -13,7 +13,7 @@ function getDaysSinceCollection(dateString) {
 function renderCollectionPoint(point, report) {
   const lastCollectedOn = report?.created_at?.slice(0, 10) || point.lastCollectedOn;
   const daysSinceCollection = getDaysSinceCollection(lastCollectedOn);
-  const ageClass = daysSinceCollection >= 7 ? 'age-overdue' : daysSinceCollection >= 4 ? 'age-due-soon' : 'age-recent';
+  const ageClass = daysSinceCollection >= 2 ? 'age-overdue' : daysSinceCollection === 1 ? 'age-due-soon' : 'age-recent';
 
   return `
     <tr>
