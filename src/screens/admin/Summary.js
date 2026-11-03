@@ -394,7 +394,7 @@ function attachBoardHover(content) {
   content.addEventListener('focusin', placeRowTip);
 }
 
-function downloadFile(content, type, name) {
+export function downloadFile(content, type, name) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(new Blob([content], { type }));
   link.download = name;

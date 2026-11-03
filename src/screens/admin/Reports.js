@@ -1,9 +1,12 @@
 import { getFillLevelLabel, normalizeFillLevel } from '../../components/CapacityMeter.js';
+import { collectionPoints } from '../../data/collectionPoints.js';
 import { getActiveIncidents } from '../../domain/report.js';
 import { getReportsForDate } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
-import { formatIncidentLabel, formatMaterialLabel, formatReportDate, formatReportLabel, formatReportWeight, renderCrewMeta } from './format.js';
+import { createZip } from '../../utils/zip.js';
+import { formatIncidentLabel, formatMaterialLabel, formatOperationalTime, formatReportDate, formatReportLabel, formatReportWeight, renderCrewMeta } from './format.js';
+import { downloadFile } from './Summary.js';
 
 const evidenceLabels = {
   initialExterior: 'Exterior inicial',
@@ -11,6 +14,42 @@ const evidenceLabels = {
   finalExterior: 'Exterior final',
   finalInterior: 'Interior final'
 };
+
+// Only images captured by the field app (inline or signed Storage URLs).
+const isPhotoUrl = (value) => typeof value === 'string' && /^(data:image\/|https?:\/\/)/.test(value);
+const pointNames = Object.fromEntries(collectionPoints.map((point) => [point.id, point.name]));
+const toFileName = (text) => String(text).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.-]+/g, '-');
+
+/** e.g. CONT-03_Parque-Morelos_2026-11-03_1015_R-01: container first, so a day's zip sorts by container. */
+function reportFilePrefix(report) {
+  const created = new Date(report.created_at);
+  return toFileName([
+    report.container_id,
+    pointNames[report.container_id],
+    getOperationalDate(created),
+    formatOperationalTime(created).replace(':', ''),
+    report.route_id
+  ].filter(Boolean).join('_'));
+}
+
+/** Downloads one zip with the evidence photos of `reports`; returns how many photos it holds. */
+export async function downloadReportPhotos(reports, fetchPhotos, zipName) {
+  const files = (await Promise.all(reports.map(async (report) => {
+    const photos = await fetchPhotos(report.id);
+    return Promise.all(Object.keys(evidenceLabels).filter((key) => isPhotoUrl(photos[key])).map(async (key) => {
+      const response = await fetch(photos[key]);
+      if (!response.ok) throw new Error(`foto ${evidenceLabels[key]} de ${report.container_id} (${response.status})`);
+      const blob = await response.blob();
+      const extension = { 'image/png': 'png', 'image/webp': 'webp' }[blob.type] || 'jpg';
+      return {
+        name: `${reportFilePrefix(report)}_${toFileName(evidenceLabels[key])}.${extension}`,
+        data: new Uint8Array(await blob.arrayBuffer())
+      };
+    }));
+  }))).flat();
+  if (files.length) downloadFile(createZip(files), 'application/zip', toFileName(zipName));
+  return files.length;
+}
 
 export function renderReportRows(reports, showAll = false) {
   if (!reports.length) {
@@ -87,6 +126,7 @@ export function renderReportDialog(report, fleetNames = null) {
         <h3>${icon('photo_camera')} Evidencia registrada</h3>
         <ul class="admin-report-evidence-list">${evidenceItems}</ul>
         <div class="admin-field-event-photos" id="admin-report-photos">Cargando fotos…</div>
+        <button class="admin-button" type="button" id="admin-report-download-photos">${icon('download')}<span>Descargar fotos (.zip)</span></button>
       </section>
       <section class="admin-report-dialog-section admin-report-comments-section">
         <h3>${icon('chat')} Comentarios</h3>
@@ -124,17 +164,35 @@ export function attachReports(ctx, { refresh, fetchPhotos }) {
   const { container } = ctx;
   const reportDialog = container.querySelector('#admin-report-dialog');
 
+  /** Shared with the calendar: zips the photos of `reports`, using `button` to show progress. */
+  ctx.downloadReportPhotos = async (button, reports, zipName) => {
+    const label = button.querySelector('span:last-child');
+    const text = label.textContent;
+    button.disabled = true;
+    label.textContent = 'Preparando zip…';
+    try {
+      if (!await downloadReportPhotos(reports, fetchPhotos, zipName)) window.alert('No hay fotos guardadas para descargar.');
+    } catch (error) {
+      window.alert(`No se pudieron descargar las fotos: ${error.message}`);
+    }
+    label.textContent = text;
+    button.disabled = false;
+  };
+
   ctx.openReport = async (report) => {
     if (!report || !reportDialog) return;
     container.querySelector('#admin-report-dialog-content').innerHTML = renderReportDialog(report, ctx.fleetNames);
+    container.querySelector('#admin-report-download-photos').addEventListener('click', (event) => {
+      ctx.downloadReportPhotos(event.currentTarget, [report], `fotos_${reportFilePrefix(report)}.zip`);
+    });
     reportDialog.showModal();
 
     const photosEl = container.querySelector('#admin-report-photos');
     try {
       const photos = await fetchPhotos(report.id);
-      // Fixed order (initial → final) and only images captured by the field app (inline or signed Storage URLs).
+      // Fixed order (initial → final).
       const items = Object.keys(evidenceLabels)
-        .filter((key) => typeof photos[key] === 'string' && /^(data:image\/|https?:\/\/)/.test(photos[key]))
+        .filter((key) => isPhotoUrl(photos[key]))
         .map((key) => `<img src="${escapeHtml(photos[key])}" alt="${escapeHtml(evidenceLabels[key])}" title="${escapeHtml(evidenceLabels[key])}">`);
       photosEl.innerHTML = items.length ? items.join('') : 'Sin fotos guardadas.';
     } catch (error) {

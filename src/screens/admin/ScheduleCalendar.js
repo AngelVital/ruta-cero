@@ -1,4 +1,5 @@
 import { getIncidentTypeLabel } from '../../domain/fieldEvents.js';
+import { getReportsForDate } from '../../domain/route.js';
 import { assignRouteToDate, getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
 import { formatMonthTitle, formatOperationalTime, formatScheduledDate, toDateKey } from './format.js';
@@ -126,6 +127,7 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
         <div class="admin-calendar-reports">
           <h4>Reportes del día <span>${selectedReports.length}</span></h4>
           <ul>${reportsHtml}</ul>
+          ${selectedReports.length ? `<button type="button" class="admin-button" data-calendar-photos>${icon('download')}<span>Descargar fotos del día (.zip)</span></button>` : ''}
         </div>
       </form>
     </div>
@@ -157,6 +159,13 @@ export function attachScheduleCalendar(ctx, { saveRouteSchedule }) {
       const kind = listButton.dataset.calendarEvents;
       ctx.calendarEventList = ctx.calendarEventList === kind ? null : kind;
       ctx.updateCalendar();
+      return;
+    }
+
+    const photosButton = event.target.closest('[data-calendar-photos]');
+    if (photosButton) {
+      const date = ctx.selectedScheduleDate;
+      ctx.downloadReportPhotos(photosButton, getReportsForDate(ctx.reports, date), `fotos_${date}.zip`);
       return;
     }
 
