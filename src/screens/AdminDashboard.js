@@ -284,6 +284,22 @@ function attachAdminDashboardContentEvents(container, reports, fieldEvents) {
     syncThemeToggle(container, themeToggle);
   });
 
+  // The options menu closes on a click outside it or on Escape.
+  const options = container.querySelector('#admin-options');
+  const closeOptions = (event) => {
+    if (!options?.open) return;
+    if (event.type === 'keydown' ? event.key === 'Escape' : !options.contains(event.target)) options.open = false;
+  };
+  document.addEventListener('click', closeOptions);
+  document.addEventListener('keydown', closeOptions);
+
+  const sidebarToggle = container.querySelector('#admin-sidebar-toggle');
+  syncSidebarToggle(container, sidebarToggle);
+  sidebarToggle?.addEventListener('click', () => {
+    setAdminSidebar(container, container.dataset.sidebar === 'collapsed' ? 'open' : 'collapsed');
+    syncSidebarToggle(container, sidebarToggle);
+  });
+
   container.querySelector('#admin-signout')?.addEventListener('click', async () => {
     try {
       await (await api()).signOut();
@@ -380,14 +396,39 @@ function syncThemeToggle(container, button) {
   button.innerHTML = `${icon(isDark ? 'light_mode' : 'dark_mode')}<span>${label}</span>`;
 }
 
+const SIDEBAR_KEY = 'ruta-cero-admin-sidebar';
+
+/** Hides the side menu (data-sidebar on #admin-root) so the tables get the full width. */
+function setAdminSidebar(container, state) {
+  container.dataset.sidebar = state;
+  try {
+    localStorage.setItem(SIDEBAR_KEY, state);
+  } catch {
+    // Storage blocked (private mode): the choice lasts for this visit only.
+  }
+}
+
+function syncSidebarToggle(container, button) {
+  if (!button) return;
+  const isCollapsed = container.dataset.sidebar === 'collapsed';
+  const label = isCollapsed ? 'Mostrar menú' : 'Ocultar menú';
+  button.setAttribute('aria-label', label);
+  button.setAttribute('aria-expanded', String(!isCollapsed));
+  button.title = label;
+  button.innerHTML = icon(isCollapsed ? 'left_panel_open' : 'left_panel_close');
+}
+
 export function attachAdminDashboardEvents(container) {
   let saved = null;
+  let savedSidebar = null;
   try {
     saved = localStorage.getItem(THEME_KEY);
+    savedSidebar = localStorage.getItem(SIDEBAR_KEY);
   } catch {
     // Storage blocked: fall back to the system setting.
   }
   // Without a saved choice, follow the system setting.
   container.dataset.theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  container.dataset.sidebar = savedSidebar === 'collapsed' ? 'collapsed' : 'open';
   mountAdminDashboard(container);
 }

@@ -417,21 +417,25 @@
   color: var(--c-f3f7f3);
 }
 
+/* The header is light in light mode and dark in dark mode: each theme shows the logo drawn for its background. */
 .admin-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 52px;
-  margin: 4px 15px 40px;
 }
 
-.admin-brand-mark {
-  display: grid;
-  width: 150px;
+.admin-brand img {
+  display: block;
+  height: 48px;
+  width: auto;
 }
 
-.admin-brand-mark img {
-  width: 100%;
+.admin-brand-dark,
+#admin-root[data-theme="dark"] .admin-brand-light {
+  display: none !important;
+}
+
+#admin-root[data-theme="dark"] .admin-brand-dark {
+  display: block !important;
 }
 
 .admin-nav-label,
@@ -558,6 +562,102 @@
   border-bottom: 1px solid var(--admin-line);
 }
 
+.admin-topbar-start {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-sidebar-toggle {
+  width: 42px;
+  padding: 0;
+}
+
+.admin-options {
+  position: relative;
+}
+
+.admin-options-trigger {
+  width: 42px;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-options-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.admin-options[open] .admin-options-trigger {
+  border-color: var(--c-98a49b);
+  background: var(--c-f0f2ef);
+}
+
+.admin-options-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 2px;
+  width: max-content;
+  min-width: 220px;
+  max-width: min(300px, calc(100vw - 32px));
+  padding: 6px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  background: var(--c-ffffff);
+  box-shadow: 0 10px 28px rgba(27, 54, 39, 0.16);
+}
+
+.admin-options-account {
+  display: grid;
+  min-width: 0;
+  margin-bottom: 4px;
+  padding: 8px 12px 12px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-options-account strong {
+  overflow: hidden;
+  color: var(--c-33453a);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-options-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-33453a);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-options-item:hover {
+  background: var(--c-f0f2ef);
+}
+
+#admin-signout {
+  color: var(--c-a95143);
+}
+
+#admin-root[data-sidebar="collapsed"] .admin-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#admin-root[data-sidebar="collapsed"] .admin-sidebar {
+  display: none;
+}
+
 .admin-breadcrumb {
   color: var(--c-68776e);
   font-size: 13px;
@@ -568,34 +668,10 @@
   color: var(--c-a7b2aa);
 }
 
-.admin-topbar-actions,
-.admin-profile {
+.admin-topbar-actions {
   display: flex;
   align-items: center;
-}
-
-.admin-topbar-actions {
   gap: 18px;
-}
-
-.admin-demo-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 29px;
-  padding: 0 9px;
-  border: 1px solid var(--c-e7c779);
-  background: var(--c-fff7df);
-  color: var(--c-795411);
-  font-family: var(--font-headline);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.admin-demo-pill i {
-  width: 7px;
-  height: 7px;
-  background: var(--c-d89a20);
 }
 
 .admin-icon-button {
@@ -612,24 +688,6 @@
 .admin-icon-button:hover {
   border-color: var(--admin-line);
   background: var(--c-f4f7f4);
-}
-
-.admin-profile {
-  gap: 9px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.admin-avatar {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  background: var(--c-d8e9df);
-  color: var(--c-18543e);
-  font-family: var(--font-headline);
-  font-size: 14px;
-  font-weight: 800;
 }
 
 .admin-content {
@@ -1691,11 +1749,6 @@ tr[data-route-status="completed"] .admin-progress-track span {
     gap: 10px;
   }
 
-  .admin-profile-name,
-  .admin-theme-toggle span:last-child {
-    display: none;
-  }
-
   .admin-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1730,14 +1783,10 @@ tr[data-route-status="completed"] .admin-progress-track span {
     border-bottom: 3px solid var(--c-28a879);
   }
 
-  .admin-brand {
-    min-height: 44px;
-    margin: 0 4px 10px;
+  .admin-brand img {
+    height: 38px;
   }
 
-  .admin-brand-mark {
-    width: 96px;
-  }
   .admin-nav-label,
   .admin-sidebar-foot { display: none; }
 
@@ -1782,19 +1831,13 @@ tr[data-route-status="completed"] .admin-progress-track span {
     padding: 0 16px;
   }
 
+  /* The logo already names the app; the breadcrumb would crowd the narrow header. */
   .admin-breadcrumb {
-    font-size: 11px;
+    display: none;
   }
 
   .admin-topbar-actions {
     gap: 7px;
-  }
-
-  .admin-demo-pill {
-    min-height: 25px;
-    gap: 5px;
-    padding: 0 6px;
-    font-size: 9px;
   }
 
   .admin-icon-button {
@@ -1804,12 +1847,6 @@ tr[data-route-status="completed"] .admin-progress-track span {
 
   .admin-icon-button .material-symbols-outlined {
     font-size: 18px !important;
-  }
-
-  .admin-avatar {
-    width: 29px;
-    height: 29px;
-    font-size: 12px;
   }
 
   .admin-content {
@@ -2004,11 +2041,6 @@ tr[data-route-status="completed"] .admin-progress-track span {
   background: linear-gradient(145deg, var(--c-f4f7f3) 0%, var(--c-eaf0eb) 100%);
 }
 
-#admin-root .admin-avatar {
-  border-radius: 50% !important;
-}
-
-#admin-root .admin-demo-pill,
 #admin-root .admin-nav-count,
 #admin-root .admin-heading-count,
 #admin-root .admin-status,

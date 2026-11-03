@@ -25,10 +25,7 @@ export function renderAdminOperations({
 
   return `
     <div class="admin-shell">
-      <aside class="admin-sidebar">
-        <a class="admin-brand" href="/?mode=admin" aria-label="Ruta Cero, resumen administrativo">
-          <span class="admin-brand-mark"><img src="/logo-light.svg" alt=""></span>        </a>
-
+      <aside class="admin-sidebar" id="admin-sidebar">
         <div class="admin-nav-label">OPERACIÓN</div>
         <nav class="admin-nav" aria-label="Navegación administrativa">
           <a class="admin-nav-link is-active" href="#overview" aria-current="page">${icon('space_dashboard')}<span>Resumen</span></a>
@@ -49,14 +46,25 @@ export function renderAdminOperations({
 
       <div class="admin-workspace">
         <header class="admin-topbar">
-          <div class="admin-breadcrumb">Ruta Cero <span>/</span> Administración</div>
+          <div class="admin-topbar-start">
+            <button type="button" class="admin-button admin-sidebar-toggle" id="admin-sidebar-toggle" aria-controls="admin-sidebar">${icon('left_panel_close')}</button>
+            <a class="admin-brand" href="/?mode=admin" aria-label="Ruta Cero, resumen administrativo">
+              <img class="admin-brand-light" src="/logo.svg" alt="">
+              <img class="admin-brand-dark" src="/logo-light.svg" alt="">
+            </a>
+            <div class="admin-breadcrumb">Ruta Cero <span>/</span> Administración</div>
+          </div>
           <div class="admin-topbar-actions">
-            <span class="admin-demo-pill"><i></i> REPORTES EN VIVO</span>
-            <div class="admin-profile" aria-label="Sesión de ${email}">
-              <span class="admin-avatar">${escapeHtml((user.email || 'AD').slice(0, 2).toUpperCase())}</span><span class="admin-profile-name">${email}</span>
-            </div>
-            <button type="button" class="admin-button admin-theme-toggle" id="admin-theme-toggle">${icon('dark_mode')}<span>Modo oscuro</span></button>
-            <button type="button" class="admin-button" id="admin-signout">Cerrar sesión</button>
+            <details class="admin-options" id="admin-options">
+              <summary class="admin-button admin-options-trigger" aria-label="Opciones" title="Opciones">${icon('more_vert')}</summary>
+              <div class="admin-options-menu">
+                <div class="admin-options-account">
+                  <strong title="${email}">${escapeHtml((user.email || 'Administrador').split('@')[0])}</strong>
+                </div>
+                <button type="button" class="admin-options-item admin-theme-toggle" id="admin-theme-toggle">${icon('dark_mode')}<span>Modo oscuro</span></button>
+                <button type="button" class="admin-options-item" id="admin-signout">${icon('logout')}<span>Cerrar sesión</span></button>
+              </div>
+            </details>
           </div>
         </header>
 
@@ -175,7 +183,6 @@ export function renderAdminOperations({
             <section class="admin-section admin-points-section" id="points">
               <div class="admin-section-heading">
                 <div><div class="admin-section-kicker">COBERTURA DE LA CIUDAD</div><h2>Puntos de recolección <span class="admin-heading-count">${String(collectionPoints.length).padStart(2, '0')}</span></h2></div>
-                <a class="admin-text-link" href="#points">Ver los ${collectionPoints.length} puntos ${icon('arrow_forward')}</a>
               </div>
               <div class="admin-points-table-wrap">
                 <table class="admin-points-table">
