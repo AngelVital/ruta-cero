@@ -34,6 +34,9 @@ function reportFilePrefix(report) {
 
 /** Downloads one zip with the evidence photos of `reports`; returns how many photos it holds. */
 export async function downloadReportPhotos(reports, fetchPhotos, zipName) {
+  zipName = toFileName(zipName);
+  // Everything goes inside a folder named like the zip, so extracting it never scatters the photos.
+  const folder = zipName.replace(/\.zip$/, '');
   const files = (await Promise.all(reports.map(async (report) => {
     const photos = await fetchPhotos(report.id);
     return Promise.all(Object.keys(evidenceLabels).filter((key) => isPhotoUrl(photos[key])).map(async (key) => {
@@ -42,12 +45,12 @@ export async function downloadReportPhotos(reports, fetchPhotos, zipName) {
       const blob = await response.blob();
       const extension = { 'image/png': 'png', 'image/webp': 'webp' }[blob.type] || 'jpg';
       return {
-        name: `${reportFilePrefix(report)}_${toFileName(evidenceLabels[key])}.${extension}`,
+        name: `${folder}/${reportFilePrefix(report)}_${toFileName(evidenceLabels[key])}.${extension}`,
         data: new Uint8Array(await blob.arrayBuffer())
       };
     }));
   }))).flat();
-  if (files.length) downloadFile(createZip(files), 'application/zip', toFileName(zipName));
+  if (files.length) downloadFile(createZip(files), 'application/zip', zipName);
   return files.length;
 }
 
