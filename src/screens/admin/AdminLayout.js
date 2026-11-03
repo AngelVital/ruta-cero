@@ -26,6 +26,10 @@ export function renderAdminOperations({
   return `
     <div class="admin-shell">
       <aside class="admin-sidebar" id="admin-sidebar">
+        <a class="admin-sidebar-brand" href="/?mode=admin" aria-label="Ruta Cero, resumen administrativo">
+          <img src="/logo-light.svg" alt="">
+        </a>
+
         <div class="admin-nav-label">OPERACIÓN</div>
         <nav class="admin-nav" aria-label="Navegación administrativa">
           <a class="admin-nav-link is-active" href="#overview" aria-current="page">${icon('space_dashboard')}<span>Resumen</span></a>
@@ -48,7 +52,7 @@ export function renderAdminOperations({
         <header class="admin-topbar">
           <div class="admin-topbar-start">
             <button type="button" class="admin-button admin-sidebar-toggle" id="admin-sidebar-toggle" aria-controls="admin-sidebar">${icon('left_panel_close')}</button>
-            <a class="admin-brand" href="/?mode=admin" aria-label="Ruta Cero, resumen administrativo">
+            <a class="admin-brand admin-topbar-brand" href="/?mode=admin" aria-label="Ruta Cero, resumen administrativo">
               <img class="admin-brand-light" src="/logo.svg" alt="">
               <img class="admin-brand-dark" src="/logo-light.svg" alt="">
             </a>

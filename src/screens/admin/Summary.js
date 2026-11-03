@@ -68,7 +68,10 @@ export function renderSummary(reports, start, end, period = 'range', { incidents
   return `
     <article class="summary-doc">
       <header class="summary-doc-header">
-        <div><strong>RUTA CERO</strong><span>Coordinación de recolección de residuos reciclables</span></div>
+        <div class="summary-doc-brand" role="img" aria-label="Ruta Cero">
+          <img class="summary-doc-logo-light" src="/logo.svg" alt="">
+          <img class="summary-doc-logo-dark" src="/logo-light.svg" alt="">
+        </div>
         <div class="summary-doc-issued"><span>Fecha de emisión</span><strong>${escapeHtml(issuedFormatter.format(new Date()))}</strong></div>
       </header>
 

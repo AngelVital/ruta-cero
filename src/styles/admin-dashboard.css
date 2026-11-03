@@ -417,10 +417,26 @@
   color: var(--c-f3f7f3);
 }
 
+/* Desktop: the logo sits atop the always-visible sidebar. Phones move it to the header (see max-width: 680px). */
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  margin: 4px 15px 40px;
+}
+
+.admin-sidebar-brand img {
+  width: 150px;
+}
+
 /* The header is light in light mode and dark in dark mode: each theme shows the logo drawn for its background. */
 .admin-brand {
   display: flex;
   align-items: center;
+}
+
+.admin-topbar .admin-topbar-brand {
+  display: none;
 }
 
 .admin-brand img {
@@ -573,6 +589,11 @@
   padding: 0;
 }
 
+/* Only phones can hide the menu; on desktop it is always visible. */
+.admin-topbar .admin-sidebar-toggle {
+  display: none;
+}
+
 .admin-options {
   position: relative;
 }
@@ -648,14 +669,6 @@
 
 #admin-signout {
   color: var(--c-a95143);
-}
-
-#admin-root[data-sidebar="collapsed"] .admin-shell {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-#admin-root[data-sidebar="collapsed"] .admin-sidebar {
-  display: none;
 }
 
 .admin-breadcrumb {
@@ -1783,8 +1796,24 @@ tr[data-route-status="completed"] .admin-progress-track span {
     border-bottom: 3px solid var(--c-28a879);
   }
 
+  .admin-sidebar-brand {
+    display: none;
+  }
+
+  .admin-topbar .admin-topbar-brand {
+    display: flex;
+  }
+
   .admin-brand img {
     height: 38px;
+  }
+
+  .admin-topbar .admin-sidebar-toggle {
+    display: inline-flex;
+  }
+
+  #admin-root[data-sidebar="collapsed"] .admin-sidebar {
+    display: none;
   }
 
   .admin-nav-label,
@@ -2760,6 +2789,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
 .summary-doc { color: var(--c-1a2d24); font-size: 13px; }
 .summary-doc-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 12px;
@@ -2769,6 +2799,13 @@ tr[data-route-status="completed"] .admin-progress-track span {
 .summary-doc-header strong { font-family: var(--font-headline); font-size: 16px; letter-spacing: 0.04em; }
 .summary-doc-header span { color: var(--c-5b6b62); font-size: 11px; }
 .summary-doc-issued { text-align: right; }
+.summary-doc-brand img { display: block; height: 56px; width: auto; }
+/* Screen follows the panel theme; the printed PDF is always light, so it keeps the dark-lettered logo. */
+.summary-doc-brand .summary-doc-logo-dark { display: none; }
+@media screen {
+  #admin-root[data-theme="dark"] .summary-doc-brand .summary-doc-logo-light { display: none; }
+  #admin-root[data-theme="dark"] .summary-doc-brand .summary-doc-logo-dark { display: block; }
+}
 .summary-doc-title { margin: 18px 0 2px; font-family: var(--font-headline); font-size: 20px; font-weight: 800; }
 .summary-doc-period { margin: 0; font-size: 15px; font-weight: 700; color: var(--admin-green); }
 .summary-doc-range { margin: 2px 0 0; color: var(--c-5b6b62); font-size: 12px; }
