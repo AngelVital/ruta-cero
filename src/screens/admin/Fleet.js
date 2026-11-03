@@ -76,6 +76,7 @@ export function attachFleet(ctx, { addFleetResource, archiveFleetResource }) {
     try {
       const created = await addFleetResource(kind, name);
       ctx.fleet = [...ctx.fleet, created].sort((a, b) => a.name.localeCompare(b.name));
+      ctx.fleetNames?.set(created.id, created.name);
       form.reset();
       update();
       showMessage(`${created.name} registrado con el id ${created.id}.`);

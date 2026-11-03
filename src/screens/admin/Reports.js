@@ -39,7 +39,7 @@ export function renderReportRows(reports, showAll = false) {
   }).join('');
 }
 
-export function renderReportDialog(report) {
+export function renderReportDialog(report, fleetNames = null) {
   const fillLevel = normalizeFillLevel(report.fill_level);
   const materials = Array.isArray(report.materials) ? report.materials : [];
   const materialWeights = report.material_weights && typeof report.material_weights === 'object'
@@ -67,7 +67,7 @@ export function renderReportDialog(report) {
     <div class="admin-report-dialog-meta">
       <span>${icon('inventory_2')} ${escapeHtml(report.container_id)}</span>
       <span>${icon('alt_route')} ${escapeHtml(report.route_id)}</span>
-      ${renderCrewMeta(report)}
+      ${renderCrewMeta(report, fleetNames)}
       <time>${escapeHtml(formatReportDate(report.created_at))}</time>
     </div>
     <div class="admin-report-dialog-metrics">
@@ -126,7 +126,7 @@ export function attachReports(ctx, { refresh, fetchPhotos }) {
 
   ctx.openReport = async (report) => {
     if (!report || !reportDialog) return;
-    container.querySelector('#admin-report-dialog-content').innerHTML = renderReportDialog(report);
+    container.querySelector('#admin-report-dialog-content').innerHTML = renderReportDialog(report, ctx.fleetNames);
     reportDialog.showModal();
 
     const photosEl = container.querySelector('#admin-report-photos');

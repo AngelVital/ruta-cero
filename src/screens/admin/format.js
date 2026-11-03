@@ -73,11 +73,19 @@ export function toDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-/** Unit, driver and assistant ids a field report was sent with, for the detail dialogs. */
-export function renderCrewMeta(record) {
+/**
+ * Unit, driver and assistant a field report was sent with, for the detail dialogs. With `names`
+ * (id → name), each one shows its name, keeping the id in the tooltip.
+ */
+export function renderCrewMeta(record, names = null) {
   return [
     ['local_shipping', record.unit_id, 'Sin unidad'],
     ['badge', record.driver_id, 'Sin operador'],
     ['group', record.assistant_id, 'Sin auxiliar']
-  ].map(([name, id, empty]) => `<span>${icon(name)} ${escapeHtml(id || empty)}</span>`).join('');
+  ].map(([name, id, empty]) => {
+    const resourceName = id ? names?.get(id) : null;
+    return resourceName
+      ? `<span title="${escapeHtml(id)}">${icon(name)} ${escapeHtml(resourceName)}</span>`
+      : `<span>${icon(name)} ${escapeHtml(id || empty)}</span>`;
+  }).join('');
 }

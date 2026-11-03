@@ -241,6 +241,16 @@ export async function fetchFleetResources() {
   return data;
 }
 
+/** Names of every unit and person, archived ones too, as a Map of id → name: old reports keep their ids. */
+export async function fetchFleetNames() {
+  const { data, error } = await requireSupabase()
+    .from('fleet_resources')
+    .select('id, name');
+
+  if (error) throw error;
+  return new Map(data.map(({ id, name }) => [id, name]));
+}
+
 /** The database assigns the id (U-001, OP-001, AUX-001); returns the created record. */
 export async function addFleetResource(kind, name) {
   const { data, error } = await requireSupabase()

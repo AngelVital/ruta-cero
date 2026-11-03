@@ -70,10 +70,10 @@ export function renderInspectionRows(inspections) {
   `).join('');
 }
 
-function renderInspectionDetail(inspection) {
+function renderInspectionDetail(inspection, fleetNames) {
   return `
     <div class="admin-report-dialog-meta">
-      ${renderCrewMeta(inspection)}
+      ${renderCrewMeta(inspection, fleetNames)}
       <span>${icon('alt_route')} ${escapeHtml(inspection.route_id || 'Sin ruta')}</span>
       <time>${escapeHtml(formatReportDate(inspection.created_at))}</time>
     </div>
@@ -111,10 +111,10 @@ export function renderClosureRows(closures) {
   `).join('');
 }
 
-function renderClosureDetail(closure) {
+function renderClosureDetail(closure, fleetNames) {
   return `
     <div class="admin-report-dialog-meta">
-      ${renderCrewMeta(closure)}
+      ${renderCrewMeta(closure, fleetNames)}
       <span>${icon('alt_route')} ${escapeHtml(closure.route_id || 'Sin ruta')}</span>
       <time>${escapeHtml(formatReportDate(closure.created_at))}</time>
     </div>
@@ -139,10 +139,10 @@ export function renderFieldEventDialogShell() {
   `;
 }
 
-function renderIncidentDetail(incident) {
+function renderIncidentDetail(incident, fleetNames) {
   return `
     <div class="admin-report-dialog-meta">
-      ${renderCrewMeta(incident)}
+      ${renderCrewMeta(incident, fleetNames)}
       <span>${icon('alt_route')} ${escapeHtml(incident.route_id || 'Sin ruta')}</span>
       ${incident.stop_id ? `<span>${icon('inventory_2')} ${escapeHtml(incident.stop_id)}</span>` : ''}
       <time>${escapeHtml(formatReportDate(incident.created_at))}</time>
@@ -161,10 +161,10 @@ function renderIncidentDetail(incident) {
   `;
 }
 
-function renderFuelDetail(load) {
+function renderFuelDetail(load, fleetNames) {
   return `
     <div class="admin-report-dialog-meta">
-      ${renderCrewMeta(load)}
+      ${renderCrewMeta(load, fleetNames)}
       <span>${icon('alt_route')} ${escapeHtml(load.route_id || 'Sin ruta')}</span>
       <time>${escapeHtml(formatReportDate(load.created_at))}</time>
     </div>
@@ -211,7 +211,7 @@ export function attachFieldEvents(ctx, { fetchPhotos }) {
     if (!record || !dialog) return;
     container.querySelector('#admin-field-event-kicker').textContent = kicker;
     container.querySelector('#admin-field-event-title').textContent = title;
-    container.querySelector('#admin-field-event-content').innerHTML = renderDetail(record);
+    container.querySelector('#admin-field-event-content').innerHTML = renderDetail(record, ctx.fleetNames);
     dialog.showModal();
 
     const photosEl = container.querySelector('#admin-field-event-photos');

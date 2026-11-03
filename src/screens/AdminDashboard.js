@@ -78,13 +78,19 @@ async function loadFieldEvents() {
 
 async function loadFleet() {
   try {
-    return { fleet: await (await api()).fetchFleetResources(), fleetError: '' };
+    const { fetchFleetResources, fetchFleetNames } = await api();
+    const [fleet, fleetNames] = await Promise.all([
+      fetchFleetResources(),
+      // Without names, the detail dialogs fall back to the ids.
+      fetchFleetNames().catch(() => new Map())
+    ]);
+    return { fleet, fleetNames, fleetError: '' };
   } catch (error) {
-    return { fleet: [], fleetError: `No se pudieron cargar unidades y personal: ${error.message}` };
+    return { fleet: [], fleetNames: new Map(), fleetError: `No se pudieron cargar unidades y personal: ${error.message}` };
   }
 }
 
-function createAdminContext(container, reports, { incidents, fuelLoads, inspections, closures, fleet }) {
+function createAdminContext(container, reports, { incidents, fuelLoads, inspections, closures, fleet, fleetNames }) {
   const routeMessage = container.querySelector('#admin-route-message');
   const ctx = {
     container,
@@ -95,6 +101,7 @@ function createAdminContext(container, reports, { incidents, fuelLoads, inspecti
     inspections,
     closures,
     fleet,
+    fleetNames,
     visibleReports: getReportsForDate(reports, getOperationalDate()),
     showAllReports: false,
     selectedScheduleDate: getOperationalDate(),
