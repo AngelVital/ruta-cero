@@ -686,16 +686,28 @@
   min-height: 42px;
   padding: 0 12px;
   border: 1px solid var(--c-cbd6ce);
+  border-radius: var(--radius-sm);
   background: var(--c-ffffff);
   color: var(--c-33453a);
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(27, 54, 39, 0.06);
 }
 
 .admin-button {
   cursor: pointer;
-  transition: background-color 130ms ease;
+  transition: background-color 130ms ease, border-color 130ms ease, box-shadow 130ms ease, transform 130ms ease;
+}
+
+.admin-button:hover {
+  border-color: var(--c-98a49b);
+  box-shadow: 0 3px 8px rgba(27, 54, 39, 0.1);
+}
+
+.admin-button:active {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 
 .admin-button-dark {
@@ -705,6 +717,7 @@
 }
 
 .admin-button-dark:hover {
+  border-color: var(--c-245143);
   background: var(--c-245143);
 }
 
