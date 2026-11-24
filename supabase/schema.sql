@@ -341,7 +341,7 @@ begin
           or exists (
             select 1
             from jsonb_array_elements_text(route->'point_ids') point_id
-            where point_id not in ('CONT-01', 'CONT-02', 'CONT-03', 'CONT-04', 'CONT-05', 'CONT-06', 'CONT-07', 'CONT-08')
+            where point_id not in ('CONT-01', 'CONT-02', 'CONT-03', 'CONT-04', 'CONT-05', 'CONT-06', 'CONT-07', 'CONT-08', 'CONT-09')
           )
         else true
       end

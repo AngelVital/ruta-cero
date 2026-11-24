@@ -49,6 +49,7 @@ test('la tabla administrativa conserva la fecha y ordena por identificador sin m
   assert.match(table, /datetime="2026-10-08"/);
   assert.ok(table.indexOf('CONT-01') < table.indexOf('CONT-02'));
   assert.ok(table.indexOf('CONT-07') < table.indexOf('CONT-08'));
+  assert.match(table, /CONT-09[\s\S]*Todos Santos[\s\S]*Sin registro/);
   assert.match(table, /admin-days-badge/);
   assert.doesNotMatch(table, /VISITADO|SIN REPORTE/);
   assert.doesNotMatch(table, /admin-point-route|RUTA ASIGNADA/);
