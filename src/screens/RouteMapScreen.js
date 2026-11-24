@@ -3,6 +3,8 @@
  */
 
 import { attachFieldSignOut, renderFieldOptionsMenu } from '../components/FieldOptionsMenu.js';
+import { notVisitedReport } from '../domain/report.js';
+import { queueFieldAction } from '../services/fieldSync.js';
 import { formatElapsedTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 
@@ -92,7 +94,9 @@ export function renderRouteMapScreen(state) {
         const isActive = stop.status === 'active';
 
         let statusBadge = '<span class="status-pill status-pill-xs status-pill-pending">PENDIENTE</span>';
-        if (isCompleted) {
+        if (isCompleted && stop.fillLevel === notVisitedReport.fillLevel) {
+          statusBadge = '<span class="status-pill status-pill-critical status-pill-xs"><span class="material-symbols-outlined">close</span>NO VISITADO</span>';
+        } else if (isCompleted) {
           statusBadge = '<span class="status-pill status-pill-optimal status-pill-xs"><span class="material-symbols-outlined">check</span>COMPLETADO</span>';
         } else if (isActive) {
           statusBadge = '<span class="status-pill status-pill-warning status-pill-xs"><span class="material-symbols-outlined">near_me</span>EN CURSO</span>';
@@ -115,9 +119,14 @@ export function renderRouteMapScreen(state) {
                   FINALIZAR RUTA
                 </button>
               ` : isActive ? `
-                <button type="button" class="btn-tactical btn-tactical-sm btn-scan-stop stop-card-action" data-container-id="${stop.id}">
-                  ESCANEAR QR
-                </button>
+                <div class="stop-card-actions">
+                  <button type="button" class="btn-tactical btn-tactical-sm btn-skip-stop stop-card-action" data-container-id="${stop.id}">
+                    NO VISITADO
+                  </button>
+                  <button type="button" class="btn-tactical btn-tactical-sm btn-scan-stop stop-card-action" data-container-id="${stop.id}">
+                    ESCANEAR QR
+                  </button>
+                </div>
               ` : ''}
             </div>
           </div>
@@ -147,7 +156,7 @@ export function attachRouteMapEvents(container, store) {
       e.stopPropagation();
       const cid = card.getAttribute('data-container-id');
       const selectedContainer = store.state.stops.find(stop => stop.id === cid);
-      if (selectedContainer?.status === 'active') {
+      if (selectedContainer && selectedContainer.status !== 'completed') {
         store.selectContainer(cid);
         document.getElementById('screen-viewport-root')?.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -162,6 +171,25 @@ export function attachRouteMapEvents(container, store) {
       if (selectedContainer?.status === 'active') {
         store.selectContainer(cid);
         store.setScreen('scanner');
+      }
+    });
+  });
+
+  container.querySelectorAll('.btn-skip-stop').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const cid = button.getAttribute('data-container-id');
+      if (!window.confirm(`¿Estás seguro de marcar ${cid} como no visitado? No se puede deshacer.`)) return;
+      button.disabled = true;
+      try {
+        // Saved on the device first; fieldSync sends it to Supabase when there is signal.
+        const queued = await queueFieldAction('report', { routeId: store.state.route.id, containerId: cid, report: notVisitedReport });
+        store.completeContainerReport(cid, notVisitedReport);
+        store.showToast(`${cid} registrado como no visitado${queued ? '' : ' en modo local'}`, queued ? 'success' : 'info');
+      } catch (error) {
+        console.error('No se pudo guardar el registro en el dispositivo:', error);
+        store.showToast(`No se pudo guardar el registro en el dispositivo: ${error.message}`, 'info', 8000);
+        button.disabled = false;
       }
     });
   });

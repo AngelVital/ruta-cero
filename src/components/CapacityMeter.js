@@ -1,7 +1,8 @@
 const fillLevelLabels = {
   low: 'BAJO',
   medium: 'MEDIO',
-  full: 'LLENO'
+  full: 'LLENO',
+  not_visited: 'NO VISITADO'
 };
 
 export function normalizeFillLevel(value) {

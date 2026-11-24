@@ -2,7 +2,7 @@ create table if not exists public.container_reports (
   id uuid primary key default gen_random_uuid(),
   route_id text not null,
   container_id text not null,
-  fill_level text not null check (fill_level in ('low', 'medium', 'full')),
+  fill_level text not null check (fill_level in ('low', 'medium', 'full', 'not_visited')),
   collected_kg numeric not null default 0 check (collected_kg >= 0),
   materials text[] not null default '{}',
   material_weights jsonb not null default '{}',
@@ -51,7 +51,7 @@ end $$;
 
 alter table public.container_reports
   add constraint container_reports_fill_level_check
-  check (fill_level in ('low', 'medium', 'full'));
+  check (fill_level in ('low', 'medium', 'full', 'not_visited'));
 
 alter table public.container_reports enable row level security;
 -- Only signed-in field accounts write reports; the anon key alone can't (it ships inside the app).

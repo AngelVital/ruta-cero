@@ -315,14 +315,19 @@ class TacticalStore {
     const isStarted = route.status === 'active' || (isSameRouteDay && current.route.status === 'EN RUTA');
     const returning = !isCompleted && mappedRouteStops.length > 0
       && (completedCount >= mappedRouteStops.length || (isSameRoute && current.route.returning));
-    if (firstPendingStop) firstPendingStop.status = 'active';
+    // A refresh of the same day keeps the container the crew selected.
+    const selectedStop = isSameRouteDay
+      ? mappedRouteStops.find((stop) => stop.id === current.activeContainerId && stop.status !== 'completed')
+      : null;
+    const activeStop = selectedStop || firstPendingStop;
+    if (activeStop && !returning) activeStop.status = 'active';
     if (returning) mappedRouteStops.push(returnStationStop('active'));
 
     this.setState({
       stops: mappedRouteStops,
       activeContainerId: returning
         ? returnStation.id
-        : firstPendingStop?.id || routeStops[0]?.id || null,
+        : activeStop?.id || routeStops[0]?.id || null,
       reportDrafts: isSameRouteDay ? current.reportDrafts : {},
       route: {
         ...current.route,

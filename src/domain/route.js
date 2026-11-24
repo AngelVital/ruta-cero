@@ -1,5 +1,6 @@
 import { getOperationalDate, getRouteForDate } from '../services/routeConfiguration.js';
 import { formatClockTime } from '../utils/format.js';
+import { notVisitedReport } from './report.js';
 
 export function getReportsForDate(reports, date) {
   return reports.filter((report) => getOperationalDate(new Date(report.created_at)) === date);
@@ -126,9 +127,10 @@ export function getPeriodRange(period, dateKey) {
   return [dateKey, dateKey];
 }
 
-/** Reports between two 'YYYY-MM-DD' keys (inclusive): total kg, kg per material and per container, routes. */
+/** Visit reports between two 'YYYY-MM-DD' keys (inclusive): total kg, kg per material and per container, routes. */
 export function summarizeReports(reports, start, end) {
   const periodReports = reports.filter((report) => {
+    if (report.fill_level === notVisitedReport.fillLevel) return false;
     const date = getOperationalDate(new Date(report.created_at));
     return date >= start && date <= end;
   });

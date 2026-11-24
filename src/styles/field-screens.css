@@ -461,6 +461,8 @@
 
 .screen-viewport .stop-card-foot {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: space-between;
   padding-top: 6px;
   border-top: 1px solid #e2e8f0;
@@ -471,6 +473,11 @@
   color: #475569;
   font-size: 13px;
   margin-top: 2px;
+}
+
+.screen-viewport .stop-card-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .screen-viewport .stop-card-action {

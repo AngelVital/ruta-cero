@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { store } from '../src/state/store.js';
+import { notVisitedReport, getLatestReportByContainer } from '../src/domain/report.js';
+import { summarizeReports } from '../src/domain/route.js';
+import { renderRouteMapScreen } from '../src/screens/RouteMapScreen.js';
 import { renderRouteSummaryScreen } from '../src/screens/RouteSummaryScreen.js';
 
 const route = {
@@ -67,6 +70,28 @@ test('el borrador del reporte se conserva por contenedor y se limpia al guardar 
 
   store.startRoute();
   assert.deepEqual(store.state.reportDrafts, {});
+});
+
+test('el contenedor elegido sigue activo tras refrescar y el no visitado permite cerrar la ruta', () => {
+  const day = { ...route, id: 'R-52' };
+  store.applyConfiguredRoute(day, false);
+  store.startRoute();
+  store.selectContainer('CONT-05');
+  store.applyConfiguredRoute({ ...day, status: 'active' }, false);
+  assert.equal(store.state.activeContainerId, 'CONT-05');
+  assert.deepEqual(store.state.stops.map((stop) => stop.status), ['pending', 'active']);
+  assert.match(renderRouteMapScreen(store.state), /btn-skip-stop[^>]*data-container-id="CONT-05"/);
+
+  store.completeContainerReport('CONT-05', notVisitedReport);
+  assert.equal(store.state.activeContainerId, 'CONT-02');
+  assert.match(renderRouteMapScreen(store.state), /close<\/span>NO VISITADO/);
+  store.completeContainerReport('CONT-02', { fillLevel: 'low', collectedKg: 0 });
+  assert.equal(store.state.route.returning, true);
+  assert.match(renderRouteSummaryScreen(store.state), /1 \/ 2/);
+
+  const skipped = [{ container_id: 'CONT-05', fill_level: 'not_visited', created_at: '2026-10-20T18:00:00Z' }];
+  assert.equal(getLatestReportByContainer(skipped).size, 0);
+  assert.equal(summarizeReports(skipped, '2026-10-20', '2026-10-20').reports.length, 0);
 });
 
 test('updateReportDraft y los cambios en la misma pantalla no vuelven a dibujarla', () => {

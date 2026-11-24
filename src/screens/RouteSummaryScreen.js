@@ -3,7 +3,7 @@
  * así que la app se queda aquí hasta el siguiente día operativo.
  */
 import { attachFieldSignOut } from '../components/FieldOptionsMenu.js';
-import { getActiveIncidents } from '../domain/report.js';
+import { getActiveIncidents, notVisitedReport } from '../domain/report.js';
 import { formatClockTime, formatElapsedTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 
@@ -12,7 +12,8 @@ const optionLabel = (options, id) => options.find((option) => option.id === id)?
 export function renderRouteSummaryScreen(state) {
   const { route, assignment, dispatchOptions } = state;
   const points = state.stops.filter((stop) => stop.type !== 'return-station');
-  const completedPoints = points.filter((stop) => stop.status === 'completed');
+  const registeredPoints = points.filter((stop) => stop.status === 'completed');
+  const completedPoints = registeredPoints.filter((stop) => stop.fillLevel !== notVisitedReport.fillLevel);
   // Kg are only known on the device that reported the points.
   const reportedKg = completedPoints.filter((stop) => Number.isFinite(stop.collectedKg));
   const totalKg = reportedKg.reduce((sum, stop) => sum + stop.collectedKg, 0);
@@ -22,6 +23,7 @@ export function renderRouteSummaryScreen(state) {
     ['CIERRE', route.completedAt ? formatClockTime(route.completedAt) : '--:--'],
     ['DURACIÓN', route.startTimestamp && route.completedAt ? formatElapsedTime(route.startTimestamp, route.completedAt) : '--'],
     ['PUNTOS', `${completedPoints.length} / ${points.length}`],
+    ['NO VISITADOS', String(registeredPoints.length - completedPoints.length)],
     ['RECOLECTADO', reportedKg.length ? `${totalKg} kg` : '--'],
     ['INCIDENCIAS EN PUNTOS', String(incidentCount)]
   ];

@@ -1,5 +1,17 @@
 export const requiredReportPhotos = ['initialExterior', 'initialInterior', 'finalExterior', 'finalInterior'];
 
+/** A skipped container is stored as a report with this fill level, so the server lets the route close. */
+export const notVisitedReport = {
+  fillLevel: 'not_visited',
+  collectedKg: 0,
+  materials: [],
+  materialWeights: {},
+  photoEvidence: {},
+  photos: {},
+  incidents: {},
+  incidentComments: ''
+};
+
 export function validateContainerReport(fillLevel, selectedMaterials, materialWeights) {
   if (!['low', 'medium', 'full'].includes(fillLevel)) {
     return 'Selecciona un nivel de llenado del contenedor';
@@ -54,11 +66,11 @@ export function mergeNewReports(currentReports, newReports) {
     : currentReports;
 }
 
-/** Most recent report of each container, keyed by container id. */
+/** Most recent visit report of each container, keyed by container id. */
 export function getLatestReportByContainer(reports) {
   const latestReports = new Map();
   reports.forEach((report) => {
-    if (!report.container_id || !report.created_at) return;
+    if (!report.container_id || !report.created_at || report.fill_level === notVisitedReport.fillLevel) return;
 
     const currentReport = latestReports.get(report.container_id);
     if (!currentReport || report.created_at > currentReport.created_at) {
