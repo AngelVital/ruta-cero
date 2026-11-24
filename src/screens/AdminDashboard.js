@@ -106,13 +106,12 @@ function createAdminContext(container, reports, { incidents, fuelLoads, inspecti
     showAllReports: false,
     selectedScheduleDate: getOperationalDate(),
     displayedMonth: parseDateKey(getOperationalDate()),
-    calendarEventList: null,
     openReport: () => {},
     updateRoutes: () => updateRoutes(ctx),
     updateCalendar: () => {
       container.querySelector('#admin-calendar-container').innerHTML = renderRouteScheduleCalendar(
         ctx.routes, ctx.selectedScheduleDate, ctx.displayedMonth, ctx.reports,
-        { incidents: ctx.incidents, fuelLoads: ctx.fuelLoads, openList: ctx.calendarEventList }
+        { incidents: ctx.incidents, fuelLoads: ctx.fuelLoads }
       );
     },
     /** Stores routes already saved in Supabase in the local cache and refreshes the panel. */
@@ -245,7 +244,8 @@ function attachAdminDashboardContentEvents(container, reports, fieldEvents) {
   const { refresh, teardown } = startAdminSync(ctx);
   attachReports(ctx, {
     refresh,
-    fetchPhotos: async (...args) => (await api()).fetchContainerReportPhotos(...args)
+    fetchPhotos: async (...args) => (await api()).fetchContainerReportPhotos(...args),
+    fetchEventsForDate: async (...args) => (await api()).fetchFieldEventsForDate(...args)
   });
   attachSummary(ctx);
   attachFieldEvents(ctx, {

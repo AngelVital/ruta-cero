@@ -1,5 +1,4 @@
 import { getIncidentTypeLabel } from '../../domain/fieldEvents.js';
-import { getReportsForDate } from '../../domain/route.js';
 import { assignRouteToDate, getOperationalDate } from '../../services/routeConfiguration.js';
 import { escapeHtml, icon } from '../../utils/html.js';
 import { formatMonthTitle, formatOperationalTime, formatScheduledDate, toDateKey } from './format.js';
@@ -17,7 +16,7 @@ const eventLists = {
   }
 };
 
-export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth, reports = [], { incidents = [], fuelLoads = [], openList = null } = {}) {
+export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth, reports = [], { incidents = [], fuelLoads = [] } = {}) {
   const monthStart = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), 1, 12);
   const firstDay = new Date(monthStart);
   const mondayOffset = (firstDay.getDay() + 6) % 7;
@@ -65,26 +64,25 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
     `).join('')
     : '<li class="admin-calendar-reports-empty">No hay reportes registrados para este día.</li>';
   // Indexes point into the full lists so the item click can open the shared field-event dialog.
-  const dayEvents = {
-    incidents: incidents.map((record, index) => ({ record, index })),
-    fuelLoads: fuelLoads.map((record, index) => ({ record, index }))
-  };
-  Object.keys(dayEvents).forEach((kind) => {
-    dayEvents[kind] = dayEvents[kind].filter(({ record }) => getOperationalDate(new Date(record.created_at)) === selectedDate);
-  });
-  const openEvents = isPast && eventLists[openList] ? dayEvents[openList] : null;
-  const eventsHtml = openEvents ? `
+  // shortcut: only the latest 100 records of each kind are loaded (recentFieldEventLimit), fetch by date once older days matter.
+  const eventsHtml = Object.entries({ incidents, fuelLoads }).map(([kind, records]) => {
+    const { title, empty, label } = eventLists[kind];
+    const dayEvents = records
+      .map((record, index) => ({ record, index }))
+      .filter(({ record }) => getOperationalDate(new Date(record.created_at)) === selectedDate);
+    return `
         <div class="admin-calendar-reports">
-          <h4>${eventLists[openList].title} <span>${openEvents.length}</span></h4>
-          <ul>${openEvents.length
-            ? openEvents.map(({ record, index }) => `
+          <h4>${title} <span>${dayEvents.length}</span></h4>
+          <ul>${dayEvents.length
+            ? dayEvents.map(({ record, index }) => `
               <li>
-                <span><strong>${escapeHtml(eventLists[openList].label(record))}</strong><small>${escapeHtml(formatOperationalTime(record.created_at))} · ${escapeHtml(record.route_id || 'Sin ruta')}</small></span>
-                <button type="button" class="admin-report-open" data-calendar-event="${openList}" data-calendar-event-index="${index}">${icon('visibility')}<span>Ver</span></button>
+                <span><strong>${escapeHtml(label(record))}</strong><small>${escapeHtml(formatOperationalTime(record.created_at))} · ${escapeHtml(record.route_id || 'Sin ruta')}</small></span>
+                <button type="button" class="admin-report-open" data-calendar-event="${kind}" data-calendar-event-index="${index}">${icon('visibility')}<span>Ver</span></button>
               </li>
             `).join('')
-            : `<li class="admin-calendar-reports-empty">${eventLists[openList].empty}</li>`}</ul>
-        </div>` : '';
+            : `<li class="admin-calendar-reports-empty">${empty}</li>`}</ul>
+        </div>`;
+  }).join('');
 
   return `
     <div class="admin-calendar-layout">
@@ -113,22 +111,20 @@ export function renderRouteScheduleCalendar(routes, selectedDate, displayedMonth
           ? '<p class="admin-calendar-assignment-note">Elegida en campo porque no había ruta asignada para este día.</p>'
           : ''}
         <p class="admin-calendar-assignment-note">${isPast
-          ? 'Las fechas pasadas son de solo lectura; puedes consultar aquí los reportes registrados.'
+          ? 'Las fechas pasadas son de solo lectura; puedes consultar aquí los reportes, incidencias y cargas de combustible registrados.'
           : isLocked
             ? 'La ruta de hoy ya fue iniciada en campo; no se puede cambiar la asignación.'
             : 'Cada día admite una sola ruta. La misma ruta puede asignarse a varios días.'}</p>
         ${isPast
-          ? `<button type="button" class="admin-button admin-button-dark" data-calendar-summary>${icon('summarize')}<span>Generar resumen</span></button>
-            <button type="button" class="admin-button" data-calendar-events="incidents" aria-pressed="${openList === 'incidents'}">${icon('notifications_active')}<span>Ver incidencias (${dayEvents.incidents.length})</span></button>
-            <button type="button" class="admin-button" data-calendar-events="fuelLoads" aria-pressed="${openList === 'fuelLoads'}">${icon('local_gas_station')}<span>Ver cargas de combustible (${dayEvents.fuelLoads.length})</span></button>`
+          ? `<button type="button" class="admin-button admin-button-dark" data-calendar-summary>${icon('summarize')}<span>Generar resumen</span></button>`
           : `<button type="submit" class="admin-button admin-button-dark" ${routes.length && !isLocked ? '' : 'disabled'}>${icon('event_available')}<span>Guardar asignación</span></button>`}
         <p class="admin-calendar-message" id="admin-calendar-message" role="status" aria-live="polite"></p>
-        ${eventsHtml}
         <div class="admin-calendar-reports">
           <h4>Reportes del día <span>${selectedReports.length}</span></h4>
           <ul>${reportsHtml}</ul>
-          ${selectedReports.length ? `<button type="button" class="admin-button" data-calendar-photos>${icon('download')}<span>Descargar fotos del día (.zip)</span></button>` : ''}
         </div>
+        ${eventsHtml}
+        ${selectedDate <= today ? `<button type="button" class="admin-button" data-calendar-photos>${icon('download')}<span>Descargar fotos del día (.zip)</span></button>` : ''}
       </form>
     </div>
   `;
@@ -153,19 +149,9 @@ export function attachScheduleCalendar(ctx, { saveRouteSchedule }) {
       return;
     }
 
-    const listButton = event.target.closest('[data-calendar-events]');
-    if (listButton) {
-      // A second click on the same button hides its list.
-      const kind = listButton.dataset.calendarEvents;
-      ctx.calendarEventList = ctx.calendarEventList === kind ? null : kind;
-      ctx.updateCalendar();
-      return;
-    }
-
     const photosButton = event.target.closest('[data-calendar-photos]');
     if (photosButton) {
-      const date = ctx.selectedScheduleDate;
-      ctx.downloadReportPhotos(photosButton, getReportsForDate(ctx.reports, date), `fotos_${date}.zip`);
+      ctx.downloadDayPhotos(photosButton, ctx.selectedScheduleDate);
       return;
     }
 

@@ -501,6 +501,24 @@ export async function fetchContainerReportPhotos(id) {
 
 const fieldEventPhotoColumns = { fuel_loads: 'ticket_photo', dispatch_inspections: 'odometer_photo' };
 
+/** Every event of `table` on an operational date, with its `photos` as URLs; not capped like the admin lists. */
+export async function fetchFieldEventsForDate(table, date) {
+  const column = fieldEventPhotoColumns[table] || 'photos';
+  const start = new Date(`${date}T00:00:00-07:00`); // La Paz is UTC-7 all year.
+  const { data, error } = await requireSupabase()
+    .from(table)
+    .select('*')
+    .gte('created_at', start.toISOString())
+    .lt('created_at', new Date(start.getTime() + 24 * 60 * 60 * 1000).toISOString())
+    .order('created_at');
+
+  if (error) throw error;
+  return Promise.all(data.map(async (event) => ({
+    ...event,
+    photos: (await resolvePhotoUrls([event[column]].flat().filter(Boolean))).filter(Boolean)
+  })));
+}
+
 /** Photo URLs of one incident, fuel load, dispatch inspection or route closure (by table). */
 export async function fetchFieldEventPhotos(table, id) {
   const column = fieldEventPhotoColumns[table] || 'photos';

@@ -1,5 +1,6 @@
 import { getFillLevelLabel, normalizeFillLevel } from '../../components/CapacityMeter.js';
 import { collectionPoints } from '../../data/collectionPoints.js';
+import { getIncidentTypeLabel } from '../../domain/fieldEvents.js';
 import { getActiveIncidents } from '../../domain/report.js';
 import { getReportsForDate } from '../../domain/route.js';
 import { getOperationalDate } from '../../services/routeConfiguration.js';
@@ -32,24 +33,48 @@ function reportFilePrefix(report) {
   ].filter(Boolean).join('_'));
 }
 
-/** Downloads one zip with the evidence photos of `reports`; returns how many photos it holds. */
-export async function downloadReportPhotos(reports, fetchPhotos, zipName) {
+// Field-event tables and their subfolder in a day's zip.
+const eventFolders = {
+  incident_reports: 'incidencias',
+  fuel_loads: 'combustible',
+  dispatch_inspections: 'odometro',
+  route_completions: 'cierre-de-ruta'
+};
+
+/** Photos of one field event as { name, url }; the id keeps events from the same minute apart. */
+export function getEventPhotos(table, event) {
+  const created = new Date(event.created_at);
+  const prefix = toFileName([
+    getOperationalDate(created),
+    formatOperationalTime(created).replace(':', ''),
+    event.incident_type && getIncidentTypeLabel(event.incident_type),
+    event.unit_id,
+    event.route_id,
+    event.id.slice(0, 8)
+  ].filter(Boolean).join('_'));
+  return event.photos.filter(isPhotoUrl).map((url, index) => ({ name: `${eventFolders[table]}/${prefix}_${index + 1}`, url }));
+}
+
+async function getReportPhotos(report, fetchPhotos, subfolder = '') {
+  const photos = await fetchPhotos(report.id);
+  return Object.keys(evidenceLabels).filter((key) => isPhotoUrl(photos[key])).map((key) => ({
+    name: `${subfolder}${reportFilePrefix(report)}_${toFileName(evidenceLabels[key])}`,
+    url: photos[key]
+  }));
+}
+
+/** Downloads one zip with `photos` ([{ name, url }], names without extension); returns how many it holds. */
+async function downloadPhotos(photos, zipName) {
   zipName = toFileName(zipName);
   // Everything goes inside a folder named like the zip, so extracting it never scatters the photos.
   const folder = zipName.replace(/\.zip$/, '');
-  const files = (await Promise.all(reports.map(async (report) => {
-    const photos = await fetchPhotos(report.id);
-    return Promise.all(Object.keys(evidenceLabels).filter((key) => isPhotoUrl(photos[key])).map(async (key) => {
-      const response = await fetch(photos[key]);
-      if (!response.ok) throw new Error(`foto ${evidenceLabels[key]} de ${report.container_id} (${response.status})`);
-      const blob = await response.blob();
-      const extension = { 'image/png': 'png', 'image/webp': 'webp' }[blob.type] || 'jpg';
-      return {
-        name: `${folder}/${reportFilePrefix(report)}_${toFileName(evidenceLabels[key])}.${extension}`,
-        data: new Uint8Array(await blob.arrayBuffer())
-      };
-    }));
-  }))).flat();
+  const files = await Promise.all(photos.map(async ({ name, url }) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`foto ${name} (${response.status})`);
+    const blob = await response.blob();
+    const extension = { 'image/png': 'png', 'image/webp': 'webp' }[blob.type] || 'jpg';
+    return { name: `${folder}/${name}.${extension}`, data: new Uint8Array(await blob.arrayBuffer()) };
+  }));
   if (files.length) downloadFile(createZip(files), 'application/zip', zipName);
   return files.length;
 }
@@ -163,18 +188,18 @@ export function updateReportList(ctx) {
 }
 
 /** Report table, detail dialog, "Ver todos" toggle and manual refresh. */
-export function attachReports(ctx, { refresh, fetchPhotos }) {
+export function attachReports(ctx, { refresh, fetchPhotos, fetchEventsForDate }) {
   const { container } = ctx;
   const reportDialog = container.querySelector('#admin-report-dialog');
 
-  /** Shared with the calendar: zips the photos of `reports`, using `button` to show progress. */
-  ctx.downloadReportPhotos = async (button, reports, zipName) => {
+  /** Zips the photos listed by `loadPhotos`, using `button` to show progress. */
+  const downloadZip = async (button, loadPhotos, zipName) => {
     const label = button.querySelector('span:last-child');
     const text = label.textContent;
     button.disabled = true;
     label.textContent = 'Preparando zip…';
     try {
-      if (!await downloadReportPhotos(reports, fetchPhotos, zipName)) window.alert('No hay fotos guardadas para descargar.');
+      if (!await downloadPhotos(await loadPhotos(), zipName)) window.alert('No hay fotos guardadas para descargar.');
     } catch (error) {
       window.alert(`No se pudieron descargar las fotos: ${error.message}`);
     }
@@ -182,11 +207,19 @@ export function attachReports(ctx, { refresh, fetchPhotos }) {
     button.disabled = false;
   };
 
+  /** Used by the calendar: every photo of `date`, one subfolder per kind of record. */
+  ctx.downloadDayPhotos = (button, date) => downloadZip(button, async () => (await Promise.all([
+    ...getReportsForDate(ctx.reports, date).map((report) => getReportPhotos(report, fetchPhotos, 'contenedores/')),
+    ...Object.keys(eventFolders).map(async (table) => (
+      (await fetchEventsForDate(table, date)).flatMap((event) => getEventPhotos(table, event))
+    ))
+  ])).flat(), `fotos_${date}.zip`);
+
   ctx.openReport = async (report) => {
     if (!report || !reportDialog) return;
     container.querySelector('#admin-report-dialog-content').innerHTML = renderReportDialog(report, ctx.fleetNames);
     container.querySelector('#admin-report-download-photos').addEventListener('click', (event) => {
-      ctx.downloadReportPhotos(event.currentTarget, [report], `fotos_${reportFilePrefix(report)}.zip`);
+      downloadZip(event.currentTarget, () => getReportPhotos(report, fetchPhotos), `fotos_${reportFilePrefix(report)}.zip`);
     });
     reportDialog.showModal();
 
