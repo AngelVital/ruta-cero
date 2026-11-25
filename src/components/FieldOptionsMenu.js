@@ -43,7 +43,7 @@ export function attachFieldSignOut(container, store) {
       }
 
       const discardProgress = button.hasAttribute('data-discard-progress');
-      if (!window.confirm(discardProgress
+      if (store.state.route.status !== 'COMPLETADA' && !window.confirm(discardProgress
         ? '¿Cerrar sesión y borrar el avance de la ruta guardado en este teléfono? No se puede deshacer.'
         : '¿Cerrar sesión? El avance de la ruta se queda guardado en este teléfono.')) return;
 
