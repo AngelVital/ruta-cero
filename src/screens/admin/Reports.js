@@ -37,7 +37,7 @@ function reportFilePrefix(report) {
 const eventFolders = {
   incident_reports: 'incidencias',
   fuel_loads: 'combustible',
-  dispatch_inspections: 'odometro',
+  dispatch_inspections: 'inspeccion-inicial',
   route_completions: 'cierre-de-ruta'
 };
 
