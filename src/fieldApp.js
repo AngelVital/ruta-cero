@@ -22,6 +22,9 @@ import { renderContainerReportScreen, attachContainerReportEvents } from './scre
 import { renderIncidentScreen, attachIncidentEvents } from './screens/IncidentScreen.js';
 import { renderRefuelScreen, attachRefuelEvents } from './screens/RefuelScreen.js';
 
+// Screens that only make sense once the route has started.
+const runScreens = ['map', 'scanner', 'report', 'route-completion'];
+
 const screens = {
   dispatch: [renderDispatchScreen, attachDispatchScreenEvents],
   inspection: [renderInspection360Screen, attachInspection360Events],
@@ -40,6 +43,8 @@ async function refreshFieldRouteConfiguration() {
   try {
     // Send pending actions first so the server state already includes them.
     await flushFieldQueue();
+    // Read before fetching, so a closing queued meanwhile is never mistaken for a restarted day.
+    const isClosedAndSynced = store.state.route.status === 'COMPLETADA' && getPendingSyncCount() === 0;
     const { fetchRouteConfigurations, fetchFleetResources } = await import('./services/supabase.js');
     const [routes, fleet] = await Promise.all([
       fetchRouteConfigurations(),
@@ -50,7 +55,10 @@ async function refreshFieldRouteConfiguration() {
     // The server doesn't know the route the crew chose yet; its empty day would wipe the local run.
     if (hasPendingFieldAction('claim')) return;
     saveConfiguredRoutes(routes);
-    store.applyConfiguredRoute(routes.find((route) => route.scheduledDates?.includes(getOperationalDate())) || null);
+    const todaysRoute = routes.find((route) => route.scheduledDates?.includes(getOperationalDate())) || null;
+    // The server has the route not started again (reprogrammed or restarted): its state wins over the local closing.
+    if (isClosedAndSynced && todaysRoute?.status === 'scheduled') store.resetRun();
+    store.applyConfiguredRoute(todaysRoute);
   } catch {
     // The local route cache remains available while Supabase is offline or unconfigured.
   }
@@ -95,9 +103,9 @@ export function startFieldApp(appEl) {
   function renderApp() {
     const state = store.state;
     // One route per day: once it is closed (here or reported by the server) only the summary is shown.
-    // The server can withdraw the route mid-run; the map cannot render without stops.
+    // The server can withdraw or replace the route mid-run; then the crew goes back to dispatch.
     const screenName = state.route.status === 'COMPLETADA' ? 'route-summary'
-      : state.currentScreen === 'map' && !state.stops.length ? 'dispatch' : state.currentScreen;
+      : runScreens.includes(state.currentScreen) && (state.route.status !== 'EN RUTA' || !state.stops.length) ? 'dispatch' : state.currentScreen;
     const oldViewport = document.getElementById('screen-viewport-root');
     const screenChanged = previousScreen !== null && previousScreen !== screenName;
     const savedScrollTop = (!screenChanged && oldViewport) ? oldViewport.scrollTop : 0;

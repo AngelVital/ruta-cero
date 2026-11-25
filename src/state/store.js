@@ -246,7 +246,18 @@ class TacticalStore {
     this.setState(({ formDrafts }) => ({ formDrafts: { ...formDrafts, [form]: {} } }), { notify: false });
   }
 
+  /** Discards the run saved on this device (screen, crew, inspection, fuel and stops). */
+  resetRun() {
+    const initial = createInitialState();
+    this.lastRouteSignature = undefined;
+    this.setState(Object.fromEntries(persistedKeys.map((key) => [key, initial[key]])), { notify: false });
+  }
+
   applyConfiguredRoute(route, shouldNotify = true) {
+    // An app left open overnight must not carry yesterday's screen and run into the new day.
+    const { statusDate } = this.state.route;
+    if (statusDate && statusDate !== (route?.statusDate || getOperationalDate())) this.resetRun();
+
     // Focus, visibility and Realtime refreshes usually return the same route; skipping them
     // avoids re-rendering the active screen (map iframe reload, open camera, report draft).
     const routeSignature = route

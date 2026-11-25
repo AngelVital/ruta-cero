@@ -130,3 +130,37 @@ test('una ruta con un contenedor que la app no conoce se puede iniciar y abre el
   store.completeContainerReport('CONT-99', { fillLevel: 'low', collectedKg: 0 });
   assert.equal(store.state.route.returning, true);
 });
+
+test('un día nuevo con la app abierta vuelve a despacho sin el avance de ayer', () => {
+  const day = { ...route, id: 'R-60', pointIds: ['CONT-02'] };
+  store.applyConfiguredRoute(day, false);
+  store.setFuelPreset('LLENO (100%)', 250, false);
+  store.startRoute();
+  store.completeContainerReport('CONT-02', { fillLevel: 'low', collectedKg: 0 });
+  store.setScreen('route-completion');
+  // Same day: a refresh keeps the crew where it was.
+  store.applyConfiguredRoute({ ...day, status: 'active' }, false);
+  assert.equal(store.state.currentScreen, 'route-completion');
+
+  store.applyConfiguredRoute({ ...day, statusDate: '2026-10-21' }, false);
+  assert.equal(store.state.currentScreen, 'dispatch');
+  assert.equal(store.state.route.status, 'PENDIENTE');
+  assert.equal(store.state.route.returning, false);
+  assert.equal(store.state.fuelLevel.preset, null);
+});
+
+test('resetRun reabre una ruta cerrada en el teléfono aunque la programación no haya cambiado', () => {
+  const day = { ...route, id: 'R-61', pointIds: ['CONT-02'] };
+  store.applyConfiguredRoute(day, false);
+  store.startRoute();
+  store.completeContainerReport('CONT-02', { fillLevel: 'low', collectedKg: 0 });
+  store.setCompletionPhotos(['data:image/jpeg;base64,a']);
+  store.completeRoute();
+  store.applyConfiguredRoute(day, false);
+  assert.equal(store.state.route.status, 'COMPLETADA');
+
+  store.resetRun();
+  store.applyConfiguredRoute(day, false);
+  assert.equal(store.state.route.status, 'PENDIENTE');
+  assert.equal(store.state.currentScreen, 'dispatch');
+});
