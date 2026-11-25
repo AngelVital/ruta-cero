@@ -1,17 +1,15 @@
 import { collectionPoints } from '../../data/collectionPoints.js';
 import { getLatestReportByContainer } from '../../domain/report.js';
+import { getOperationalDate } from '../../services/routeConfiguration.js';
 import { formatScheduledDate } from './format.js';
 
 function getDaysSinceCollection(dateString) {
-  const [year, month, day] = dateString.split('-').map(Number);
-  const now = new Date();
-  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  const lastCollection = Date.UTC(year, month - 1, day);
-  return Math.max(0, Math.floor((today - lastCollection) / 86400000));
+  // Date-only strings parse as UTC midnight, so the difference is always whole days.
+  return Math.max(0, (Date.parse(getOperationalDate()) - Date.parse(dateString)) / 86400000);
 }
 
 function renderCollectionPoint(point, report) {
-  const lastCollectedOn = report?.created_at?.slice(0, 10) || point.lastCollectedOn;
+  const lastCollectedOn = report ? getOperationalDate(new Date(report.created_at)) : point.lastCollectedOn;
   if (!lastCollectedOn) {
     return `
     <tr>
@@ -22,13 +20,13 @@ function renderCollectionPoint(point, report) {
   `;
   }
   const daysSinceCollection = getDaysSinceCollection(lastCollectedOn);
-  const ageClass = daysSinceCollection >= 2 ? 'age-overdue' : daysSinceCollection === 1 ? 'age-due-soon' : 'age-recent';
+  const ageClass = daysSinceCollection > 2 ? 'age-overdue' : daysSinceCollection === 2 ? 'age-due-soon' : 'age-recent';
 
   return `
     <tr>
       <td><span class="admin-route-id">${point.id}</span><span class="admin-cell-primary">${point.name}</span></td>
       <td><time datetime="${lastCollectedOn}">${formatScheduledDate(lastCollectedOn)}</time></td>
-      <td><span class="admin-days-badge ${ageClass}">${daysSinceCollection === 0 ? 'Hoy' : `${daysSinceCollection} ${daysSinceCollection === 1 ? 'día' : 'días'}`}</span></td>
+      <td><span class="admin-days-badge ${ageClass}">${daysSinceCollection === 0 ? 'Hoy' : daysSinceCollection === 1 ? 'Ayer' : `${daysSinceCollection} días`}</span></td>
     </tr>
   `;
 }

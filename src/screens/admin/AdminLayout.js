@@ -194,7 +194,7 @@ export function renderAdminOperations({
                   <tbody id="admin-points-rows">${renderCollectionPointTable(reports)}</tbody>
                 </table>
               </div>
-              <div class="admin-points-foot"><span><i class="point-legend-overdue"></i>7 días o más</span><span><i class="point-legend-due"></i>4–6 días</span><span><i class="point-legend-recent"></i>0–3 días</span><strong>Orden: CONT-01 al CONT-08</strong></div>
+              <div class="admin-points-foot"><span><i class="point-legend-overdue"></i>Más de 2 días</span><span><i class="point-legend-due"></i>2 días</span><span><i class="point-legend-recent"></i>Hoy o ayer</span><strong>Orden: CONT-01 al CONT-09</strong></div>
             </section>
           </div>
 

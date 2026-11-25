@@ -26,7 +26,9 @@
   --c-fff3d9: #fff3d9;
   --c-f1f5f2: #f1f5f2;
   --c-edf6f0: #edf6f0;
-  --c-fff2d7: #fff2d7;
+  --c-ffe5cc: #ffe5cc;
+  --c-944708: #944708;
+  --c-e67e22: #e67e22;
   --c-edf5ef: #edf5ef;
   --c-eef4f0: #eef4f0;
   --c-f0f2ef: #f0f2ef;
@@ -132,7 +134,6 @@
   --c-a64233: #a64233;
   --c-5b6b62: #5b6b62;
   --c-a64034: #a64034;
-  --c-855d10: #855d10;
   --c-9b4a34: #9b4a34;
   --c-276d8c: #276d8c;
   --c-a63d30: #a63d30;
@@ -202,7 +203,9 @@
     --c-fff3d9: #312813;
     --c-f1f5f2: #272a28;
     --c-edf6f0: #242b27;
-    --c-fff2d7: #322812;
+    --c-ffe5cc: #3b2610;
+    --c-944708: #f0a050;
+    --c-e67e22: #e67e22;
     --c-edf5ef: #262c27;
     --c-eef4f0: #272b28;
     --c-f0f2ef: #2a2b29;
@@ -308,7 +311,6 @@
     --c-a64233: #e27866;
     --c-5b6b62: #8fa096;
     --c-a64034: #e47869;
-    --c-855d10: #bf9450;
     --c-9b4a34: #d9826a;
     --c-276d8c: #63a7c8;
     --c-a63d30: #e77867;
@@ -1617,8 +1619,8 @@ tr[data-route-status="completed"] .admin-progress-track span {
 }
 
 .admin-days-badge.age-due-soon {
-  background: var(--c-fff2d7);
-  color: var(--c-855d10);
+  background: var(--c-ffe5cc);
+  color: var(--c-944708);
 }
 
 .admin-days-badge.age-recent {
@@ -1688,7 +1690,7 @@ tr[data-route-status="completed"] .admin-progress-track span {
 }
 
 .point-legend-overdue { background: var(--c-bd473b); }
-.point-legend-due { background: var(--c-d39a27); }
+.point-legend-due { background: var(--c-e67e22); }
 .point-legend-recent { background: var(--c-17845d); }
 
 .admin-points-foot strong {

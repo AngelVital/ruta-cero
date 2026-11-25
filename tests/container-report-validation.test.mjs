@@ -54,3 +54,15 @@ test('la tabla administrativa conserva la fecha y ordena por identificador sin m
   assert.doesNotMatch(table, /VISITADO|SIN REPORTE/);
   assert.doesNotMatch(table, /admin-point-route|RUTA ASIGNADA/);
 });
+
+test('el semáforo usa el día operativo: hoy y ayer verde, dos días naranja, más rojo', (t) => {
+  // 02:00 UTC on the 10th is still the evening of the 9th in La Paz.
+  t.mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-10-10T02:00:00.000Z') });
+  const badge = (createdAt) => renderCollectionPointTable([{ container_id: 'CONT-01', created_at: createdAt }])
+    .match(/admin-days-badge ([\w-]+)">([^<]+)</).slice(1);
+
+  assert.deepEqual(badge('2026-10-10T01:00:00.000Z'), ['age-recent', 'Hoy']);
+  assert.deepEqual(badge('2026-10-09T02:00:00.000Z'), ['age-recent', 'Ayer']);
+  assert.deepEqual(badge('2026-10-08T02:00:00.000Z'), ['age-due-soon', '2 días']);
+  assert.deepEqual(badge('2026-10-07T02:00:00.000Z'), ['age-overdue', '3 días']);
+});
