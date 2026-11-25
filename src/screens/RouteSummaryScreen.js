@@ -7,7 +7,7 @@ import { getActiveIncidents, notVisitedReport } from '../domain/report.js';
 import { formatClockTime, formatElapsedTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 
-const optionLabel = (options, id) => options.find((option) => option.id === id)?.label || id || '--';
+const optionName = (options, id) => options.find((option) => option.id === id)?.name || '--';
 
 export function renderRouteSummaryScreen(state) {
   const { route, assignment, dispatchOptions } = state;
@@ -28,9 +28,9 @@ export function renderRouteSummaryScreen(state) {
     ['INCIDENCIAS EN PUNTOS', String(incidentCount)]
   ];
   const crew = [
-    ['UNIDAD', optionLabel(dispatchOptions.units, assignment.unitId)],
-    ['OPERADOR', optionLabel(dispatchOptions.drivers, assignment.driverId)],
-    ['AUXILIAR', optionLabel(dispatchOptions.assistants, assignment.assistantId)]
+    ['UNIDAD', optionName(dispatchOptions.units, assignment.unitId)],
+    ['OPERADOR', optionName(dispatchOptions.drivers, assignment.driverId)],
+    ['AUXILIAR', optionName(dispatchOptions.assistants, assignment.assistantId)]
   ];
 
   return `

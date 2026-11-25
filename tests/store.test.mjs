@@ -48,6 +48,7 @@ test('las acciones crean un estado nuevo sin modificar el anterior', () => {
   assert.match(summary, /2 \/ 2/);
   assert.match(summary, /40 kg/);
   assert.match(summary, /TRIPULACIÓN/);
+  assert.doesNotMatch(summary, /U-01/);
   assert.match(summary, /btn-field-sign-out/);
 });
 
@@ -116,9 +117,9 @@ test('setFleetResources agrupa unidades, operadores y auxiliares para el despach
     { id: 'AUX-001', kind: 'assistant', name: 'Eva Ruiz' }
   ]);
   assert.deepEqual(store.state.dispatchOptions, {
-    units: [{ id: 'U-007', label: 'U-007 · Freightliner LPZ-2099' }],
-    drivers: [{ id: 'OP-001', label: 'OP-001 · Luis Peña' }],
-    assistants: [{ id: 'AUX-001', label: 'AUX-001 · Eva Ruiz' }]
+    units: [{ id: 'U-007', name: 'Freightliner LPZ-2099', label: 'U-007 · Freightliner LPZ-2099' }],
+    drivers: [{ id: 'OP-001', name: 'Luis Peña', label: 'OP-001 · Luis Peña' }],
+    assistants: [{ id: 'AUX-001', name: 'Eva Ruiz', label: 'AUX-001 · Eva Ruiz' }]
   });
 });
 

@@ -20,7 +20,7 @@ const litersFormatter = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 
 const formatLiters = (value) => `${litersFormatter.format(Number(value) || 0)} L`;
 const pointNames = Object.fromEntries(collectionPoints.map((point) => [point.id, point.name]));
 
-export function renderSummary(reports, start, end, period = 'range', { incidents = [], fuelLoads = [] } = {}) {
+export function renderSummary(reports, start, end, period = 'range', { incidents = [], fuelLoads = [], fleetNames = new Map() } = {}) {
   const summary = summarizeReports(reports, start, end);
   const inPeriod = (records) => records
     .filter((record) => {
@@ -33,10 +33,10 @@ export function renderSummary(reports, start, end, period = 'range', { incidents
   const fuelLiters = periodFuel.reduce((sum, load) => sum + (Number(load.liters) || 0), 0);
   const fuelAmount = periodFuel.reduce((sum, load) => sum + (Number(load.amount) || 0), 0);
   const incidentRows = periodIncidents.map((incident) => `
-      <tr><td>${escapeHtml(formatReportDate(incident.created_at))}</td><td>${escapeHtml(incident.unit_id || '—')}</td><td>${escapeHtml(incident.route_id || '—')}</td><td>${escapeHtml(getIncidentTypeLabel(incident.incident_type))}</td><td>${escapeHtml(getSeverityLabel(incident.severity))}</td><td>${escapeHtml(incident.description || '—')}</td></tr>
+      <tr><td>${escapeHtml(formatReportDate(incident.created_at))}</td><td>${escapeHtml(fleetNames.get(incident.unit_id) || '—')}</td><td>${escapeHtml(incident.route_id || '—')}</td><td>${escapeHtml(getIncidentTypeLabel(incident.incident_type))}</td><td>${escapeHtml(getSeverityLabel(incident.severity))}</td><td>${escapeHtml(incident.description || '—')}</td></tr>
     `).join('') || '<tr><td colspan="6">Sin incidencias en este periodo.</td></tr>';
   const fuelRows = periodFuel.map((load) => `
-      <tr><td>${escapeHtml(formatReportDate(load.created_at))}</td><td>${escapeHtml(load.unit_id || '—')}</td><td>${escapeHtml(load.route_id || '—')}</td><td class="num">${escapeHtml(formatLiters(load.liters))}</td><td class="num">${load.amount === null || load.amount === undefined ? '—' : escapeHtml(moneyFormatter.format(Number(load.amount)))}</td></tr>
+      <tr><td>${escapeHtml(formatReportDate(load.created_at))}</td><td>${escapeHtml(fleetNames.get(load.unit_id) || '—')}</td><td>${escapeHtml(load.route_id || '—')}</td><td class="num">${escapeHtml(formatLiters(load.liters))}</td><td class="num">${load.amount === null || load.amount === undefined ? '—' : escapeHtml(moneyFormatter.format(Number(load.amount)))}</td></tr>
     `).join('') || '<tr><td colspan="5">Sin cargas de combustible en este periodo.</td></tr>';
   const range = summary.start === summary.end
     ? formatScheduledDate(summary.start)
@@ -539,7 +539,7 @@ export function attachSummary(ctx) {
     const [start, end] = getRange();
     content.innerHTML = showBoard
       ? renderSummaryBoard(ctx.reports, start, end, period.value, material)
-      : renderSummary(ctx.reports, start, end, period.value, { incidents: ctx.incidents, fuelLoads: ctx.fuelLoads });
+      : renderSummary(ctx.reports, start, end, period.value, { incidents: ctx.incidents, fuelLoads: ctx.fuelLoads, fleetNames: ctx.fleetNames });
     boardToggle.setAttribute('aria-pressed', String(showBoard));
     boardToggle.innerHTML = showBoard
       ? `${icon('description')}<span>Ver documento</span>`

@@ -31,3 +31,13 @@ test('el tablero exportado es un HTML independiente con una versión por materia
   const script = html.slice(html.indexOf('<script>') + 8, html.indexOf('</script>'));
   assert.doesNotThrow(() => new Function(script));
 });
+
+test('el resumen muestra el nombre de la unidad y no su id', async () => {
+  const { renderSummary } = await import('../src/screens/admin/Summary.js');
+  const record = { unit_id: 'U-001', created_at: '2026-10-20T18:00:00Z' };
+  const html = renderSummary([], '2026-10-20', '2026-10-20', 'day', {
+    incidents: [record], fuelLoads: [record], fleetNames: new Map([['U-001', 'Camión Azul']])
+  });
+  assert.equal(html.split('Camión Azul').length, 3);
+  assert.doesNotMatch(html, /U-001/);
+});

@@ -101,7 +101,7 @@ function loadFleetCache() {
 function toDispatchOptions(resources) {
   const options = (kind) => resources
     .filter((resource) => resource.kind === kind)
-    .map(({ id, name }) => ({ id, label: `${id} · ${name}` }));
+    .map(({ id, name }) => ({ id, name, label: `${id} · ${name}` }));
   return { units: options('unit'), drivers: options('driver'), assistants: options('assistant') };
 }
 
