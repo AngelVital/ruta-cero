@@ -95,7 +95,9 @@ export function startFieldApp(appEl) {
   function renderApp() {
     const state = store.state;
     // One route per day: once it is closed (here or reported by the server) only the summary is shown.
-    const screenName = state.route.status === 'COMPLETADA' ? 'route-summary' : state.currentScreen;
+    // The server can withdraw the route mid-run; the map cannot render without stops.
+    const screenName = state.route.status === 'COMPLETADA' ? 'route-summary'
+      : state.currentScreen === 'map' && !state.stops.length ? 'dispatch' : state.currentScreen;
     const oldViewport = document.getElementById('screen-viewport-root');
     const screenChanged = previousScreen !== null && previousScreen !== screenName;
     const savedScrollTop = (!screenChanged && oldViewport) ? oldViewport.scrollTop : 0;

@@ -121,3 +121,11 @@ test('setFleetResources agrupa unidades, operadores y auxiliares para el despach
     assistants: [{ id: 'AUX-001', label: 'AUX-001 · Eva Ruiz' }]
   });
 });
+
+test('una ruta con un contenedor que la app no conoce se puede iniciar y abre el mapa', () => {
+  store.applyConfiguredRoute({ ...route, id: 'R-99', pointIds: ['CONT-99'] }, false);
+  assert.equal(store.startRoute(), 'R-99');
+  assert.match(renderRouteMapScreen(store.state), /CONT-99/);
+  store.completeContainerReport('CONT-99', { fillLevel: 'low', collectedKg: 0 });
+  assert.equal(store.state.route.returning, true);
+});

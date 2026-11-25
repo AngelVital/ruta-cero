@@ -300,12 +300,14 @@ class TacticalStore {
         : [])
     ]);
     const routeStops = route.pointIds
-      .map((pointId) => collectionPoints.find((point) => point.id === pointId))
-      .filter(Boolean);
+      // An outdated app may not know a newly added container; the stop must still be workable.
+      .map((pointId) => collectionPoints.find((point) => point.id === pointId) || {
+        id: pointId, code: 'PUNTO NUEVO', name: pointId, address: 'Actualiza la app para ver su ubicación', latitude: null, longitude: null
+      });
     // On the same route day keep what each stop already recorded (completed report data).
     const mappedRouteStops = routeStops.map((stop) => ({
-      ...stop,
       ...(isSameRouteDay ? current.stops.find((currentStop) => currentStop.id === stop.id) : null),
+      ...stop,
       status: completedStopIds.has(stop.id) ? 'completed' : 'pending'
     }));
     const completedCount = mappedRouteStops.filter((stop) => stop.status === 'completed').length;
