@@ -934,12 +934,33 @@ create sequence if not exists public.fleet_assistant_id_seq;
 
 create or replace function public.next_fleet_resource_id(p_kind text)
 returns text
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
-  select case p_kind when 'unit' then 'U-' when 'driver' then 'OP-' else 'AUX-' end
-    || lpad(nextval(format('public.fleet_%s_id_seq', p_kind)::regclass)::text, 3, '0');
+declare
+  prefix text := case p_kind when 'unit' then 'U-' when 'driver' then 'OP-' else 'AUX-' end;
+  id_sequence regclass := format('public.fleet_%s_id_seq', p_kind)::regclass;
+  highest bigint;
+  next_number bigint;
+begin
+  -- Two admins registering at the same time get different ids.
+  perform pg_advisory_xact_lock(hashtext('public.next_fleet_resource_id'));
+
+  -- Skips ids already in the table (archived ones too), in case the sequence was restarted.
+  select coalesce(max(substring(id from '^' || prefix || '([0-9]+)$')::bigint), 0)
+  into highest
+  from public.fleet_resources;
+
+  next_number := nextval(id_sequence);
+  if next_number <= highest then
+    next_number := highest + 1;
+    perform setval(id_sequence, next_number);
+  end if;
+
+  -- lpad alone would cut 1000 down to 100.
+  return prefix || lpad(next_number::text, greatest(3, length(next_number::text)), '0');
+end;
 $$;
 
 revoke all on function public.next_fleet_resource_id(text) from public, anon, authenticated;
