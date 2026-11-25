@@ -9,8 +9,7 @@ function getDaysSinceCollection(dateString) {
 }
 
 function renderCollectionPoint(point, report) {
-  const lastCollectedOn = report ? getOperationalDate(new Date(report.created_at)) : point.lastCollectedOn;
-  if (!lastCollectedOn) {
+  if (!report) {
     return `
     <tr>
       <td><span class="admin-route-id">${point.id}</span><span class="admin-cell-primary">${point.name}</span></td>
@@ -19,6 +18,7 @@ function renderCollectionPoint(point, report) {
     </tr>
   `;
   }
+  const lastCollectedOn = getOperationalDate(new Date(report.created_at));
   const daysSinceCollection = getDaysSinceCollection(lastCollectedOn);
   const ageClass = daysSinceCollection > 2 ? 'age-overdue' : daysSinceCollection === 2 ? 'age-due-soon' : 'age-recent';
 
