@@ -124,6 +124,9 @@ export function startFieldApp(appEl) {
 
     previousScreen = screenName;
     const screenTransition = store.consumeScreenTransition();
+    // Only a real screen change animates; re-renders of the same screen (sync, route refresh, taps) replace it in place.
+    const transitionClass = oldViewport && !screenChanged ? ''
+      : screenTransition === 'slide-left' ? ' screen-transition-slide-left' : ' screen-transition-reveal';
 
     const [renderScreen, attachEvents] = screens[screenName] || screens.dispatch;
 
@@ -132,7 +135,7 @@ export function startFieldApp(appEl) {
       <div class="hud-canvas">
         <div class="mobile-chassis" id="main-mobile-chassis">
           <div id="sync-root" class="sync-status" role="status" hidden></div>
-          <main class="screen-viewport${screenTransition === 'slide-left' ? ' screen-transition-slide-left' : ''}" id="screen-viewport-root">
+          <main class="screen-viewport${transitionClass}" id="screen-viewport-root">
             ${renderScreen(state)}
           </main>
 

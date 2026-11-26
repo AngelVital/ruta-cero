@@ -43,13 +43,13 @@
   animation: screenSlideLeft 0.32s ease-out both;
 }
 
-.screen-viewport:not(.screen-transition-slide-left) > * {
+.screen-transition-reveal > * {
   animation: screenContentReveal 0.28s ease-out both;
 }
 
-.screen-viewport > *:nth-child(2) { animation-delay: 0.04s; }
-.screen-viewport > *:nth-child(3) { animation-delay: 0.08s; }
-.screen-viewport > *:nth-child(4) { animation-delay: 0.12s; }
+.screen-transition-reveal > *:nth-child(2) { animation-delay: 0.04s; }
+.screen-transition-reveal > *:nth-child(3) { animation-delay: 0.08s; }
+.screen-transition-reveal > *:nth-child(4) { animation-delay: 0.12s; }
 
 @keyframes screenContentReveal {
   from { transform: translateY(8px); opacity: 0; }
