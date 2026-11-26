@@ -8,8 +8,8 @@ import { queueFieldAction } from '../services/fieldSync.js';
 import { formatElapsedTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 
-// Map URL whose iframe already finished loading; the splash only covers a map not yet loaded.
-let loadedMapUrl = null;
+// The splash only covers the first map load; changing the active stop later must not show it again.
+let mapLoadedOnce = false;
 
 function formatElapsedRouteTime(startTimestamp) {
   return startTimestamp ? formatElapsedTime(startTimestamp).toUpperCase() : '0 MIN';
@@ -29,7 +29,7 @@ export function renderRouteMapScreen(state) {
   const isReturnStation = activeStop.type === 'return-station';
 
   return `
-    ${loadedMapUrl === mapsUrl ? '' : `
+    ${mapLoadedOnce ? '' : `
       <div class="app-splash route-map-splash" role="status">
         <img src="/logo-light.svg" alt="Ruta Cero">
         <span class="app-splash-spinner" aria-hidden="true"></span>
@@ -52,7 +52,6 @@ export function renderRouteMapScreen(state) {
     <div class="route-google-map" aria-label="Ubicación de ${activeStop.id}">
       <iframe
         src="${mapsUrl}"
-        data-map-url="${mapsUrl}"
         title="Ubicación de ${activeStop.id}"
         allowfullscreen
       ></iframe>
@@ -154,7 +153,7 @@ export function attachRouteMapEvents(container, store) {
   if (splash && mapFrame) {
     const hideSplash = () => {
       clearTimeout(splashTimeoutId);
-      loadedMapUrl = mapFrame.dataset.mapUrl;
+      mapLoadedOnce = true;
       splash.remove();
     };
     mapFrame.addEventListener('load', hideSplash, { once: true });
