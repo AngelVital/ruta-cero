@@ -8,6 +8,9 @@ import { queueFieldAction } from '../services/fieldSync.js';
 import { formatElapsedTime } from '../utils/format.js';
 import { escapeHtml } from '../utils/html.js';
 
+// Map URL whose iframe already finished loading; the splash only covers a map not yet loaded.
+let loadedMapUrl = null;
+
 function formatElapsedRouteTime(startTimestamp) {
   return startTimestamp ? formatElapsedTime(startTimestamp).toUpperCase() : '0 MIN';
 }
@@ -26,6 +29,13 @@ export function renderRouteMapScreen(state) {
   const isReturnStation = activeStop.type === 'return-station';
 
   return `
+    ${loadedMapUrl === mapsUrl ? '' : `
+      <div class="app-splash route-map-splash" role="status">
+        <img src="/logo-light.svg" alt="Ruta Cero">
+        <span class="app-splash-spinner" aria-hidden="true"></span>
+        <span class="app-splash-label">Cargando ruta…</span>
+      </div>
+    `}
     <div class="screen-header-bar">
       <div class="screen-header-title">
         <span class="material-symbols-outlined">alt_route</span>
@@ -42,8 +52,8 @@ export function renderRouteMapScreen(state) {
     <div class="route-google-map" aria-label="Ubicación de ${activeStop.id}">
       <iframe
         src="${mapsUrl}"
+        data-map-url="${mapsUrl}"
         title="Ubicación de ${activeStop.id}"
-        loading="lazy"
         allowfullscreen
       ></iframe>
     </div>
@@ -138,6 +148,19 @@ export function renderRouteMapScreen(state) {
 
 export function attachRouteMapEvents(container, store) {
   attachFieldSignOut(container, store);
+  const mapFrame = container.querySelector('.route-google-map iframe');
+  const splash = container.querySelector('.route-map-splash');
+  let splashTimeoutId;
+  if (splash && mapFrame) {
+    const hideSplash = () => {
+      clearTimeout(splashTimeoutId);
+      loadedMapUrl = mapFrame.dataset.mapUrl;
+      splash.remove();
+    };
+    mapFrame.addEventListener('load', hideSplash, { once: true });
+    // Without signal the map may never load; the stop list must stay usable.
+    splashTimeoutId = setTimeout(hideSplash, 8000);
+  }
   const timeInRoute = container.querySelector('#route-time-in-route');
   let timerId;
   if (timeInRoute && store.state.route.startTimestamp) {
@@ -201,5 +224,8 @@ export function attachRouteMapEvents(container, store) {
     store.setScreen('route-completion');
   });
 
-  return () => clearInterval(timerId);
+  return () => {
+    clearInterval(timerId);
+    clearTimeout(splashTimeoutId);
+  };
 }

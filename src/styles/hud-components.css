@@ -396,3 +396,8 @@
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* Map screen loading cover (RouteMapScreen.js); not animated so re-renders don't flash it */
+.screen-viewport > .route-map-splash {
+  animation: none;
+}
