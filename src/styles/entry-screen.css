@@ -258,6 +258,33 @@
   cursor: wait;
 }
 
+.entry-login-form[hidden] {
+  display: none;
+}
+
+.entry-login-link {
+  justify-self: center;
+  margin-top: 4px;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: #17845d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.entry-login-link:focus-visible {
+  outline: 3px solid rgba(23, 131, 93, 0.45);
+  outline-offset: 2px;
+}
+
+.entry-login-message.is-success {
+  color: #17845d;
+}
+
 .entry-login-message {
   min-height: 20px;
   margin-top: 14px;

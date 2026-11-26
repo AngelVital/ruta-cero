@@ -33,6 +33,18 @@ export async function signIn(email, password) {
   return data.session;
 }
 
+/** Checks the current password by signing in, sets the new one, and signs out again. */
+export async function changePassword(email, currentPassword, newPassword) {
+  const client = requireSupabase();
+  await signIn(email, currentPassword);
+  try {
+    const { error } = await client.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  } finally {
+    await client.auth.signOut();
+  }
+}
+
 export async function signOut() {
   const { error } = await requireSupabase().auth.signOut();
   if (error) throw error;

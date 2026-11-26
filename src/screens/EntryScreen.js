@@ -41,7 +41,7 @@ export function renderEntryScreen(message = '') {
         <div class="entry-main-content">
           <div class="entry-eyebrow"><span></span> ACCESO AL SISTEMA</div>
           <h1 id="entry-title">Iniciar sesión</h1>
-          <p class="entry-subtitle">Entra con tu cuenta; el sistema abre el panel de campo o de administración según tu perfil.</p>
+          <p class="entry-subtitle" id="entry-subtitle">Entra con tu cuenta; el sistema abre el panel de campo o de administración según tu perfil.</p>
 
           <form id="entry-login-form" class="entry-login-form">
             <label for="entry-email">Correo electrónico</label>
@@ -49,6 +49,20 @@ export function renderEntryScreen(message = '') {
             <label for="entry-password">Contraseña</label>
             <input id="entry-password" name="password" type="password" autocomplete="current-password" required>
             <button class="entry-login-submit" id="entry-login-submit" type="submit"><span>Iniciar sesión</span>${icon('arrow_forward')}</button>
+            <button class="entry-login-link" id="entry-show-password-form" type="button">Cambiar contraseña</button>
+          </form>
+
+          <form id="entry-password-form" class="entry-login-form" hidden>
+            <label for="entry-password-email">Correo electrónico</label>
+            <input id="entry-password-email" name="email" type="email" autocomplete="username" required>
+            <label for="entry-current-password">Contraseña actual</label>
+            <input id="entry-current-password" name="currentPassword" type="password" autocomplete="current-password" required>
+            <label for="entry-new-password">Nueva contraseña</label>
+            <input id="entry-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+            <label for="entry-confirm-password">Confirmar nueva contraseña</label>
+            <input id="entry-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+            <button class="entry-login-submit" id="entry-password-submit" type="submit"><span>Guardar contraseña</span>${icon('check')}</button>
+            <button class="entry-login-link" id="entry-show-login-form" type="button">Volver a iniciar sesión</button>
           </form>
           <p class="entry-login-message" id="entry-login-message" role="status" aria-live="polite">${escapeHtml(message)}</p>
         </div>
@@ -69,6 +83,7 @@ export function attachEntryScreen(container, { panelFor, openPanel }) {
     const button = container.querySelector('#entry-login-submit');
     const message = container.querySelector('#entry-login-message');
     button.disabled = true;
+    message.classList.remove('is-success');
     message.textContent = 'Verificando acceso…';
 
     try {
@@ -82,6 +97,60 @@ export function attachEntryScreen(container, { panelFor, openPanel }) {
       openPanel(panel);
     } catch (error) {
       message.textContent = error?.code === 'invalid_credentials' ? 'Correo o contraseña incorrectos.' : error.message;
+      button.disabled = false;
+    }
+  });
+
+  const passwordForm = container.querySelector('#entry-password-form');
+  const title = container.querySelector('#entry-title');
+  const subtitle = container.querySelector('#entry-subtitle');
+  const message = container.querySelector('#entry-login-message');
+  const loginSubtitle = subtitle.textContent;
+
+  const showForm = (changingPassword, text = '', isSuccess = false) => {
+    form.hidden = changingPassword;
+    passwordForm.hidden = !changingPassword;
+    title.textContent = changingPassword ? 'Cambiar contraseña' : 'Iniciar sesión';
+    subtitle.textContent = changingPassword
+      ? 'Confirma tu contraseña actual y elige una nueva.'
+      : loginSubtitle;
+    message.textContent = text;
+    message.classList.toggle('is-success', isSuccess);
+  };
+
+  container.querySelector('#entry-show-password-form').addEventListener('click', () => {
+    passwordForm.elements.email.value = form.elements.email.value;
+    showForm(true);
+  });
+  container.querySelector('#entry-show-login-form').addEventListener('click', () => showForm(false));
+
+  passwordForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const { email, currentPassword, newPassword, confirmPassword } = passwordForm.elements;
+    message.classList.remove('is-success');
+    if (newPassword.value !== confirmPassword.value) {
+      message.textContent = 'La nueva contraseña y su confirmación no coinciden.';
+      return;
+    }
+
+    const button = container.querySelector('#entry-password-submit');
+    button.disabled = true;
+    message.textContent = 'Actualizando contraseña…';
+
+    try {
+      const { changePassword } = await import('../services/supabase.js');
+      await changePassword(email.value.trim(), currentPassword.value, newPassword.value);
+      form.elements.email.value = email.value.trim();
+      form.elements.password.value = '';
+      passwordForm.reset();
+      showForm(false, 'Contraseña actualizada. Inicia sesión con la nueva.', true);
+    } catch (error) {
+      message.textContent = {
+        invalid_credentials: 'Correo o contraseña actual incorrectos.',
+        same_password: 'La nueva contraseña debe ser distinta de la actual.',
+        weak_password: 'La nueva contraseña es demasiado débil; usa al menos 6 caracteres.'
+      }[error?.code] || error.message;
+    } finally {
       button.disabled = false;
     }
   });
